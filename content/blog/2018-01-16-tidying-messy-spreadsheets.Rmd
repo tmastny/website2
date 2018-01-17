@@ -21,17 +21,23 @@ knitr::read_chunk("periodization-meta-analysis/tidier.R")
 
 ## Introduction
 
-This post is part introduction, part appendix. This first goal of this post is to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. In educational environments data is served in a convenient format that is immediately ready to be subjected to an array of algorithms from which we hope to drive some insight. But as Hadley explains in his [transformative paper](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html), the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself. In his article, Hadley identifies tidy data as data that is ready to be analyzed by statistical programs. The tidy data is usually characterized by
-    
+I'd like this post to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. Instead of presenting a finished script that takes a messy spreadsheet and outputs a tidy one, I want to emphasize the exploratory nature data cleaning. My approach will follow Hadley Wickham's in his [tidy data](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html) paper. At the end, our data should satify these three characteristics:
+
 - one variable per column
 
 - one observation per row
 
 - each type of observational unit forms a table
 
-He also introduces packages for R that facilitate tidying, which he has collected under the the brand [tidyverse](https://www.tidyverse.org/). We are going to use these tools, particularly `dplyr` and `tidyr` to tidy a messy spreadsheet. 
+## Why Tidy?
 
-This post also serves as an appendix to a future blog post analyzing Greg Nuckol's meta-analysis on periodization in strength training found on his website [Strong By Science](https://www.strongerbyscience.com/periodization-data/). Greg shared his data and encouraged others to analyze it, which is absolutely fantastic. However, as organized, the data is not well suited for analysis by statistical programs. 
+In educational environments data is served in a convenient format that is immediately ready to be subjected to an array of algorithms from which we hope to drive some insight. But as Hadley explains in his [transformative paper](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html), the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself. In his article, Hadley identifies tidy data as data that is ready to be analyzed by statistical programs.
+
+## The Data
+
+The spreadsheet I will be tidying is Greg Nuckol's dataset of periodization studies on strength training found on his website [Strong By Science](https://www.strongerbyscience.com/periodization-data/). Greg used this data to run a meta-analysis and encouraged others to analyze it, which is absolutely fantastic. 
+
+Indeed, I consider this post to be a part one, or an appendix to a future blog post that does a Bayesian meta-analysis on the tidied verison of this dataset. As organized, the data is not well suited for analysis by statistical programs. 
 
 I want to make it clear that I'm not picking on Greg and this isn't an indictment of his skills as a researcher. I've created my fair share of [feral systems](https://twitter.com/hadleybeeman/status/934867384577462274). And as Hadley explains in his paper, tidy data, which is data organized for computer analysis, often sacrifices human readability and has various other [trade-offs](https://simplystatistics.org/2016/02/17/non-tidy-data/). I commend Greg's own analysis and his willingness to share his data, and I'm happy to go through the exercise of cleaning it up.
 
@@ -47,6 +53,12 @@ The first step is to actually look at the data. Since Greg shared his data on Go
 Greg has only filled out the study's details for it's first occurence in the spreadsheet. This makes it easy to read by adding white space between each study, but hard for the computer because there is an implicit spatial relation, which makes grouping and lookups difficult.
 
 Luckily, we can easily correct this spatial dependence^[When we can't easily correct this spatial depedence, for example with Excel pivot tables, I recommend the [tidyxl](https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html) package.]: the first five variables always inherent the data from the previous row. We can code that as follows:
+
+```{r}
+library(tidyverse)
+library(magrittr)
+d <- readxl::read_excel('periodization-meta-analysis/Periodization Stuff.xlsx')
+```
 
 ```{r spatial}
 ```
