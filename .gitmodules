@@ -1,0 +1,3 @@
+[submodule "content/blog/periodization-meta-analysis"]
+	path = content/blog/periodization-meta-analysis
+	url = https://github.com/tmastny/periodization-meta-analysis.git
