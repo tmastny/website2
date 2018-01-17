@@ -1,0 +1,251 @@
+---
+title: Tidying Messy Spreadsheets
+author: ~
+date: '2018-01-13'
+slug: tidying-messy-spreadsheets-dplyr
+categories: []
+tags: []
+description: Tidying Messy Spreadsheets with dplyr and tidyr 
+meta_img: /images/image.jpg
+publishdate: '2018-01-20'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#cleaning">Cleaning</a></li>
+<li><a href="#conclusions">Conclusions</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This post is part introduction, part appendix. This first goal of this post is to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. In educational environments data is served in a convenient format that is immediately ready to be subjected to an array of algorithms from which we hope to drive some insight. But as Hadley explains in his <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">transformative paper</a>, the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself. In his article, Hadley identifies tidy data as data that is ready to be analyzed by statistical programs. The tidy data is usually characterized by</p>
+<ul>
+<li><p>one variable per column</p></li>
+<li><p>one observation per row</p></li>
+<li><p>each type of observational unit forms a table</p></li>
+</ul>
+<p>He also introduces packages for R that facilitate tidying, which he has collected under the the brand <a href="https://www.tidyverse.org/">tidyverse</a>. We are going to use these tools, particularly <code>dplyr</code> and <code>tidyr</code> to tidy a messy spreadsheet.</p>
+<p>This post also serves as an appendix to a future blog post analyzing Greg Nuckol’s meta-analysis on periodization in strength training found on his website <a href="https://www.strongerbyscience.com/periodization-data/">Strong By Science</a>. Greg shared his data and encouraged others to analyze it, which is absolutely fantastic. However, as organized, the data is not well suited for analysis by statistical programs.</p>
+<p>I want to make it clear that I’m not picking on Greg and this isn’t an indictment of his skills as a researcher. I’ve created my fair share of <a href="https://twitter.com/hadleybeeman/status/934867384577462274">feral systems</a>. And as Hadley explains in his paper, tidy data, which is data organized for computer analysis, often sacrifices human readability and has various other <a href="https://simplystatistics.org/2016/02/17/non-tidy-data/">trade-offs</a>. I commend Greg’s own analysis and his willingness to share his data, and I’m happy to go through the exercise of cleaning it up.</p>
+<p>Finally, note that the original data, the R script used to clean it, and the final tidy data can all be found in the <a href="https://github.com/tmastny/periodization-meta-analysis">github repo</a> I created to analyze Greg’s work.</p>
+</div>
+<div id="cleaning" class="section level2">
+<h2>Cleaning</h2>
+<p>The first step is to actually look at the data. Since Greg shared his data on Google sheets, this was my first glimpse of the data.</p>
+<div class="figure">
+<img src="/blog/spreadsheet_pic.png" />
+
+</div>
+<p>Greg has only filled out the study’s details for it’s first occurence in the spreadsheet. This makes it easy to read by adding white space between each study, but hard for the computer because there is an implicit spatial relation, which makes grouping and lookups difficult.</p>
+<p>Luckily, we can easily correct this spatial dependence<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>: the first five variables always inherent the data from the previous row. We can code that as follows:</p>
+<pre class="r"><code>library(tidyverse)
+library(magrittr)
+d &lt;- readxl::read_excel(&#39;Periodization Stuff.xlsx&#39;)
+
+for (i in 1:nrow(d)) {
+  if (is.na(d[i,1])) {
+    d[i, c(1, 2, 3, 4, 5)] = d[i - 1, c(1, 2, 3, 4, 5)]
+  }
+}</code></pre>
+<p>Next, we need to make sure our import from Excel to R was successful. I suggest printing the data frame in various ways. Here, I noticed columns with numbers was reading as a character vector.</p>
+<pre class="r"><code>is.numeric(d$`Other 1 pre`)</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code>is.character(d$`Other 1 pre`)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Again, manually looking through the data I see that there is a URL (accidentially?) stored in what should be a numeric variable:</p>
+<pre class="r"><code>d[67,70]</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `Other 1 pre`                                                           
+##   &lt;chr&gt;                                                                   
+## 1 https://www.dropbox.com/s/kyqean4j8zlfae9/Screenshot%202017-06-19%2009.…</code></pre>
+<p>But we can ceorce to numeric, filling in the character strings as NAs.</p>
+<pre class="r"><code>d$`Other 1 pre` &lt;- as.numeric(d$`Other 1 pre`)</code></pre>
+<p>If you are still exploring and trying to understand how to clean the file, I really recommend hiding some of the less critical, text heavy columns. This makes exploring the data frame with filters or <code>head(d)</code> a lot more useful. One easy way to do this is with <code>dplyr::select</code>:</p>
+<pre class="r"><code>d %&lt;&gt;%
+  select(
+    -`Measurements at 3+ time points?`, -Author, -`Study Title`,
+    -`Participants (training status)`, -Age, -Sex, -`Length (weeks)`,
+    -`Intensity Closest to 1RM test`, -`Volume Equated?`, -Issues)</code></pre>
+<p>Call this early in your pipeline and either delete or comment it out when you are finished so you can still preserve all the data.</p>
+<p>Next, you should notice that the last 70 columns are all numeric, with variable identifiers such as squat, bench, LBM, etc. It appears that each column</p>
+<p>This violates the second principle of tidy data: we should have <em>one observation per row</em>. Instead, we have one study for row, with multiple observations per study (such as control, treatment 1, treatment 2, etc.) as columns. We need to gather the columns into one row:</p>
+<pre class="r"><code>d %&lt;&gt;%
+  gather(type, outcome, `LBM Pre`:`ES 1 vs. 3__4`)</code></pre>
+<p>Let’s take a closer look at the variables we’ve gathered:</p>
+<pre class="r"><code>unique(d$type)</code></pre>
+<pre><code>##  [1] &quot;LBM Pre&quot;                &quot;LBM SD&quot;                
+##  [3] &quot;LBM post&quot;               &quot;% increase&quot;            
+##  [5] &quot;ES pre/post&quot;            &quot;ES 1 vs. 2, 2 vs. 3&quot;   
+##  [7] &quot;ES 1 vs 3&quot;              &quot;MT Pre&quot;                
+##  [9] &quot;MT SD&quot;                  &quot;MT Post&quot;               
+## [11] &quot;% increase__1&quot;          &quot;ES pre/post__1&quot;        
+## [13] &quot;ES 1 vs. 2, 2 vs. 3__1&quot; &quot;ES 1 vs 3__1&quot;          
+## [15] &quot;CSA pre&quot;                &quot;CSA SD&quot;                
+## [17] &quot;CSA post&quot;               &quot;% increase__2&quot;         
+## [19] &quot;ES pre/post__2&quot;         &quot;ES 1 vs. 2, 2 vs. 3__2&quot;
+## [21] &quot;ES 1 vs 3__2&quot;           &quot;BF% pre&quot;               
+## [23] &quot;BF% SD&quot;                 &quot;BF% post&quot;              
+## [25] &quot;% increase__3&quot;          &quot;ES pre/post__3&quot;        
+## [27] &quot;ES 1 vs. 2, 2 vs. 3__3&quot; &quot;ES 1 vs 3__3&quot;          
+## [29] &quot;Fiber CSA pre&quot;          &quot;Fiber CSA SA&quot;          
+## [31] &quot;Fiber CSA post&quot;         &quot;% increase__4&quot;         
+## [33] &quot;ES pre/post__4&quot;         &quot;ES 1 vs. 2, 2 vs. 3__4&quot;
+## [35] &quot;ES 1 vs 3__4&quot;           &quot;Squat pre&quot;             
+## [37] &quot;Squat SD&quot;               &quot;Squat post&quot;            
+## [39] &quot;% increase__5&quot;          &quot;ES pre/post__5&quot;        
+## [41] &quot;ES 1 vs. 2/2 vs. 3&quot;     &quot;ES 1 vs. 3&quot;            
+## [43] &quot;Bench Pre&quot;              &quot;Bench SD&quot;              
+## [45] &quot;Bench post&quot;             &quot;% increase__6&quot;         
+## [47] &quot;ES pre/post__6&quot;         &quot;ES 1 vs. 2/2 vs. 3__1&quot; 
+## [49] &quot;ES 1 vs. 3__1&quot;          &quot;Leg press pre&quot;         
+## [51] &quot;Leg press SD&quot;           &quot;Leg press post&quot;        
+## [53] &quot;% increase__7&quot;          &quot;ES pre/post__7&quot;        
+## [55] &quot;ES 1 vs. 2/2 vs. 3__2&quot;  &quot;ES 1 vs. 3__2&quot;         
+## [57] &quot;Other 1 pre&quot;            &quot;Other 1 SD&quot;            
+## [59] &quot;Other 1 post&quot;           &quot;% increase__8&quot;         
+## [61] &quot;ES pre/post__8&quot;         &quot;ES 1 vs. 2/2 vs. 3__3&quot; 
+## [63] &quot;ES 1 vs. 3__3&quot;          &quot;Other 2 pre&quot;           
+## [65] &quot;Other 2 SD&quot;             &quot;Other 2 post&quot;          
+## [67] &quot;% increase__9&quot;          &quot;ES pre/post__9&quot;        
+## [69] &quot;ES 1 vs. 2/2 vs. 3__4&quot;  &quot;ES 1 vs. 3__4&quot;</code></pre>
+<p>Okay, first we can safely ignore anything with “ES”<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> in the name. Those are calculated, not observed quantities.</p>
+<p>However, we should see a pattern in the rest of the column names. All the different types of outcomes are named something like <strong>“[LBM/Bench/Squat] [Pre/Post/SD]”</strong>. We actually have two different variables in one column, which violates the first tidy principle: <em>one variable per column</em>. We need to separate the columns so we have a select of outcome types such as LBM, bench, squat, etc. and outcome measurements such as pre, post, and SD:</p>
+<pre class="r"><code>d %&lt;&gt;%
+  mutate(type = str_to_lower(type)) %&gt;%
+  filter(
+    (str_detect(type, &#39; pre&#39;) |
+    str_detect(type, &#39; post&#39;) |
+    str_detect(type, &#39; sd&#39;)) &amp;
+    not(str_detect(type, &quot;/&quot;))) %&gt;%
+    separate(
+      type, c(&#39;outcome_type&#39;, &#39;outcome_measurements&#39;), 
+      &#39; (?=(pre$|post$|sd$))&#39;)</code></pre>
+<p>This gives us</p>
+<pre class="r"><code>head(d %&gt;% select(Number, outcome_type, outcome_measurements, outcome))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   Number outcome_type outcome_measurements outcome
+##    &lt;dbl&gt; &lt;chr&gt;        &lt;chr&gt;                &lt;chr&gt;  
+## 1   1.00 lbm          pre                  &lt;NA&gt;   
+## 2   1.00 lbm          pre                  &lt;NA&gt;   
+## 3   1.00 lbm          pre                  &lt;NA&gt;   
+## 4   2.00 lbm          pre                  66.5   
+## 5   2.00 lbm          pre                  68.9   
+## 6   3.00 lbm          pre                  &lt;NA&gt;</code></pre>
+<p>As we can see, study one didn’t measurement LBM. We only care what each study did measure, so we can now remove all the NAs and change outcome to numeric.</p>
+<pre class="r"><code>d &lt;- d[complete.cases(d$outcome),]
+d$outcome &lt;- as.numeric(d$outcome)</code></pre>
+<p>Now, let’s double check our changes to the original data from study one:</p>
+<pre class="r"><code>head(d %&gt;% filter(Number == 1) %&gt;% select(-`Program Details`))</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##   Number     N `Program Label` outcome_type outcome_measurements outcome
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           &lt;chr&gt;        &lt;chr&gt;                  &lt;dbl&gt;
+## 1   1.00  23.0 NP              squat        pre                    1.48 
+## 2   1.00  23.0 NP              squat        pre                    1.48 
+## 3   1.00  23.0 LP/BP           squat        pre                    1.48 
+## 4   1.00  23.0 NP              squat        sd                     0.105
+## 5   1.00  23.0 NP              squat        sd                     0.105
+## 6   1.00  23.0 LP/BP           squat        sd                     0.105</code></pre>
+<p>On second thought, I would contend that the <code>outcome_measurements</code> columns now violates principle one: <em>one variable per column</em>. For comparison, <code>outcome_type</code> is definitely one variable. It indicates what the study was actually measuring as an outcome. But <code>outcome_measurements</code> is a collection of three different variables, pre, post, and sd that measure some aspect of the <code>outcome_type</code>. Therefore, we need to separate into their own column.</p>
+<p>This part is a little tricky. I recommend this stackoverflow <a href="%5Bhttps://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and?noredirect=1&amp;lq=1">link</a> for additional details.</p>
+<p>Let’s take a look at what we have for study 1:</p>
+<pre class="r"><code>d %&gt;% filter(Number == 1) %&gt;% select(-N, -Number)</code></pre>
+<pre><code>## # A tibble: 18 x 5
+##    `Program Label` `Program Details` outcome_type outcome_measure… outcome
+##    &lt;chr&gt;           &lt;chr&gt;             &lt;chr&gt;        &lt;chr&gt;              &lt;dbl&gt;
+##  1 NP              5x10RM (78.9%); … squat        pre              1.48   
+##  2 NP              6x8RM (83.3%); w… squat        pre              1.48   
+##  3 LP/BP           5x10RM for 4 wee… squat        pre              1.48   
+##  4 NP              5x10RM (78.9%); … squat        sd               0.105  
+##  5 NP              6x8RM (83.3%); w… squat        sd               0.105  
+##  6 LP/BP           5x10RM for 4 wee… squat        sd               0.105  
+##  7 NP              5x10RM (78.9%); … squat        post             1.74   
+##  8 NP              6x8RM (83.3%); w… squat        post             1.89   
+##  9 LP/BP           5x10RM for 4 wee… squat        post             2.02   
+## 10 NP              5x10RM (78.9%); … bench        pre              1.28   
+## 11 NP              6x8RM (83.3%); w… bench        pre              1.28   
+## 12 LP/BP           5x10RM for 4 wee… bench        pre              1.28   
+## 13 NP              5x10RM (78.9%); … bench        sd               0.00200
+## 14 NP              6x8RM (83.3%); w… bench        sd               0.00200
+## 15 LP/BP           5x10RM for 4 wee… bench        sd               0.00200
+## 16 NP              5x10RM (78.9%); … bench        post             1.41   
+## 17 NP              6x8RM (83.3%); w… bench        post             1.43   
+## 18 LP/BP           5x10RM for 4 wee… bench        post             1.60</code></pre>
+<p>This data is grouped and we can exploit that structure. We need to sub divide by each column, and then spread the <code>outcome_measurements</code> to a column containing the <code>outcome</code> numeric.</p>
+<pre class="r"><code>d %&gt;% 
+  filter(Number == 1) %&gt;%
+  select(-N, -Number) %&gt;%
+  mutate_if(is.character, funs(factor(.))) %&gt;%
+  group_by(
+    `Program Label`, `Program Details`, outcome_type, outcome_measurements) %&gt;%
+  spread(outcome_measurements, outcome)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+## # Groups: Program Label, Program Details, outcome_type [6]
+##   `Program Label` `Program Details`       outcome_type  post   pre      sd
+## * &lt;fct&gt;           &lt;fct&gt;                   &lt;fct&gt;        &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+## 1 LP/BP           5x10RM for 4 weeks, 4x… bench         1.60  1.28 0.00200
+## 2 LP/BP           5x10RM for 4 weeks, 4x… squat         2.02  1.48 0.105  
+## 3 NP              5x10RM (78.9%); weight… bench         1.41  1.28 0.00200
+## 4 NP              5x10RM (78.9%); weight… squat         1.74  1.48 0.105  
+## 5 NP              6x8RM (83.3%); weights… bench         1.43  1.28 0.00200
+## 6 NP              6x8RM (83.3%); weights… squat         1.89  1.48 0.105</code></pre>
+<p>This works perfect. Let’s apply it to the rest of the data set:</p>
+<pre class="r"><code>d %&lt;&gt;% 
+  mutate_if(is.character, funs(factor(.))) %&gt;%
+  group_by(
+    outcome_type, outcome_measurements, Number, `Program Label`, `Program Details`) %&gt;%
+  spread(outcome_measurements, outcome) %&gt;%
+  ungroup()</code></pre>
+<pre><code>## Error: Duplicate identifiers for rows (114, 115), (120, 121, 122, 123), (90, 91), (96, 97, 98, 99), (102, 103), (108, 109, 110, 111)</code></pre>
+<p>We got an error, but we can work with this. It tells us where <code>spread</code> sees identical groups. This is most likely missing data, which tells us not every study is organized as nicely study 1.</p>
+<pre class="r"><code>d[c(114, 115, 120, 121, 122, 123, 90, 91, 96, 97, 98, 99, 102, 103, 108, 109, 110, 111),]</code></pre>
+<pre><code>## # A tibble: 18 x 7
+##    Number     N `Program Label` `Program Details` outcome_type
+##     &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           &lt;chr&gt;             &lt;chr&gt;       
+##  1   35.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  2   35.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  3   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  4   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  5   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  6   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  7   35.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  8   35.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+##  9   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 10   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 11   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 12   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 13   35.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 14   35.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 15   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 16   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 17   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## 18   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
+## # ... with 2 more variables: outcome_measurements &lt;chr&gt;, outcome &lt;dbl&gt;</code></pre>
+<p>As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation just to toss it out, but let’s go to the source too if we are missing anything.</p>
+<p>If we refer back to the original data, it looks like the missing data is a strange encoding of some smaller muscles like elbow flexors and triceps. I’m going to exclude it, because it would probably take some manual data manipulation to fix. Also, in the next blog post I’m going to focus on squat and bench anyway.</p>
+<p>So let’s try it without those rows:</p>
+<pre class="r"><code>d &lt;- d[-c(114, 115, 120, 121, 122, 123, 90, 91, 96, 97, 98, 99, 102, 103, 108, 109, 110, 111),]</code></pre>
+<pre class="r"><code>d %&lt;&gt;% 
+  mutate_if(is.character, funs(factor(.))) %&gt;%
+  group_by(
+    outcome_type, outcome_measurements, Number, `Program Label`, `Program Details`) %&gt;%
+  spread(outcome_measurements, outcome) %&gt;%
+  ungroup()</code></pre>
+<p>And we have no errors!</p>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>As you can see above, each observation is not completely filled out. This makes it easier to read, but can lead to difficulties when writing programs and scripts. Luckily there doesn’t seem to be other common <a href="http://blog.revolutionanalytics.com/2017/11/good-practices-spreadsheets.html">spreadsheet issues</a> formatting as data or formulas. There are a few merged cells, but they aren’t across rows and they are over studies that I won’t include in my analysis. I’ll discuss my inclusive criteria in the methodology section.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>When we can’t easily correct this spatial depedence, for example with Excel pivot tables, I recommend the <a href="https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html">tidyxl</a> package.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>ES stands for effect size. We’ll talk about that in the next blog post<a href="#fnref2">↩</a></p></li>
+</ol>
+</div>

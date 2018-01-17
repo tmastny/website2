@@ -1,0 +1,174 @@
+---
+title: Tidying Messy Spreadsheets
+author: ~
+date: '2018-01-13'
+slug: tidying-messy-spreadsheets-dplyr
+categories: []
+tags: []
+description: Tidying Messy Spreadsheets with dplyr and tidyr 
+meta_img: /images/image.jpg
+publishdate: '2018-01-20'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+knitr::read_chunk("periodization-meta-analysis/tidier.R")
+```
+
+## Introduction
+
+This post is part introduction, part appendix. This first goal of this post is to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. In educational environments data is served in a convenient format that is immediately ready to be subjected to an array of algorithms from which we hope to drive some insight. But as Hadley explains in his [transformative paper](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html), the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself. In his article, Hadley identifies tidy data as data that is ready to be analyzed by statistical programs. The tidy data is usually characterized by
+    
+- one variable per column
+
+- one observation per row
+
+- each type of observational unit forms a table
+
+He also introduces packages for R that facilitate tidying, which he has collected under the the brand [tidyverse](https://www.tidyverse.org/). We are going to use these tools, particularly `dplyr` and `tidyr` to tidy a messy spreadsheet. 
+
+This post also serves as an appendix to a future blog post analyzing Greg Nuckol's meta-analysis on periodization in strength training found on his website [Strong By Science](https://www.strongerbyscience.com/periodization-data/). Greg shared his data and encouraged others to analyze it, which is absolutely fantastic. However, as organized, the data is not well suited for analysis by statistical programs. 
+
+I want to make it clear that I'm not picking on Greg and this isn't an indictment of his skills as a researcher. I've created my fair share of [feral systems](https://twitter.com/hadleybeeman/status/934867384577462274). And as Hadley explains in his paper, tidy data, which is data organized for computer analysis, often sacrifices human readability and has various other [trade-offs](https://simplystatistics.org/2016/02/17/non-tidy-data/). I commend Greg's own analysis and his willingness to share his data, and I'm happy to go through the exercise of cleaning it up.
+
+Finally, note that the original data, the R script used to clean it, and the final tidy data can all be found in the [github repo](https://github.com/tmastny/periodization-meta-analysis) I created to analyze Greg's work. 
+
+
+## Cleaning
+
+The first step is to actually look at the data. Since Greg shared his data on Google sheets, this was my first glimpse of the data.
+
+![](/blog/spreadsheet_pic.png)
+
+Greg has only filled out the study's details for it's first occurence in the spreadsheet. This makes it easy to read by adding white space between each study, but hard for the computer because there is an implicit spatial relation, which makes grouping and lookups difficult.
+
+Luckily, we can easily correct this spatial dependence^[When we can't easily correct this spatial depedence, for example with Excel pivot tables, I recommend the [tidyxl](https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html) package.]: the first five variables always inherent the data from the previous row. We can code that as follows:
+
+```{r spatial}
+```
+
+Next, we need to make sure our import from Excel to R was successful. I suggest printing the data frame in various ways. Here, I noticed columns with numbers was reading as a character vector.
+
+```{r}
+is.numeric(d$`Other 1 pre`)
+is.character(d$`Other 1 pre`)
+```
+
+Again, manually looking through the data I see that there is a URL (accidentially?) stored in what should be a numeric variable:
+
+```{r}
+d[67,70]
+```
+
+But we can ceorce to numeric, filling in the character strings as NAs.
+
+```{r remove_url}
+```
+
+If you are still exploring and trying to understand how to clean the file, I really recommend hiding some of the less critical, text heavy columns. This makes exploring the data frame with filters or `head(d)` a lot more useful. One easy way to do this is with `dplyr::select`:
+
+```{r}
+d %<>%
+  select(
+    -`Measurements at 3+ time points?`, -Author, -`Study Title`,
+    -`Participants (training status)`, -Age, -Sex, -`Length (weeks)`,
+    -`Intensity Closest to 1RM test`, -`Volume Equated?`, -Issues)
+```
+
+Call this early in your pipeline and either delete or comment it out when you are finished so you can still preserve all the data.
+
+Next, you should notice that the last 70 columns are all numeric, with variable identifiers such as squat, bench, LBM, etc. It appears that each column 
+
+This violates the second principle of tidy data: we should have *one observation per row*. Instead, we have one study for row, with multiple observations per study (such as control, treatment 1, treatment 2, etc.) as columns. We need to gather the columns into one row:
+
+```{r gather_variables}
+```
+
+Let's take a closer look at the variables we've gathered:
+
+```{r}
+unique(d$type)
+```
+
+Okay, first we can safely ignore anything with "ES"^[ES stands for effect size. We'll talk about that in the next blog post] in the name. Those are calculated, not observed quantities. 
+
+However, we should see a pattern in the rest of the column names. All the different types of outcomes are named something like **"[LBM/Bench/Squat] [Pre/Post/SD]"**. We actually have two different variables in one column, which violates the first tidy principle: *one variable per column*. We need to separate the columns so we have a select of outcome types such as LBM, bench, squat, etc. and outcome measurements such as pre, post, and SD:
+
+```{r split_columns}
+```
+
+This gives us
+
+```{r}
+head(d %>% select(Number, outcome_type, outcome_measurements, outcome))
+```
+
+As we can see, study one didn't measurement LBM. We only care what each study did measure, so we can now remove all the NAs and change outcome to numeric.
+
+```{r remove_na}
+```
+
+Now, let's double check our changes to the original data from study one:
+
+```{r}
+head(d %>% filter(Number == 1) %>% select(-`Program Details`))
+```
+
+On second thought, I would contend that the `outcome_measurements` columns now violates principle one: *one variable per column*. For comparison, `outcome_type` is definitely one variable. It indicates what the study was actually measuring as an outcome. But `outcome_measurements` is a collection of three different variables, pre, post, and sd that measure some aspect of the `outcome_type`. Therefore, we need to separate into their own column.
+
+This part is a little tricky. I recommend this stackoverflow [link]([https://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and?noredirect=1&lq=1) for additional details. 
+
+Let's take a look at what we have for study 1:
+
+```{r}
+d %>% filter(Number == 1) %>% select(-N, -Number)
+```
+
+This data is grouped and we can exploit that structure. We need to sub divide by each column, and then spread the `outcome_measurements` to a column containing the `outcome` numeric. 
+
+```{r}
+d %>% 
+  filter(Number == 1) %>%
+  select(-N, -Number) %>%
+  mutate_if(is.character, funs(factor(.))) %>%
+  group_by(
+    `Program Label`, `Program Details`, outcome_type, outcome_measurements) %>%
+  spread(outcome_measurements, outcome)
+```
+
+This works perfect. Let's apply it to the rest of the data set:
+
+```{r group_by, error = TRUE}
+```
+
+We got an error, but we can work with this. It tells us where `spread` sees identical groups. This is most likely missing data, which tells us not every study is organized as nicely study 1.  
+
+```{r}
+d[c(114, 115, 120, 121, 122, 123, 90, 91, 96, 97, 98, 99, 102, 103, 108, 109, 110, 111),]
+```
+
+As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation just to toss it out, but let's go to the source too if we are missing anything.
+
+If we refer back to the original data, it looks like the missing data is a strange encoding of some smaller muscles like elbow flexors and triceps. I'm going to exclude it, because it would probably take some manual data manipulation to fix. Also, in the next blog post I'm going to focus on squat and bench anyway.
+
+So let's try it without those rows:
+
+```{r fix_data}
+```
+
+```{r group_by}
+```
+
+And we have no errors!
+
+
+
+## Conclusions
+
+As you can see above, each observation is not completely filled out. This makes it easier to read, but can lead to difficulties when writing programs and scripts. Luckily there doesn't seem to be other common [spreadsheet issues](http://blog.revolutionanalytics.com/2017/11/good-practices-spreadsheets.html) formatting as data or formulas. There are a few merged cells, but they aren't across rows and they are over studies that I won't include in my analysis. I'll discuss my inclusive criteria in the methodology section.
+
+

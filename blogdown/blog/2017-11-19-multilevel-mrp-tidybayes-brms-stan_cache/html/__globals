@@ -1,0 +1,23 @@
+unnamed-chunk-1	library	tidyverse	lme4	brms	rstan	albersusa	cowplot	rstan_options	options	detectCores
+unnamed-chunk-2	marriage.data	read.dta	Statelevel	Census
+unnamed-chunk-3	Statelevel	%>%	rename	sstate	marriage.data	select	state	p.evang	p.mormon	kerry.04	right_join	mutate	female	race.wbh	age.cat	edu.cat	filter
+unnamed-chunk-4	Census	%>%	rename	cstate	cage.cat	cedu.cat	cregion	Statelevel	select	state	p.evang	p.mormon	kerry.04	right_join	mutate	cfemale	crace.WBH	age.cat	edu.cat
+unnamed-chunk-5	mod.disag	marriage.data	%>%	group_by	state	summarise	mean	yes.of.all	mutate
+unnamed-chunk-6	grp.means	marriage.data	%>%	group_by	state	region	race.female	age.cat	edu.cat	age.edu.cat	p.relig	kerry.04	summarise	mean	yes.of.all
+unnamed-chunk-7	grp.means	Census	%>%	select	state	age.cat	edu.cat	region	kerry.04	race.female	age.edu.cat	p.relig	cpercent.state	right_join
+unnamed-chunk-8	mod.disag.ps	grp.means	%>%	group_by	state	summarise	sum	support	cpercent.state	mutate
+unnamed-chunk-9	disag.point	bind_rows	mod.disag	mod.disag.ps	%>%	group_by	model	arrange	support	ggplot	aes	fct_inorder	state	geom_point	theme_classic	theme	geom_dl	ylab	compare_scat	return	d	support1	geom_text	geom_abline	xlim	c	ylim	xlab	coord_fixed	disag.scat	bind_cols	plot_grid
+unnamed-chunk-10	Census	%>%	group_by	state	summarise	sum	cpercent.state	arrange	desc	percent
+unnamed-chunk-11	grp.means	%>%	group_by	state	summarise	sum	cpercent.state	filter	ggplot	aes	total_percent	geom_text	theme	element_blank	coord_fixed	ylim	c
+unnamed-chunk-12	approx.mod	glmer	yes.of.all	race.female	age.cat	edu.cat	age.edu.cat	state	region	p.relig	kerry.04	marriage.data	binomial
+unnamed-chunk-13	summary	approx.mod
+unnamed-chunk-14	marriage.data	%>%	filter	state
+unnamed-chunk-15	ps.approx.mod	Census	%>%	mutate	predict	approx.mod	.	support	cpercent.state	group_by	state	summarise	sum
+unnamed-chunk-16	bayes.mod	brm	yes.of.all	race.female	age.cat	edu.cat	age.edu.cat	state	region	p.relig	kerry.04	marriage.data	bernoulli	c	set_prior
+unnamed-chunk-17	summary	bayes.mod
+unnamed-chunk-18	library	tidybayes	approx_sd	tidy	approx.mod	%>%	filter	str_detect	term	bayes.mod	gather_samples	`sd_.*`	ungroup	mutate	str_replace_all	c	ggplot	aes	group	estimate	geom_density_ridges	..density..	geom_point
+unnamed-chunk-19	ps.bayes.mod	bayes.mod	%>%	add_predicted_samples	Census	rename	pred	mean_qi	mutate	support	cpercent.state	group_by	state	summarise	sum
+unnamed-chunk-20	mod.disag	nrow	list	mean	support	disag.approx	bind_cols	ps.approx.mod	%>%	compare_scat	xlab	ylab	disag.bayes	ps.bayes.mod	approx.bayes	plot_grid
+unnamed-chunk-21	str	predict	bayes.mod	Census
+unnamed-chunk-22	bayes.mod	%>%	add_predicted_samples	Census
+unnamed-chunk-23	

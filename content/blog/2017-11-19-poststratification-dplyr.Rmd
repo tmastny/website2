@@ -1,0 +1,258 @@
+---
+title: Poststratification Primer with dplyr
+author: ~
+date: '2017-11-19'
+slug: poststratification-with-dplyr
+categories: []
+tags: []
+description: Desc
+meta_img: /images/image.jpg
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=TRUE, autodep=TRUE)
+```
+
+
+## Introduction
+
+This post will introduce poststartification: the process of correcting non-representative samples to better reflect the actual population proportions. There are some excellent resources to learn about multilevel regression and poststratification ([MRP or Mister P](http://andrewgelman.com/2013/10/09/mister-p-whats-its-secret-sauce/)), but most are heavy on multilevel regression and light on poststratification. 
+
+My next blog post will dive into the [MRP Primer by Jonathan Kastellec](http://www.princeton.edu/~jkastell/MRP_primer/mrp_primer.pdf) using tools such as [Stan](http://mc-stan.org/), [brms](https://github.com/paul-buerkner/brms), and [tidybayes](https://github.com/mjskay/tidybayes). In the meantime, consider this the "MRP Primer" Primer, where I investigate poststratification with some math and R examples. 
+
+First, let's imagine we have the following data. 
+
+```{r}
+vote_yes <- c(rep(0, 25*(1-0.76)), 
+              rep(1, 25*0.76),
+              rep(0, 50*(1-0.3)),
+              rep(1, 50*0.3))
+vote_yes
+```
+
+Suppose this data is a list of yes or no responses to a public policy poll. If this is the total population of a small town, we can determine if there is a majority of support for the issue by finding the mean. Let $X = x_1, x_2, \dots, x_{75}$ denote this data set. Then
+
+```{r}
+mean(vote_yes)
+```
+
+equals 
+
+\begin{align}
+\bar{X} &= \frac{1}{75}\sum_{i=1}^{75}x_i
+\end{align}
+
+Rarely in practice do we have results for the entire population. So we send out a survey to a sample of that population to estimate opinion. If the survey turns out to be representative, great. More likely, the demographic groups within the survey are non-representative, sometimes [intentionally (or inevitably) so](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/04/forecasting-with-nonrepresentative-polls.pdf). That means that the demographic groups are not in proportion to the total population. 
+
+For example, suppose this is a survey on the same population with demographic groups `A` and `B`:
+
+```{r}
+library(tidyverse)
+poll_data <- tibble(
+  group = c(rep("A", 25), rep("B", 10)),
+  yes = c(rep(1, 19), rep(0, 6), rep(1, 3), rep(0, 7))
+)
+poll_data %>%
+  group_by(group) %>%
+  summarise(count = n())
+```
+
+If we have some external Census data, we can easily tell that this survey is non-representative. 
+
+```{r}
+Census <- tibble(
+  group = c("A", "B"),
+  pop = c(25, 50)
+)
+Census
+```
+
+The impact of this is evident when comparing the survey mean
+
+```{r}
+mean(poll_data$yes)
+```
+
+to the overall population mean shown above. 
+
+How then do we estimate the overall population mean based on `poll_data`? We need a correction based on our Census data, knowing that each mean represents only a certain percentage of the population. This process is known as poststratification. 
+
+Let $X_a = x_{a1}, x_{a2}, \dots, x_{a25}$ and $X_b = x_{b1}, x_{b2}, \dots, x_{b50}$ be the data indicating support for each demographic. Then using $\bar{X}$, we have
+
+\begin{align*}
+\bar{X} &= \frac{1}{75}\sum_{i=1}^{75}x_i \\
+&= \frac{1}{75}\left( \sum_{i=1}^{25}x_{ai} + \sum_{i=1}^{75}x_{bi} \right) \\
+&= \frac{1}{75}\left(\frac{25}{25} \sum_{i=1}^{25}x_{ai} + \frac{50}{50}\sum_{i=1}^{75}x_{bi} \right) \\
+&= \frac{1}{75} \left( 25 \bar{X}_a + 50 \bar{X}_b \right) \\
+&= \frac{25}{75}\bar{X}_a + \frac{50}{75} \bar{X}_b
+\end{align*}
+
+
+Then assuming the samples from `poll_data` are random samples within each demographic group, the expected value of the sample mean should equal $\bar{X}_a$ and $\bar{X}_b$:
+
+```{r}
+group_support <- poll_data %>%
+  group_by(group) %>%
+  summarise(perc_support = mean(yes))
+group_support
+```
+
+And we can use the derived formula to calculate the population mean in R. 
+
+```{r}
+overall_support <- group_support %>%
+  summarise(total_support = sum(perc_support * Census$pop/sum(Census$pop)))
+overall_support
+```
+
+This gives us a general way to poststratify averages. If we know the percentage $p_i$ of the total population for each subgroup $X_i$, then we can find the poststratified population average $\bar{X}_{\text{post}}$ by
+\begin{align}
+\bar{X}_{\text{post}} &= \sum_{i = 1}^N p_i \bar{X}_i
+\end{align}
+where $N$ is the total number of subgroups. As we'll see in the next post, we can get the subgroup averages by (multilevel) regressing on the poll outcome for each demographic group. 
+
+## Another example
+
+Next, let's use an example from a real survey. I'll use data from the book [Complex Surveys: A Guide to Analysis Using R](http://r-survey.r-forge.r-project.org/svybook/) by Thomas Lumley. 
+
+```{r}
+library(survey)
+data(api)
+```
+
+The data set `api` is the California Academic Performance Index that surveys all 6194 California schools, which includes 4421 elementary schools, 755 high schools, and 1018 middle schools. This information will be our Census data.
+
+```{r}
+Census <- tibble(
+  stype = c("E", "H", "M"),
+  pop = c(4421, 755, 1018)
+)
+```
+
+And we will be working with a subset of the `api` survey
+
+```{r}
+d <- apistrat %>% as.tibble()
+d %>% 
+  group_by(stype) %>% 
+  summarise(school_count = n())
+```
+
+which is not representative.^[Lumley analyzes this data set on page 23 of his book using his package `survey`.]
+
+
+Since the school types are not in proportion to the total population, we need to do poststratification. Proceeding as before
+
+```{r}
+d.group.ave <- d %>% 
+  group_by(stype) %>%
+  summarise(ave_score = mean(api00))
+d.group.ave
+```
+```{r}
+d.total.ave <- d.group.ave %>%
+  summarise(ave_score = sum(ave_score * Census$pop/sum(Census$pop)))
+d.total.ave
+```
+
+Conveniently, the data set `api` contains the scores for every school:
+
+```{r}
+apipop %>% as.tibble() %>%
+  summarise(mean(api00))
+```
+
+which shows that our poststratification was a good approximation. 
+
+### The Total Statistic
+
+The standard application of MRP is estimating state-level opinions by taking the weighted average of demographic group averages within the each state. That is an extension of the process we used in the previous examples.
+
+However, the mean is only one statistc. Other times we are interested in the total, or statistics that are functions of the total. We then need a way to poststratify the sample totals.
+
+Of course estimating total test scores isn't very useful. Instead I'll use school enrollment data, because total student enrollment has clear policy implications.
+
+Let $X = x_1, x_2, \dots, x_{6194}$ be the number of students enrolled at each school. Then $T(X) = \sum_{i=1}^{6194}x_i$ is the total number of students enrolled, with $T(X) = T(X_e) + T(X_h) + T(X_m)$ where $X_e, X_h, X_m$ are the enrollment data by school type. 
+
+In our school survey, the total enrollment for each school type is
+
+```{r}
+d.group.enroll <- d %>% 
+  group_by(stype) %>%
+  summarise(enroll = sum(enroll))
+d.group.enroll
+```
+
+It is clear we need a correction to find $T(X)$. If 50 of the high schools surveyed have 66035 students enrolled, the total enrollment for all 755 high schools will be much higher. 
+
+In the previous section, we made the assumption that the expected sample mean of a subgroup equals the population mean of the subgroup. For the total statistic we need a similar assumption: that the expected total enrollment in $n$ schools of a certain type equals the expected value of another random sample of $n$ schools of the same type.
+
+In other words, we need to assume that the number of enrolled students in our sample should be approximately equal to the number of enrolled students in another sample of the same size. Mathematically, I'll use the high school type as an example:
+
+\begin{align}
+T(X_h) &= \sum_{i=1}^{755}x_{hi} \\
+&= \sum_{i=1}^{50}x_{hi} + \sum_{i=51}^{100}x_{hi} + \cdots + \sum_{i=701}^{750}x_{hi} + \sum_{i=751}^{755}x_{hi}   \\
+&\approx \frac{755}{50}\sum_{i = 1}^{50} \hat{x}_{hi}
+\end{align}
+
+where $\hat{X}_h = \hat{x}_{h1}, \hat{x}_{h2}, \dots, \hat{x}_{h50}$ is the enrollment data from the highschool survey subgroup. Previously we scaled down the averages in proportion to the whole, and now we are scaling up the totals relative to the subgroup size. 
+
+Calculating with R, we get
+
+```{r}
+group_sizes <- c(100, 50, 50)
+d.tot.enroll <- d.group.enroll %>%
+  summarise(total_enroll = sum(enroll * Census$pop/group_sizes))
+d.tot.enroll
+```
+
+This type of poststratification gives us a decent total estimate.
+
+```{r}
+apipop %>% as.tibble() %>%
+  summarise(total=sum(enroll, na.rm=TRUE))
+```
+
+### The Total and Weighted Averaging
+
+The weighted average of subgroup averages is actually a special case of total-based poststratification. Let's consider average test scores again, where $\hat{X}_e, \hat{X}_h, \hat{X}_m$ are the test score data for each school type in our survey, with $X_e, X_h, X_m$ being the population score data by school type. Then by definition, the average
+
+\begin{align}
+\bar{X} &= \frac{1}{6194}\left( T(X_e) + T(X_h) + T(X_m) \right) \\
+&\approx \frac{1}{6194}\left(\frac{4421}{100} T(\hat{X}_e) + \frac{755}{50} T(\hat{X}_h) + \frac{1018}{50} T(\hat{X}_m)        \right) \\
+&= \frac{4421}{6194} \frac{T(\hat{X}_e)}{100} + \frac{755}{6194} \frac{T(\hat{X}_h)}{50} + \frac{1018}{6194} \frac{T(\hat{X}_m)}{50}      \\
+&\approx \frac{4421}{6194} \bar{X}_e + \frac{755}{6194} \bar{X}_h + \frac{1018}{6194} \bar{X}_m
+\end{align}
+
+which is the weighted average of subgroup averages found in the first section. 
+
+In `R`,
+
+```{r}
+d.api.tot <- d %>%
+  group_by(stype) %>%
+  summarise(tot_api = sum(api00))
+d.api.tot
+```
+```{r}
+d.api.mean <- d.api.tot %>%
+  summarise(api_mean = sum(tot_api * Census$pop/group_sizes)/6194)
+d.api.mean
+```
+
+which is exactly the same mean we found before. 
+
+## Conclusion
+
+In general, we use poststratification to find the weighted average of subgroup averages to find estimate the population average. As you'll see in the next post, using regression averages instead of empirical averages gives better results.
+
+We also showed that poststratifying averages is a special case of poststratifying the total. For surveys we are typically interested in estimating the mean, but the total statistic provides insight into the weighted average correction and into generalizing poststratification to other statistics. Moreover, finding the total can be an useful problem in its own right. There is the classic [German tanks problem](https://en.wikipedia.org/wiki/German_tank_problem), estimating [immigration](http://www.pewresearch.org/fact-tank/2016/09/20/measuring-illegal-immigration-how-pew-research-center-counts-unauthorized-immigrants-in-the-u-s/), or investigating problems [with the Census](http://andrewgelman.com/2010/02/02/problems_with_c_1/). 
+
+
+
+
+

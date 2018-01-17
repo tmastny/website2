@@ -1,0 +1,30 @@
+baseurl = "https://timmastny.rbind.io/"
+theme = "hugo-xmin"
+languageCode = "en-US"
+title = "Tim Mastny"
+disqusshortname = "https-timmastny-netlify-com"
+googleAnalytics = "UA-110017486-1"
+ignoreFiles = ["\\.Rmd$", "_files$", "_cache$", "\\.dta$", "blogdown$"]
+
+[permalinks]
+blog = "blog/:slug/"
+
+[[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 1
+[[menu.main]]
+    name = "Posts"
+    url = "/blog/"
+    weight = 2
+[[menu.main]]
+    name = "About"
+    url = "/about/"
+    weight = 3
+
+[params]
+preserveTaxonomyNames = true
+lang = "en"
+paginate = 10
+
+footer = "Tim Mastny 2018 | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/TimothyMastny)"

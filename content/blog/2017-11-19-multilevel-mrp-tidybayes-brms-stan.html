@@ -1,0 +1,405 @@
+---
+title: MRP Using brms and tidybayes
+author: ~
+date: '2017-11-20'
+slug: multilevel-mrp-tidybayes-brms-stan
+categories: []
+tags: []
+description: Multilevel Regression and Poststratification with Stan
+meta_img: /images/image.jpg
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#the-data">The Data</a><ul>
+<li><a href="#tidying-variables">Tidying Variables</a></li>
+<li><a href="#tidying-poststratification">Tidying Poststratification</a></li>
+</ul></li>
+<li><a href="#model-1-disaggragation">Model 1: Disaggragation</a></li>
+<li><a href="#model-2-maximum-likelihood-multilevel-model">Model 2: Maximum Likelihood Multilevel Model</a></li>
+<li><a href="#model-3-full-bayesian-model">Model 3: Full Bayesian Model</a></li>
+<li><a href="#model-comparisons">Model Comparisons</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In the last post I wrote the <a href="https://timmastny.rbind.io/blog/poststratification-with-dplyr/">“MRP Primer” Primer</a> studying the <em>p</em> part of MRP: poststratification. This post explores the actual <a href="http://www.princeton.edu/~jkastell/mrp_primer.html">MRP Primer by Jonathan Kastellec</a>. Jonathan and his coauthors wrote this excellent tutorial on Multilevel Regression and Poststratification (MRP) using <code>r-base</code> and <code>arm</code>/<code>lme4</code>.</p>
+<p>The aim of the MRP Primer is to estimate state level opinions for gay marriage based on a potentially non-representative survey data. That requires poststratification. As was done in the last post, we are going to use external Census data to scale the average support of each demographic group in proportion to its percentage of the state population.</p>
+<p>Previously, we used empirical means to find the average demographic group support. Here, we’ll use multilevel regression which has <a href="http://andrewgelman.com/2014/01/21/everything-need-know-bayesian-statistics-learned-eight-schools/">well documented advantages</a> to compared to empirical means and traditional regression models. These multilevel models allow us to partially pool information across similar groups, providing better estimates for groups with sparse (or even non-existent) data.</p>
+<p>Inspired by Austin Rochford’s full Bayesian implementation of the MRP Primer using <a href="https://gist.github.com/AustinRochford/bfc20cb3262169b41b730bd9faf74477">PyMC3</a>, I decided to approach the problem using R and <a href="http://mc-stan.org/">Stan</a>. In particular, I wanted to highlight two packages:</p>
+<ul>
+<li><p><a href="https://github.com/paul-buerkner/brms"><code>brms</code></a>, which provides a <code>lme4</code> like interface to Stan. And</p></li>
+<li><p><a href="https://github.com/mjskay/tidybayes"><code>tidybayes</code></a>, which is a general tool for tidying Bayesian package outputs.</p></li>
+</ul>
+<p>Additionally, I’d like to do a three-way comparison between the empirical mean disaggregated model, the maximum likelihood estimated multilevel model, the full Bayesian model. This includes some graphical map comparisons with the <code>albersusa</code> package.</p>
+<p>Here’s what we’ll need to get started</p>
+<pre class="r"><code>library(tidyverse)
+library(lme4)
+library(brms)
+library(rstan)
+library(albersusa)
+library(cowplot)
+
+rstan_options(auto_write=TRUE)
+options(mc.cores=parallel::detectCores())</code></pre>
+</div>
+<div id="the-data" class="section level2">
+<h2>The Data</h2>
+<p>Here are the three data sets we’ll need. First the <code>marriage.data</code> is a compilation of gay marriage polls that we hope can give us a perspective on the support of gay marriage state by state. <code>Statelevel</code> provides some additional state information we’ll use as predictors in our model, such as the proportion of religious voters. And just like <a href="https://timmastny.rbind.io/blog/poststratification-with-dplyr/">last time</a>, the Census data will provide our poststratification weights.</p>
+<pre class="r"><code>marriage.data &lt;- foreign::read.dta(&#39;gay_marriage_megapoll.dta&#39;,
+                                   convert.underscore=TRUE)
+Statelevel &lt;- foreign::read.dta(&quot;state_level_update.dta&quot;,
+                                convert.underscore = TRUE)
+Census &lt;- foreign::read.dta(&quot;poststratification 2000.dta&quot;,
+                            convert.underscore = TRUE)</code></pre>
+<div id="tidying-variables" class="section level3">
+<h3>Tidying Variables</h3>
+<p>The MRP Primer takes a very literal, <code>r-base</code> approach to recoding the demographic variables and combining data across data frames. Here, I try to <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">tidy</a> the data, based on the philosophy and tools of the <code>tidyverse</code> collection of packages. Personally, I think cleaning the data in this manner is simpler and more descriptive of the tidying goals.</p>
+<pre class="r"><code># add state level predictors to marriage.data
+Statelevel &lt;- Statelevel %&gt;% rename(state = sstate)
+
+marriage.data &lt;- Statelevel %&gt;%
+  select(state, p.evang, p.mormon, kerry.04) %&gt;%
+  right_join(marriage.data)
+
+# Combine demographic groups
+marriage.data &lt;- marriage.data %&gt;%
+  mutate(race.female = (female * 3) + race.wbh) %&gt;%
+  mutate(age.edu.cat = 4 * (age.cat - 1) + edu.cat) %&gt;%
+  mutate(p.relig = p.evang + p.mormon) %&gt;%
+  filter(state != &quot;&quot;)</code></pre>
+</div>
+<div id="tidying-poststratification" class="section level3">
+<h3>Tidying Poststratification</h3>
+<p>Now that the data is broken down into the demographic groups, the next step is to find the percentage of the total state population for each group so we can poststratify. We want to code the Census demographics in the same way as in the gay marriage polls so we can</p>
+<pre class="r"><code># change column names for natural join with marriage.data
+Census &lt;- Census %&gt;% 
+  rename(state = cstate,
+         age.cat = cage.cat,
+         edu.cat = cedu.cat,
+         region = cregion)
+
+Census &lt;- Statelevel %&gt;%
+  select(state, p.evang, p.mormon, kerry.04) %&gt;%
+  right_join(Census)
+
+Census &lt;- Census %&gt;%
+  mutate(race.female = (cfemale * 3 ) + crace.WBH) %&gt;%
+  mutate(age.edu.cat = 4 * (age.cat - 1) + edu.cat) %&gt;%
+  mutate(p.relig = p.evang + p.mormon)</code></pre>
+</div>
+</div>
+<div id="model-1-disaggragation" class="section level2">
+<h2>Model 1: Disaggragation</h2>
+<p>The first model we’ll build is the disaggregate model. This model simply calculates the averages in each state by taking the mean of responses within each state.</p>
+<pre class="r"><code>mod.disag &lt;- marriage.data %&gt;%
+  group_by(state) %&gt;%
+  summarise(support = mean(yes.of.all)) %&gt;%
+  mutate(model = &quot;no_ps&quot;)</code></pre>
+<p>This simplicity comes at a cost. As demonstrated in the previous post, the empirical mean is not representative of the actual state mean if the respondents within are not in proportion to each group’s percentage of the total population. So let’s build the poststratified disaggregated model.</p>
+<p>First we’ll find the average of within each group:</p>
+<pre class="r"><code>grp.means &lt;- marriage.data %&gt;%
+  group_by(state, region, race.female, age.cat, 
+           edu.cat, age.edu.cat, p.relig, kerry.04) %&gt;%
+  summarise(support = mean(yes.of.all, na.rm=TRUE))</code></pre>
+<p>Then we’ll add in the group’s percentage in each state:</p>
+<pre class="r"><code>grp.means &lt;- Census %&gt;%
+  select(state, age.cat, edu.cat, region, kerry.04,
+         race.female, age.edu.cat, p.relig, cpercent.state) %&gt;%
+  right_join(grp.means)</code></pre>
+<p>Then we’ll sum the scaled group averages and get the total state averages:</p>
+<pre class="r"><code>mod.disag.ps &lt;- grp.means %&gt;%
+  group_by(state) %&gt;%
+  summarise(support = sum(support * cpercent.state, na.rm=TRUE)) %&gt;%
+  mutate(model = &quot;ps&quot;)</code></pre>
+<p>Here’s the difference between poststratified and the empricial means:</p>
+<pre class="r"><code>disag.point &lt;- bind_rows(mod.disag, mod.disag.ps) %&gt;%
+  group_by(model) %&gt;%
+  arrange(support, .by_group=TRUE) %&gt;%
+  ggplot(aes(x = support, y=forcats::fct_inorder(state), color=model)) + 
+  geom_point() + 
+  theme_classic() + theme(legend.position = &#39;none&#39;) +  
+  directlabels::geom_dl(aes(label=model), method=&#39;smart.grid&#39;) +
+  ylab(&#39;state&#39;)
+
+# we&#39;ll be using this one a lot, so let&#39;s make it a function
+compare_scat &lt;- function(d) {
+  return(
+    ggplot(data=d, aes(x = support, y=support1)) +
+    geom_text(aes(label=state), hjust=0.5, vjust=0.25) +
+    geom_abline(slope = 1, intercept = 0) +
+    xlim(c(0,0.7)) + ylim(c(0,0.7)) + 
+    xlab(&quot;support&quot;) + ylab(&quot;poststrat support&quot;) +
+    coord_fixed()
+  )
+}
+
+disag.scat &lt;- bind_cols(mod.disag, mod.disag.ps) %&gt;% compare_scat()
+plot_grid(disag.point, disag.scat)</code></pre>
+<p><img src="/blog/2017-11-19-multilevel-mrp-tidybayes-brms-stan_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>The left plot shows a lot of variation between the poststratified averages. The right plot<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> indicates that every poststratified state average is pushed near zero. That’s not necessarily a problem in its down right, but we should still debug the model.</p>
+<p>Within each state, each group is a certain percentage of the total populations. And the percentages of each group should add up to one, the entire state population:</p>
+<pre class="r"><code>Census %&gt;%
+  group_by(state) %&gt;%
+  summarise(percent = sum(cpercent.state)) %&gt;%
+  arrange(desc(percent))</code></pre>
+<pre><code>## # A tibble: 51 x 2
+##    state percent
+##    &lt;chr&gt;   &lt;dbl&gt;
+##  1    IN       1
+##  2    MA       1
+##  3    IL       1
+##  4    NV       1
+##  5    WY       1
+##  6    KS       1
+##  7    NH       1
+##  8    NM       1
+##  9    AK       1
+## 10    ME       1
+## # ... with 41 more rows</code></pre>
+<p>What’s going own in our model? Let’s look at the total percent of demographic groups included in the survey by each state.</p>
+<pre class="r"><code>grp.means %&gt;%
+  group_by(state) %&gt;%
+  summarise(total_percent = sum(cpercent.state, na.rm=TRUE)) %&gt;%
+  filter(state != &quot;&quot;) %&gt;%
+  ggplot(aes(x = state, y = total_percent)) +
+  geom_text(aes(label=state), hjust=0.5, vjust=0.25) +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) + 
+  coord_fixed(ratio=8) + ylim(c(0,1.1))</code></pre>
+<p><img src="/blog/2017-11-19-multilevel-mrp-tidybayes-brms-stan_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Clearly the survey does not have responses from each demographic group in each state. This lack of data makes poststratifying on the state level uninformative, since there is no subgroup average to make. Implicitly, this model is assuming the missing demographic group’s support is 0%.</p>
+<p>But that isn’t a sound model. Let’s take black men for example. Our survey has no responses from black men in South Dakota, but they make up x% of the state. We would be underestimating the level of support in the state by assuming no black men support gay marriage.</p>
+<p>However, we do have the responses from black men from neighboring states and all other states around the country. It would be better to use that data to make an informative guess for the level of support black men have in South Dakota. This idea motivates the use of multilevel regression.</p>
+</div>
+<div id="model-2-maximum-likelihood-multilevel-model" class="section level2">
+<h2>Model 2: Maximum Likelihood Multilevel Model</h2>
+<p>In our disaggrated model, we took the empirical averages for each demographic group sampled in the survey. Within many states, however, not every demographic group was sampled. As described in the previous section, we’d like a way to infer missing demographic groups within each state using the support for the group outside of the state.</p>
+<p>The straightforward way to estimate state and demographic group opinions is a regression model, where every factor of a category (states, races, etc.) is allowed to have a unique intercept. In particular, we are going to work with a multilevel regression model. I think that <a href="https://cran.r-project.org/web/packages/rstanarm/vignettes/pooling.html">this introduction</a> by the Stan team is a great starting point.</p>
+<p>The key idea behind the multilevel model is that the level of support for gay marriage among races, for example, is partially pooled with information from other races. Multilevel regression is a compromise between two extremes:</p>
+<ol style="list-style-type: decimal">
+<li><p>No pooling: the assumption that each race has a completely independent opinion on gay marriage</p></li>
+<li><p>Complete pooling: The assumption that all races have the same opinion</p></li>
+</ol>
+<p>The model accomplishes this by allowing each group to have a varying intercept that is sampled from an estimated population distribution of varying intercepts. Our first model will be the maximam likelihood approximation to the full Bayesian model. This is the model Jonathan fits in the MRP Primer, expect I’m removing <code>poll</code> because he doesn’t actually use it to predict opinion.</p>
+<pre class="r"><code>approx.mod &lt;- glmer(formula = yes.of.all ~ (1|race.female)
+                    + (1|age.cat) + (1|edu.cat) + (1|age.edu.cat)
+                    + (1|state) + (1|region) + 
+                    + p.relig + kerry.04,
+                    data=marriage.data, family=binomial(link=&quot;logit&quot;))</code></pre>
+<pre class="r"><code>summary(approx.mod)</code></pre>
+<pre><code>## Generalized linear mixed model fit by maximum likelihood (Laplace
+##   Approximation) [glmerMod]
+##  Family: binomial  ( logit )
+## Formula: yes.of.all ~ (1 | race.female) + (1 | age.cat) + (1 | edu.cat) +  
+##     (1 | age.edu.cat) + (1 | state) + (1 | region) + +p.relig +  
+##     kerry.04
+##    Data: marriage.data
+## 
+##      AIC      BIC   logLik deviance df.resid 
+##   7487.8   7548.6  -3734.9   7469.8     6332 
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.9534 -0.7108 -0.4848  0.9917  3.9206 
+## 
+## Random effects:
+##  Groups      Name        Variance  Std.Dev.
+##  state       (Intercept) 0.0003689 0.01921 
+##  age.edu.cat (Intercept) 0.0073012 0.08545 
+##  race.female (Intercept) 0.0508921 0.22559 
+##  region      (Intercept) 0.0379336 0.19477 
+##  edu.cat     (Intercept) 0.1341613 0.36628 
+##  age.cat     (Intercept) 0.2930770 0.54137 
+## Number of obs: 6341, groups:  
+## state, 49; age.edu.cat, 16; race.female, 6; region, 5; edu.cat, 4; age.cat, 4
+## 
+## Fixed effects:
+##              Estimate Std. Error z value Pr(&gt;|z|)   
+## (Intercept) -1.477570   0.525617  -2.811  0.00494 **
+## p.relig     -0.014754   0.004932  -2.992  0.00277 **
+## kerry.04     0.018777   0.006798   2.762  0.00575 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Correlation of Fixed Effects:
+##          (Intr) p.relg
+## p.relig  -0.549       
+## kerry.04 -0.726  0.652</code></pre>
+<p>Jonathan manually builds the inverse link function and applies it to every row of the Census data to calculate the estimated state opinion on the state level taking into account each demographic group. I’ll take a different approach here.</p>
+<p>The <code>lme4</code> package provides a method <code>predict</code> to easily make predictions on new data. This is a generic implementation of rebuilding the link function based off of regression coefficients. And if we apply <code>predict</code> to the Census data<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>, we can also make estimates for groups not sampled in the survey, such as the missing black men in South Dakota we noted above, by applying the estimated black men opinion and the overall state opinion.</p>
+<p>Moreover, we can also address other problems in the survey. For example,</p>
+<pre class="r"><code>marriage.data %&gt;%
+  filter(state == &quot;AK&quot;, state == &quot;HI&quot;)</code></pre>
+<pre><code>##  [1] state                  p.evang                p.mormon              
+##  [4] kerry.04               poll                   poll.firm             
+##  [7] poll.year              id                     statenum              
+## [10] statename              region.cat             female                
+## [13] race.wbh               edu.cat                age.cat               
+## [16] age.cat6               age.edu.cat6           educ                  
+## [19] age                    democrat               republican            
+## [22] black                  hispanic               weight                
+## [25] yes.of.opinion.holders yes.of.all             state.initnum         
+## [28] region                 no.of.all              no.of.opinion.holders 
+## [31] race.female            age.edu.cat            p.relig               
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<p>no one from Alaska and Hawaii were included in the survey. But by applying the <code>predict</code> function to the Census, not only can we estimate the opinion by applying the overall state average, but we can also break down the opinion by the percentages of demographic groups within Alaska and Hawaii. This gives a more robust state estimate, and allows for poststratification.</p>
+<pre class="r"><code>ps.approx.mod &lt;- Census %&gt;%
+  mutate(support = predict(approx.mod, newdata=., 
+                                allow.new.levels=TRUE, type=&#39;response&#39;)) %&gt;%
+  mutate(support = support * cpercent.state) %&gt;%
+  group_by(state) %&gt;%
+  summarise(support = sum(support))</code></pre>
+<p>We’ll investigate this model further after we build the full Bayesian model.</p>
+</div>
+<div id="model-3-full-bayesian-model" class="section level2">
+<h2>Model 3: Full Bayesian Model</h2>
+<p>I am going to fit the full Bayesian modeling using the Stan interface <code>brms</code>. The model specification will be the same as the approximate model in the previous section, except for some weakly informative priors on the standard deviations of the varying intercepts useful for convergence.</p>
+<pre class="r"><code>bayes.mod &lt;- brm(yes.of.all ~ (1|race.female) + (1|age.cat) + (1|edu.cat)
+                 + (1|age.edu.cat) + (1|state) + (1|region)
+                 + p.relig + kerry.04,
+                 data=marriage.data, family=bernoulli(),
+                 prior=c(set_prior(&quot;normal(0,0.2)&quot;, class=&#39;b&#39;),
+                         set_prior(&quot;normal(0,0.2)&quot;, class=&#39;sd&#39;, group=&quot;race.female&quot;),
+                         set_prior(&quot;normal(0,0.2)&quot;, class=&#39;sd&#39;, group=&quot;age.cat&quot;),
+                         set_prior(&quot;normal(0,0.2)&quot;, class=&#39;sd&#39;, group=&quot;edu.cat&quot;),
+                         set_prior(&quot;normal(0,0.2)&quot;, class=&#39;sd&#39;, group=&quot;age.edu.cat&quot;),
+                         set_prior(&quot;normal(0,0.2)&quot;, class=&#39;sd&#39;, group=&quot;state&quot;),
+                         set_prior(&quot;normal(0,0.2)&quot;, class=&#39;sd&#39;, group=&quot;region&quot;)))</code></pre>
+<pre class="r"><code>summary(bayes.mod)</code></pre>
+<pre><code>##  Family: bernoulli 
+##   Links: mu = logit 
+## Formula: yes.of.all ~ (1 | race.female) + (1 | age.cat) + (1 | edu.cat) + (1 | age.edu.cat) + (1 | state) + (1 | region) + p.relig + kerry.04 
+##    Data: marriage.data (Number of observations: 6341) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1; 
+##          total post-warmup samples = 4000
+##     ICs: LOO = NA; WAIC = NA; R2 = NA
+##  
+## Group-Level Effects: 
+## ~age.cat (Number of levels: 4) 
+##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## sd(Intercept)     0.41      0.09     0.26     0.62       4000 1.00
+## 
+## ~age.edu.cat (Number of levels: 16) 
+##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## sd(Intercept)     0.10      0.06     0.01     0.25       1433 1.00
+## 
+## ~edu.cat (Number of levels: 4) 
+##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## sd(Intercept)     0.32      0.09     0.18     0.52       4000 1.00
+## 
+## ~race.female (Number of levels: 6) 
+##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## sd(Intercept)     0.23      0.08     0.12     0.41       4000 1.00
+## 
+## ~region (Number of levels: 5) 
+##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## sd(Intercept)     0.22      0.09     0.09     0.42       4000 1.00
+## 
+## ~state (Number of levels: 49) 
+##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## sd(Intercept)     0.06      0.04     0.00     0.15       1626 1.00
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## Intercept    -1.48      0.52    -2.50    -0.47       4000 1.00
+## p.relig      -0.01      0.01    -0.02    -0.00       4000 1.00
+## kerry.04      0.02      0.01     0.00     0.03       4000 1.00
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
+## is a crude measure of effective sample size, and Rhat is the potential 
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>So what are the advantages to the full Bayesian model? The most obvious benefit is the total accounting of uncertainty in the model. For example, let’s take a look at the standard deviation of group-level intercepts:</p>
+<pre class="r"><code>library(tidybayes)
+
+approx_sd &lt;- broom::tidy(approx.mod) %&gt;%
+  filter(stringr::str_detect(term, &quot;sd_&quot;))
+
+bayes.mod %&gt;%
+  gather_samples(`sd_.*`, regex=TRUE) %&gt;%
+  ungroup() %&gt;%
+  mutate(group = stringr::str_replace_all(term, c(&quot;sd_&quot; = &quot;&quot;,&quot;__Intercept&quot;=&quot;&quot;))) %&gt;%
+  ggplot(aes(y=group, x = estimate)) + 
+  ggridges::geom_density_ridges(aes(height=..density..),
+                                rel_min_height = 0.01, stat = &quot;density&quot;,
+                                scale=1.5) + 
+  geom_point(data=approx_sd)</code></pre>
+<p><img src="/blog/2017-11-19-multilevel-mrp-tidybayes-brms-stan_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>The Bayesian model provides a distribution of all possible standard deviations that the varying intercepts could be sampled from, while the approximate model only provides a single point estimate<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. Moreover, that point estimate does not necessarily reflect the mean of the distributions. In general, point approximates cannot quantify uncertainty and are more likely to overfit the data<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a>.</p>
+<p>But first, let’s compute the point estimate for the level of state support for gay marriage and poststratify. As in the approximate model, we want to fit this model on the Census data.</p>
+<pre class="r"><code>ps.bayes.mod &lt;- bayes.mod %&gt;%
+  add_predicted_samples(newdata=Census, allow_new_levels=TRUE) %&gt;%
+  rename(support = pred) %&gt;%
+  mean_qi() %&gt;%
+  mutate(support = support * cpercent.state) %&gt;%
+  group_by(state) %&gt;%
+  summarise(support = sum(support))</code></pre>
+<p>In the next section, we’ll compare all three models using point estimates and we’ll work to include uncertainty from the Bayesian model.</p>
+</div>
+<div id="model-comparisons" class="section level2">
+<h2>Model Comparisons</h2>
+<p>Using the comparison scatterplots, we can easily see the changes between each model.</p>
+<pre class="r"><code>mod.disag[nrow(mod.disag) + 1,] = list(&quot;AK&quot;, mean(mod.disag$support), &quot;no_ps&quot;)
+mod.disag[nrow(mod.disag) + 1,] = list(&quot;HI&quot;, mean(mod.disag$support), &quot;no_ps&quot;)
+
+disag.approx &lt;- bind_cols(mod.disag, ps.approx.mod) %&gt;% compare_scat() +
+  xlab(&quot;disag model&quot;) + ylab(&quot;approx mod&quot;)
+disag.bayes &lt;- bind_cols(mod.disag, ps.bayes.mod) %&gt;% compare_scat() + 
+  xlab(&quot;disag model&quot;) + ylab(&quot;bayes model&quot;)
+approx.bayes &lt;- bind_cols(ps.approx.mod, ps.bayes.mod) %&gt;% compare_scat() + 
+  xlab(&quot;approx model&quot;) + ylab(&quot;bayes model&quot;)
+
+plot_grid(disag.approx, disag.bayes, approx.bayes)</code></pre>
+<p><img src="/blog/2017-11-19-multilevel-mrp-tidybayes-brms-stan_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>Although the parameter values differed between the approximate and the full Bayesian model, the predictions are near identical.</p>
+<p>However, the point estimate in the Bayesian model doesn’t take full advantage of the posterior distribution <code>brms</code> and Stan calculate. For that, we can sample the posterior distribution for the entire census data 500 times and see the distribution of poststratified support for gay marriage within each state.</p>
+<pre class="r"><code>str(predict(bayes.mod, newdata=Census, allow_new_levels=TRUE, 
+        nsamples=500, summary=FALSE))</code></pre>
+<pre><code>##  int [1:500, 1:4896] 1 0 0 0 1 1 0 1 0 0 ...</code></pre>
+<pre class="r"><code>bayes.mod %&gt;%
+  add_predicted_samples(newdata=Census, allow_new_levels=TRUE, n=500)</code></pre>
+<pre><code>## # A tibble: 2,448,000 x 19
+## # Groups:   state, p.evang, p.mormon, kerry.04, crace.WBH, age.cat,
+## #   edu.cat, cfemale, .freq, cfreq.state, cpercent.state, region,
+## #   race.female, age.edu.cat, p.relig, .row [4,896]
+##    state p.evang p.mormon kerry.04 crace.WBH age.cat edu.cat cfemale .freq
+##    &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;     &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt; &lt;int&gt;
+##  1    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  2    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  3    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  4    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  5    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  6    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  7    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  8    AK   12.44 3.003126     35.5         1       1       1       0   467
+##  9    AK   12.44 3.003126     35.5         1       1       1       0   467
+## 10    AK   12.44 3.003126     35.5         1       1       1       0   467
+## # ... with 2,447,990 more rows, and 10 more variables: cfreq.state &lt;dbl&gt;,
+## #   cpercent.state &lt;dbl&gt;, region &lt;chr&gt;, race.female &lt;dbl&gt;,
+## #   age.edu.cat &lt;dbl&gt;, p.relig &lt;dbl&gt;, .row &lt;int&gt;, .chain &lt;int&gt;,
+## #   .iteration &lt;int&gt;, pred &lt;int&gt;</code></pre>
+<pre class="r"><code>  # rename(support = pred) %&gt;%
+  # mutate(support = support * cpercent.state) %&gt;%
+  # group_by(.iteration, add = TRUE) %&gt;%
+  # mean_qi()</code></pre>
+<pre class="r"><code># bayes.pred %&gt;%
+#   ggplot(aes(y=state, x=support)) +
+#   ggridges::geom_density_ridges(aes(height=..density..),
+#                                 rel_min_height = 0.01, stat = &quot;density&quot;,
+#                                 scale=1)</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The idea for this plot comes from Matt Vuorre, who called them <a href="https://mvuorre.github.io/post/2017/within-subject-scatter/">with-subject scatterplots</a> in his blog post. Austin Rochford also uses a similar chart in his MRP Prime walkthrough. And I am using the <a href="http://andrewgelman.com/2009/01/14/state-by-state/">two letter</a> state <a href="http://andrewgelman.com/2014/05/16/gullibility-effect-using-state-level-correlations-draw-pretty-much-conclusion-want-individual-level-causation/">abbreviation</a> labels instead of points as Gelman recommends.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>By design the Census provides every combination of demographic groups within each state. If that wasn’t the case, I would enter in each unique demographic and state factor into <a href="https://github.com/tidyverse/modelr"><code>modelr::data_grid</code></a>, which would automiatcally generate every possible combination of results. This is a very useful tool.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>Technically, we could calculate the standard error from the approximate model. However, it <a href="https://stackoverflow.com/questions/31694812/standard-error-of-variance-component-from-the-output-of-lmer">may not be accurate</a> and it is computationally expensive. It took me way longer to calculate the standard error via bootstrapping compared to fitting the full Bayesian model in <code>brms</code>.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Check out <a href="https://towardsdatascience.com/understanding-objective-functions-in-neural-networks-d217cb068138">this article</a> for a nice discussion in the context of machine learning.<a href="#fnref4">↩</a></p></li>
+</ol>
+</div>
