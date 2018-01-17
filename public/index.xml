@@ -26,7 +26,7 @@
       <pubDate>Sat, 13 Jan 2018 00:00:00 +0000</pubDate>
       
       <guid>/blog/tidying-messy-spreadsheets-dplyr/</guid>
-      <description>Introduction Cleaning Conclusions   Introduction This post is part introduction, part appendix. This first goal of this post is to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. In educational environments data is served in a convenient format that is immediately ready to be subjected to an array of algorithms from which we hope to drive some insight. But as Hadley explains in his transformative paper, the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself.</description>
+      <description>Introduction Why Tidy? The Data Cleaning Conclusions   Introduction I’d like this post to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. Instead of presenting a finished script that takes a messy spreadsheet and outputs a tidy one, I want to emphasize the exploratory nature data cleaning. My approach will follow Hadley Wickham’s in his tidy data paper. At the end, our data should satify these three characteristics:</description>
     </item>
     
     <item>

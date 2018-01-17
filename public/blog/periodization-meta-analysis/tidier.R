@@ -1,9 +1,10 @@
 
-## ---- spatial ----
+
 library(tidyverse)
 library(magrittr)
 d <- readxl::read_excel('Periodization Stuff.xlsx')
 
+## ---- spatial ----
 for (i in 1:nrow(d)) {
   if (is.na(d[i,1])) {
     d[i, c(1, 2, 3, 4, 5)] = d[i - 1, c(1, 2, 3, 4, 5)]
