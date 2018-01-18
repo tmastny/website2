@@ -30,6 +30,17 @@
     </item>
     
     <item>
+      <title>Use git to Blog(down) About Your Projects</title>
+      <link>/blog/git-blogdown-projects-workflow/</link>
+      <pubDate>Wed, 17 Jan 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/git-blogdown-projects-workflow/</guid>
+      <description>Introduction git Setup   Introduction Inspired, but dissatified, by this discussion on the RStudio’s forum, I’d like to share my workflow to blog about my projects using Hugo/blogdown/Netlify.
+Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.
+But how do I utilize all the work I’ve already done in the project?</description>
+    </item>
+    
+    <item>
       <title>MRP Using brms and tidybayes</title>
       <link>/blog/multilevel-mrp-tidybayes-brms-stan/</link>
       <pubDate>Mon, 20 Nov 2017 00:00:00 +0000</pubDate>
