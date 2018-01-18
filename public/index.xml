@@ -6,10 +6,19 @@
     <description>Recent content in Home on Tim Mastny</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Wed, 17 Jan 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 20 Jan 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Bayesian Meta-Analysis of Periodization in Strength Training</title>
+      <link>/blog/bayesian-meta-analysis-periodization-brms/</link>
+      <pubDate>Sat, 20 Jan 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/bayesian-meta-analysis-periodization-brms/</guid>
+      <description>Introduction Data Cleaning My Methodology Future Work   Introduction Greg Nuckols, a powerlifting coach, graduate student, and all around smart guy just did an excellent meta-analytic study on periodization methods in strength training on his website Strong By Science. If your not sure what periodization (or strength training) is, I would encourage you to read Greg’s article and explore his website. In this blog post I would like to focus on the statistical content of Greg’s article.</description>
+    </item>
     
     <item>
       <title>Tidying Messy Spreadsheets</title>
@@ -18,15 +27,6 @@
       
       <guid>/blog/tidying-messy-spreadsheets-dplyr/</guid>
       <description>Introduction Why Tidy? The Data Follow Along Cleaning Final Product Conclusion   Introduction I want this post to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. Instead of presenting a final product, I’d like to emphasize exploration as a natural part of tidying. My approach will follow Hadley Wickham’s tidy data principles outlined in his tidy data paper. At the end, our data should satisfy these three characteristics:</description>
-    </item>
-    
-    <item>
-      <title>Bayesian Meta-Analysis of Periodization in Strength Training</title>
-      <link>/blog/bayesian-meta-analysis-periodization-brms/</link>
-      <pubDate>Sat, 13 Jan 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/blog/bayesian-meta-analysis-periodization-brms/</guid>
-      <description>Introduction Data Cleaning My Methodology Future Work   Introduction Greg Nuckols, a powerlifting coach, graduate student, and all around smart guy just did an excellent meta-analytic study on periodization methods in strength training on his website Strong By Science. If your not sure what periodization (or strength training) is, I would encourage you to read Greg’s article and explore his website. In this blog post I would like to focus on the statistical content of Greg’s article.</description>
     </item>
     
     <item>
