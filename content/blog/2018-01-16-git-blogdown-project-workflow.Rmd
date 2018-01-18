@@ -7,6 +7,7 @@ categories: []
 tags: []
 description: How to use Git to improve blogdown and project workflow 
 meta_img: /images/image.jpg
+draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -32,7 +33,7 @@ I'll work through this by example. Please see the [Github repo](https://github.c
 
 ## git Setup
 
-
+For our purposes, we'll assume your git repo exists locally and on Github. I strongly recommend working through Jenny Bryan's excellence bookdown on [git for R users](http://happygitwithr.com/index.html)
 
 
 
