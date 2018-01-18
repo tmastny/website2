@@ -20,11 +20,11 @@ knitr::read_chunk("periodization-meta-analysis/tidier.R")
 
 ## Introduction
 
-Inspired, but dissatified, by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio's forum, I'd like to share my workflow to blog about my projects using Hugo/blogdown/Netlify.
+Inspired, but dissatified by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio's forum, I'd like to share my workflow to blog about my projects using Hugo/blogdown/Netlify.
 
 Here's the scenario: I'm working on my project, using a git repo to track changes. I'm excited about the project or a certain result, and I'd like to tell everyone about it by making a blog post with blogdown.
 
-But how do I utilize all the work I've already done in the project? I've already curated the data, built the plots, and saved my complicated analysis as a [`.RDS` file](https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/). I'd like to reuse that work, and as a one forum user put it "copying rmarkdown files is a nonstarter."
+But how do I utilize all the work I've already done in the project? I've curated the data, built the plots, and saved my complicated analysis as a [`.RDS` file](https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/). I'd like to reuse that work, and as a one forum user put it "copying rmarkdown files is a nonstarter."
 
 My proposal is to use git, in particular [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules), along with knitr [code externalization](https://yihui.name/knitr/demo/externalization/) to faciliate the reuse of code when writing blog posts. 
 
@@ -32,7 +32,10 @@ I'll work through this by example. Please see the [Github repo](https://github.c
 
 ## git Setup
 
-For our purposes, we'll assume your git repo exists locally and on Github. I strongly recommend working through Jenny Bryan's excellence bookdown on [git for R users](http://happygitwithr.com/index.html)
+For our purposes, we'll assume your project repo exists Github. I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html) if you would like a tutorial on working with git locally and on Github.
+
+
+
 
 
 
