@@ -1,0 +1,66 @@
+---
+title: Bayesian Meta-Analysis of Periodization in Strength Training
+author: ~
+date: '2018-01-20'
+slug: bayesian-meta-analysis-periodization-brms
+categories: []
+tags: []
+description: Bayesian Meta-Analysis of Periodization with brms 
+draft: true
+publishdate: '2018-01-20'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#data-cleaning">Data Cleaning</a></li>
+<li><a href="#my-methodology">My Methodology</a></li>
+<li><a href="#future-work">Future Work</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Greg Nuckols, a powerlifting coach, graduate student, and all around smart guy just did an excellent meta-analytic study on periodization methods in strength training on his website <a href="https://www.strongerbyscience.com/periodization-data/">Strong By Science</a>. If your not sure what periodization (or strength training) is, I would encourage you to read Greg’s article and explore his website. In this blog post I would like to focus on the statistical content of Greg’s article.</p>
+<p>Greg studied percent changes of various outcomes (usually weight added to an exercise) at various permutations of exercises, time periods, and periodization methods. Consistent with open science principles, Greg shared his data set and encouraged people to do their own analysis. I have full confidence in Greg’s conclusions, but I like both Bayesian statistics and powerlifting so I thought this would be a fun way to combine the two.</p>
+<p>The goal of this blog post is to conduct a Bayesian meta-analysis of Greg’s collection of study outcomes. I really just want to have some fun and get in some practice, but I also think there are a few general advantages to my methods. First, in the article Greg expressed concern about some implausibly large effect sizes. The Bayesian approach is the ideal way to introduce regularization through [multi-level modeling] (<a href="https://cran.r-project.org/web/packages/rstanarm/vignettes/pooling.html" class="uri">https://cran.r-project.org/web/packages/rstanarm/vignettes/pooling.html</a>) and prior information. Second, as Matti Vuorre demonstrated in his <a href="https://mvuorre.github.io/post/2016/2016-09-29-bayesian-meta-analysis/">blog post</a>, it is easy to conduct Bayesian meta-analyses and benefit from the generative and distribution nature of the results. I’ll also introduce other various changes, tweaks, and “improvements” in my own methodology section.</p>
+</div>
+<div id="data-cleaning" class="section level2">
+<h2>Data Cleaning</h2>
+<p>I actually cleaned and tidied Greg’s spreadsheet in a previous blog post. That blog post is really an appendix to this one. If you’d like to know how I cleaned his spreadsheet using the <a href="https://www.tidyverse.org/">‘tidyverse’</a> set of tools. I encourage you to take a look. Often in data science we work with spreadsheets that are much messier, so that post would be a good starting point.</p>
+<p>Otherwise, form here on out all the analysis will be done a the tidied version of the spreadsheet, which can be found as a <code>.csv</code> in the <a href="https://github.com/tmastny/periodization-meta-analysis">github repo</a> I created for this blog post.</p>
+<p>You can find Greg’s spreadsheet <a href="https://docs.google.com/spreadsheets/d/1uT2ZZ_PZEf_4YefPMSSxanwLWayzhwsgC0rnv6XSgU4/edit#gid=0">here</a>. I love to see this sort of thing and am really glad that Greg made it as easy as possible to dive in.</p>
+<p>Before we run the numbers, we need to <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">tidy the data</a> to make it friendly and useful for data science. If you’d like to skip this section, you can find both the script I used to tidy the data and the final product within the <a href="https://github.com/tmastny/periodization-meta-analysis">github repo</a> I created for this blog post.</p>
+<p>The first issue is that the spreadsheet is optimized for human reading instead of for processing with statistical software.</p>
+<div class="figure">
+<img src="/blog/spreadsheet_pic.png" />
+
+</div>
+<p>As you can see above, each observation is not completely filled out. This makes it easier to read, but can lead to difficulties when writing programs and scripts. Luckily there doesn’t seem to be other common <a href="http://blog.revolutionanalytics.com/2017/11/good-practices-spreadsheets.html">spreadsheet issues</a> formatting as data or formulas. There are a few merged cells, but they aren’t across rows and they are over studies that I won’t include in my analysis. I’ll discuss my inclusive criteria in the methodology section.</p>
+</div>
+<div id="my-methodology" class="section level2">
+<h2>My Methodology</h2>
+<p>Moreover, we’d like to introduce regularization or shrinkage to combat the publication bias and other problems with <a href="http://andrewgelman.com/2016/08/30/publication-bias-occurs-within-as-well-as-between-projects/">forking paths</a>.</p>
+<p>Instead of the classical random effects meta-analysis<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>,</p>
+<p>In the article, Greg noted that he did not follow the classic methodology of a random effects model on effect sizes because some studies reported such small standard deviations that the effects sizes were totally implausible.</p>
+<p>Greg’s general concern of implausible effects sizes is well warranted. The standard criteria of statistical significant almost assures that the <a href="http://andrewgelman.com/2016/11/13/more-on-my-paper-with-john-carlin-on-type-m-and-type-s-errors/">effect size is exaggerated</a>. Gelman and Carlin call this phenomenon a Type M (magnitude) error. I strongly recommend reading <a href="http://www.stat.columbia.edu/~gelman/research/published/retropower_final.pdf">their excellent paper</a> on the subject, where they analyze suspect effect sizes using prior information.</p>
+</div>
+<div id="future-work" class="section level2">
+<h2>Future Work</h2>
+<p>Short-term, I would like to see post-treatment standard deviations included in Greg’s spreadsheet. The spreadsheet already contains pre-treatment standard deviations and those are the ones used to calculate the effect size. However, effect sizes (or the standard error of mean differences) can be calculated by pooling the standard deviations of the pre and post-treatment groups and it would be interesting to see if that leads to different results. Unfortunately, I do not have access to the majority of the studies, so it could be that all do not include the post-treatment standard deviations, but <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4899398/">the one study</a> I do have access does have post-treatment standard deviations.</p>
+<p>Long-term I would like to a move away from meta-analyses that model only statistical summaries of the study, to ones that include the raw data from studies when possible. As McElreath explains in Chapters 2 and 14 of his book <a href="http://xcelab.net/rm/statistical-rethinking/">Statistical Rethinking</a>, there is an inherent exchangeability between data and parameters within the Bayesian framework. This flexibility allows us to combine raw data and distributions of effect sizes in a principled way, without resorting to ad-hoc corrections or procedures. When using the actual data, we can move away from unrealistic assumptions of normality and the like data speak for itself.</p>
+<p>Furthermore, shared and open data is an excellent contribution to the open science movement. Sharing data not only results in better meta-analyses, but also improves post-publication review<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> by allowing other scientists to replication the study’s statistical analyses and check for errors.</p>
+<p>The next step is reproducible analyses, which means moving away from doing the calculations by hand or in Excel and into something like R or Python. As much as I appreciate Greg crunching the numbers and creating the plots, I have no way to verify his effort beyond starting from scratch by myself. I appreciate that is a much more significant hurdle since it requires teaching scientists programming skills, but ultimately I think it is valuable.</p>
+<p>I am not a part of the exercise science and physiology communities, so maybe I am preaching to the choir. Either way, I am thankful Greg wrote up his awesome article and hope to see more from him and others in the future.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I really like <a href="https://www.leeds.ac.uk/educol/documents/00002182.htm">this</a> introduction to effect sizes and meta-analyses.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Which as Gelman points out is more useful than pre-publication (peer) review, as shown <a href="http://andrewgelman.com/2017/11/03/post-publication-review-succeeds-two-lines-edition/">here</a> and <a href="http://andrewgelman.com/2016/12/16/an-efficiency-argument-for-post-publication-review/">here</a>. Peer review is useful, but it isn’t a <a href="http://andrewgelman.com/2016/02/01/peer-review-make-no-damn-sense/">stamp of quality</a> and doesn’t mean the results are correct.<a href="#fnref2">↩</a></p></li>
+</ol>
+</div>

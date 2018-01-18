@@ -1,0 +1,35 @@
+---
+title: Use git to Blog(down) About Your Projects
+author: ~
+date: '2018-01-17'
+slug: git-blogdown-projects-workflow
+categories: []
+tags: []
+description: How to use Git to improve blogdown and project workflow 
+meta_img: /images/image.jpg
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#git-setup">git Setup</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Inspired, but dissatified, by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio’s forum, I’d like to share my workflow to blog about my projects using Hugo/blogdown/Netlify.</p>
+<p>Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.</p>
+<p>But how do I utilize all the work I’ve already done in the project? I’ve already curated the data, built the plots, and saved my complicated analysis as a <a href="https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/"><code>.RDS</code> file</a>. I’d like to reuse that work, and as a one forum user put it “copying rmarkdown files is a nonstarter.”</p>
+<p>My proposal is to use git, in particular <a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a>, along with knitr <a href="https://yihui.name/knitr/demo/externalization/">code externalization</a> to faciliate the reuse of code when writing blog posts.</p>
+<p>I’ll work through this by example. Please see the <a href="https://github.com/tmastny/git-blogdown-workflow">Github repo</a> I created for this blog post. The scripts and data within the repo will be the external project we’d like to blog about.</p>
+</div>
+<div id="git-setup" class="section level2">
+<h2>git Setup</h2>
+<p>For our purposes, we’ll assume your git repo exists locally and on Github. I strongly recommend working through Jenny Bryan’s excellence bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a></p>
+</div>
