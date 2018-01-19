@@ -9,7 +9,7 @@ description: How to use Git to improve blogdown and project workflow
 draft: true
 output:
   blogdown::html_page:
-    toc: true
+    toc: true 
 ---
 
 
@@ -22,7 +22,7 @@ output:
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Inspired, but dissatified by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio’s forum, I’d like to share my workflow to blog about my projects using Hugo/blogdown/Netlify.</p>
+<p>Inspired, but dissatified by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio’s forum, I’d like to share my workflow that I use to blog about my projects using Hugo/blogdown/Netlify.</p>
 <p>Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.</p>
 <p>But how do I utilize all the work I’ve already done in the project? I’ve curated the data, built the plots, and saved my complicated analysis as a <a href="https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/"><code>.RDS</code> file</a>. I’d like to reuse that work, and as a one forum user put it “copying rmarkdown files is a nonstarter.”</p>
 <p>My proposal is to use git, in particular <a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a>, along with knitr <a href="https://yihui.name/knitr/demo/externalization/">code externalization</a> to faciliate the reuse of code when writing blog posts.</p>

@@ -9,7 +9,7 @@ description: How to use Git to improve blogdown and project workflow
 draft: true
 output:
   blogdown::html_page:
-    toc: true
+    toc: true 
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +20,7 @@ knitr::read_chunk("periodization-meta-analysis/tidier.R")
 
 ## Introduction
 
-Inspired, but dissatified by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio's forum, I'd like to share my workflow to blog about my projects using Hugo/blogdown/Netlify.
+Inspired, but dissatified by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio's forum, I'd like to share my workflow that I use to blog about my projects using Hugo/blogdown/Netlify.
 
 Here's the scenario: I'm working on my project, using a git repo to track changes. I'm excited about the project or a certain result, and I'd like to tell everyone about it by making a blog post with blogdown.
 
@@ -34,6 +34,7 @@ I'll work through this by example. Please see the [Github repo](https://github.c
 
 For our purposes, we'll assume your project repo exists Github. I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html) if you would like a tutorial on working with git locally and on Github.
 
+## Code Externalization
 
 
 
