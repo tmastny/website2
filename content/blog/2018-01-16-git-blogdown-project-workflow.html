@@ -17,18 +17,131 @@ output:
 <ul>
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#git-setup">git Setup</a></li>
+<li><a href="#code-externalization-by-chunks">Code Externalization by Chunks</a><ul>
+<li><a href="#example">Example</a></li>
+</ul></li>
+<li><a href="#chunks-with-external-data">Chunks with External Data</a></li>
 </ul>
 </div>
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Inspired, but dissatified by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio’s forum, I’d like to share my workflow that I use to blog about my projects using Hugo/blogdown/Netlify.</p>
+<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify.</p>
 <p>Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.</p>
 <p>But how do I utilize all the work I’ve already done in the project? I’ve curated the data, built the plots, and saved my complicated analysis as a <a href="https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/"><code>.RDS</code> file</a>. I’d like to reuse that work, and as a one forum user put it “copying rmarkdown files is a nonstarter.”</p>
 <p>My proposal is to use git, in particular <a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a>, along with knitr <a href="https://yihui.name/knitr/demo/externalization/">code externalization</a> to faciliate the reuse of code when writing blog posts.</p>
-<p>I’ll work through this by example. Please see the <a href="https://github.com/tmastny/git-blogdown-workflow">Github repo</a> I created for this blog post. The scripts and data within the repo will be the external project we’d like to blog about.</p>
+<p>I’ll demonstrate this workflow by example. This <a href="https://github.com/tmastny/git-blogdown-workflow">Github repo</a> will be the external project we’d like to blog about. And this very post is where we’d like to do it. This means you should also follow the <code>.Rmd</code> for this post found on my website’s <a href="https://github.com/tmastny/website2/blob/master/content/blog/2018-01-16-git-blogdown-project-workflow.Rmd">Github repo</a>.</p>
 </div>
 <div id="git-setup" class="section level2">
 <h2>git Setup</h2>
 <p>For our purposes, we’ll assume your project repo exists Github. I strongly recommend Jenny Bryan’s bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a> if you would like a tutorial on working with git locally and on Github.</p>
+<pre class="r"><code>Timothys-MacBook-Pro:blog Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
+Cloning into &#39;/Users/Tim/website2/content/blog/git-blogdown-workflow&#39;...
+remote: Counting objects: 10, done.
+remote: Compressing objects: 100% (7/7), done.
+remote: Total 10 (delta 0), reused 7 (delta 0), pack-reused 0
+Unpacking objects: 100% (10/10), done.</code></pre>
+</div>
+<div id="code-externalization-by-chunks" class="section level2">
+<h2>Code Externalization by Chunks</h2>
+<p>To utilize external <code>.R</code> scripts, we first need to use <code>knitr::read_chunk</code>.</p>
+<pre><code>```{r}
+knitr::read_chunk(path = &#39;path_name/script.R&#39;)
+```</code></pre>
+<p>This will initialize the script within the blog’s <code>.Rmd</code> environment and allow us to call the code chunks.</p>
+<p>In the <code>.R</code> script, code chunks will be delimited by the following decoration.</p>
+<pre class="r"><code>## ---- chunk_name ----</code></pre>
+<p>To call that chunk within the <code>.Rmd</code> session of this blog, we need to do the following:</p>
+<pre><code>```{r chunk_name}
+```</code></pre>
+<p>That will execute the chunk within this session. The results will also be available to use within the blog’s <code>.Rmd</code> environment.</p>
+<p>Let’s work through an example.</p>
+<div id="example" class="section level3">
+<h3>Example</h3>
+<p>We’ll start simple by working with the R script <a href="https://github.com/tmastny/git-blogdown-workflow/blob/master/chunks.R"><code>chunks.R</code></a>.</p>
+<p>Before we can call the chunks in our file, we need to initialize the <code>.R</code> script with <code>read_chunk</code>.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
+<pre><code>```{r}
+knitr::read_chunk(path = &#39;git-blogdown-workflow/chunks.R&#39;)
+```</code></pre>
+<pre class="r"><code>knitr::read_chunk(path = &#39;git-blogdown-workflow/chunks.R&#39;)</code></pre>
+<p>This does not execute the code, but allows your blog post’s <code>.Rmd</code> environment to utilize chunks from that <code>.R</code> script.</p>
+<p>After we’ve initialized the script with <code>read_chunk</code>, we can now call the code via the code externalization decorators we’ve added to the source code of <code>chunks.R</code>. For example,</p>
+<pre><code>```{r simulate_function}
+```</code></pre>
+<p>which produces</p>
+<pre class="r"><code>library(tidyverse)
+library(magrittr)
+
+monty_hall_sim &lt;- function (door, switch) {
+  doors &lt;- c(&#39;a&#39;, &#39;b&#39;, &#39;c&#39;)
+  prize &lt;- sample(doors, size = 1)
+  open_door &lt;- sample(setdiff(doors, c(prize, door)), size = 1)
+  if (switch) {
+    door &lt;- setdiff(doors, c(door, open_door))
+  }
+  return(door == prize)
+}</code></pre>
+<p>This really helps with portability and maintainability. We haven’t copied any code or scripts. The project script <code>chunks.R</code> is being pull from the repo, so if the file is modified there, it will be modified here as well.</p>
+<p>And another useful feature is that calling <code>simulate_function</code> evalutes the code in the <code>.Rmd</code> environment of the blog post. So we can use the function within the post!</p>
+<pre class="r"><code>monty_hall_sim(&#39;a&#39;, TRUE)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>This is nice. We can now easily add simple, exploratory examples to the blog post that we wouldn’t want cluttering the <code>.R</code> script.</p>
+<p>Let’s call the next chunk:</p>
+<pre><code>```{r run_simulation}
+```</code></pre>
+<pre class="r"><code>d &lt;- tibble(
+  door = sample(c(&#39;a&#39;, &#39;b&#39;, &#39;c&#39;), size = 1000, replace = TRUE),
+  switch = sample(c(TRUE, FALSE), size = 1000, replace = TRUE)
+)
+d %&lt;&gt;%
+  mutate(prize = mapply(monty_hall_sim, door, switch))</code></pre>
+<p>Now we have the tibble <code>d</code> in our blog environment. For example, we can show</p>
+<pre class="r"><code>head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   door  switch prize
+##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
+## 1 c     F      F    
+## 2 c     T      T    
+## 3 a     T      T    
+## 4 b     F      T    
+## 5 c     F      F    
+## 6 a     T      T</code></pre>
+<p>You do need to be careful with this data. Any future chunks you call from <code>chunks.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
+<pre class="r"><code>a &lt;- d
+d &lt;- NULL</code></pre>
+<pre><code>```{r plot_results}
+```</code></pre>
+<pre class="r"><code>d %&gt;%
+  group_by(switch) %&gt;%
+  mutate(attempt = row_number()) %&gt;%
+  mutate(success_ratio = cumsum(prize)/attempt) %&gt;%
+  ungroup() %&gt;%
+  ggplot() +
+  geom_line(aes(x = attempt, y = success_ratio, color = switch))</code></pre>
+<pre><code>## Error in UseMethod(&quot;group_by_&quot;): no applicable method for &#39;group_by_&#39; applied to an object of class &quot;NULL&quot;</code></pre>
+<p>So you need to make sure you don’t change the environmental variables in a way future chunks don’t except. A good rule of thumb is to not change or make new variables within the blog environment. Only explore and view objects created from the chunks.</p>
+<p>Let’s fix our mistake and call the plot chunk again.</p>
+<pre class="r"><code>d &lt;- a</code></pre>
+<pre><code>```{r plot_results}
+```</code></pre>
+<pre class="r"><code>d %&gt;%
+  group_by(switch) %&gt;%
+  mutate(attempt = row_number()) %&gt;%
+  mutate(success_ratio = cumsum(prize)/attempt) %&gt;%
+  ungroup() %&gt;%
+  ggplot() +
+  geom_line(aes(x = attempt, y = success_ratio, color = switch))</code></pre>
+<p><img src="/blog/2018-01-16-git-blogdown-project-workflow_files/figure-html/plot_results-1.png" width="480" /></p>
+</div>
+</div>
+<div id="chunks-with-external-data" class="section level2">
+<h2>Chunks with External Data</h2>
+<p>The last example was nice, but a little unrealistic. Usually we use R to work with external data. Working with external data is similar, but we need to be careful of one complication.</p>
+<p>Again, we’ll do this by example. This time looking at two R scripts, <code>fit_model.R</code> and <code>analyze.R</code>.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>You can include the chunk option <code>echo=FALSE</code> if you don’t want to show it on your blog post. See <a href="https://yihui.name/knitr/options/">here</a> for more details.<a href="#fnref1">↩</a></p></li>
+</ol>
 </div>
