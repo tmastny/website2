@@ -20,17 +20,20 @@ knitr::read_chunk("periodization-meta-analysis/tidier.R")
 
 ## Introduction
 
-Inspired by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio forum, I'd like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify.
-
 Here's the scenario: I'm working on my project, using a git repo to track changes. I'm excited about the project or a certain result, and I'd like to tell everyone about it by making a blog post with blogdown.
 
 But how do I utilize all the work I've already done in the project? I've curated the data, built the plots, and saved my complicated analysis as a [`.RDS` file](https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/). I'd like to reuse that work, and as a one forum user put it "copying rmarkdown files is a nonstarter."
 
-My proposal is to use git, in particular [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules), along with knitr [code externalization](https://yihui.name/knitr/demo/externalization/) to faciliate the reuse of code when writing blog posts. 
+Inspired by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio forum, I'd like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We'll look at these tools:
+
+- [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)  
+- knitr [code externalization](https://yihui.name/knitr/demo/externalization/)
 
 I'll demonstrate this workflow by example. This [Github repo](https://github.com/tmastny/git-blogdown-workflow) will be the external project we'd like to blog about. And this very post is where we'd like to do it. This means you should also follow the `.Rmd` for this post found on my website's [Github repo](https://github.com/tmastny/website2/blob/master/content/blog/2018-01-16-git-blogdown-project-workflow.Rmd).
 
 ## git Setup
+
+Note: If you publish your own `public` folder (instead of using a service like Netlify) you don't need to create a submodule. You can skip this section and set the `knitr::opts_knit(root.dir = '')` to the local git repo of your project.
 
 For our purposes, we'll assume your project repo exists Github. I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html) if you would like a tutorial on working with git locally and on Github.
 
@@ -55,7 +58,7 @@ knitr::read_chunk(path = 'path_name/script.R')
 ````
 This will initialize the script within the blog's `.Rmd` environment and allow us to call the code chunks.
 
-In the `.R` script, code chunks will be delimited by the following decoration.
+In the `.R` script, code chunks will be delimited by this decoration:
 
 ```{r, eval = FALSE}
 ## ---- chunk_name ----
@@ -72,11 +75,11 @@ That will execute the chunk within this session. The results will also be availa
 
 Let's work through an example.
 
-### Example
+### Example 1: The Basics
 
 We'll start simple by working with the R script [`chunks.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/chunks.R).
 
-Before we can call the chunks in our file, we need to initialize the `.R` script with `read_chunk`.^[You can include the chunk option `echo=FALSE` if you don't want to show it on your blog post. See [here](https://yihui.name/knitr/options/) for more details.] 
+Before we can call the chunks in our file, we need to initialize the `.R` script with `read_chunk`.^[You can include the chunk option `echo=FALSE` if you don't want to show `read_chunk` in your blog post. See [here](https://yihui.name/knitr/options/) for more details.] 
 
 ````
 ```{r}`r ''`
@@ -150,11 +153,33 @@ d <- a
 ```{r plot_results, fig.width=5, fig.height=4}
 ```
 
-## Chunks with External Data
+### Example 2: External Data with `here`
 
-The last example was nice, but a little unrealistic. Usually we use R to work with external data. Working with external data is similar, but we need to be careful of one complication.
+The last example was nice, but a little unrealistic. Usually we use R to work with external data. And when we work with external data we need to be careful of an additonal complication.
 
-Again, we'll do this by example. This time looking at two R scripts, `fit_model.R` and `analyze.R`. 
+Again, we'll do this by example. This time looking at the R script [`fit_model.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/fit_model.R). 
+```{r}
+knitr::read_chunk('git-blogdown-workflow/fit_model.R')
+```
+
+
+As you browse this model and the repo, you'll notice that our goal is to analysis the dataset `tidied_periodization.csv`^[We tidied this data set in a previous [blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/).].
+
+The first chunk in `fit_model.R` seems reasonable enough, so let's try it:
+```{r read_data, error = TRUE}
+```
+
+Ah! The problem is that a file name with no path implies that the file `tidied_periodization.csv` is in the current working directory, which is now `website2/content` or where ever your blog post lives.
+
+Assuming the file is in the working directory of `fit_model.R` works well when executed in the project environment, but fails for the blog post.
+
+The solution^[You could create a symbolic link between `website2/content` and `website2/content/git-blogdown-workflow` but I think that is an unneeded level of overhead. And creating those symbolic links varies between Linux and Windows.]
+
+
+
+
+
+
 
 
 

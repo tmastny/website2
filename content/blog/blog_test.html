@@ -1,0 +1,43 @@
+---
+title: blog_test
+author: ~
+date: '2018-01-17'
+slug: blog_tes
+categories: []
+tags: []
+description: How to use Git to improve blogdown and project workflow 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<pre class="r"><code>library(tidyverse)
+getwd()</code></pre>
+<pre><code>## [1] &quot;/Users/Tim/website2/content/blog/git-blogdown-workflow&quot;</code></pre>
+<pre class="r"><code>knitr::read_chunk(&#39;fit_model.R&#39;)</code></pre>
+<pre class="r"><code>d &lt;- read_csv(file = &#39;tidied_periodization.csv&#39;)</code></pre>
+<pre class="r"><code>head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 18
+##   Number `Measurements at… Author `Study Title`    `Participants (t…     N
+##    &lt;int&gt; &lt;chr&gt;             &lt;chr&gt;  &lt;chr&gt;            &lt;chr&gt;             &lt;int&gt;
+## 1      2 Yes               Kramer Effects of Sing… Moderately train…    14
+## 2      2 Yes               Kramer Effects of Sing… Moderately train…    13
+## 3      9 no                Ahmad… Effects of shor… Sedentary             8
+## 4      9 no                Ahmad… Effects of shor… Sedentary             8
+## 5      9 no                Ahmad… Effects of shor… Sedentary             8
+## 6     12 Yes               Monte… Nonlinear Perio… Trained males (m…     9
+## # ... with 12 more variables: Age &lt;chr&gt;, Sex &lt;chr&gt;, `Program Label` &lt;chr&gt;,
+## #   `Program Details` &lt;chr&gt;, `Length (weeks)` &lt;int&gt;, `Intensity Closest to
+## #   1RM test` &lt;chr&gt;, `Volume Equated?` &lt;chr&gt;, Issues &lt;chr&gt;, outcome_type
+## #   &lt;chr&gt;, post &lt;dbl&gt;, pre &lt;dbl&gt;, sd &lt;dbl&gt;</code></pre>
+</div>

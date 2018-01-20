@@ -18,22 +18,27 @@ output:
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#git-setup">git Setup</a></li>
 <li><a href="#code-externalization-by-chunks">Code Externalization by Chunks</a><ul>
-<li><a href="#example">Example</a></li>
+<li><a href="#example-1-the-basics">Example 1: The Basics</a></li>
+<li><a href="#example-2-external-data-with-here">Example 2: External Data with <code>here</code></a></li>
 </ul></li>
-<li><a href="#chunks-with-external-data">Chunks with External Data</a></li>
 </ul>
 </div>
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify.</p>
 <p>Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.</p>
 <p>But how do I utilize all the work I’ve already done in the project? I’ve curated the data, built the plots, and saved my complicated analysis as a <a href="https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/"><code>.RDS</code> file</a>. I’d like to reuse that work, and as a one forum user put it “copying rmarkdown files is a nonstarter.”</p>
-<p>My proposal is to use git, in particular <a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a>, along with knitr <a href="https://yihui.name/knitr/demo/externalization/">code externalization</a> to faciliate the reuse of code when writing blog posts.</p>
+<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We’ll look at these tools:</p>
+<ul>
+<li><a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a><br />
+</li>
+<li>knitr <a href="https://yihui.name/knitr/demo/externalization/">code externalization</a></li>
+</ul>
 <p>I’ll demonstrate this workflow by example. This <a href="https://github.com/tmastny/git-blogdown-workflow">Github repo</a> will be the external project we’d like to blog about. And this very post is where we’d like to do it. This means you should also follow the <code>.Rmd</code> for this post found on my website’s <a href="https://github.com/tmastny/website2/blob/master/content/blog/2018-01-16-git-blogdown-project-workflow.Rmd">Github repo</a>.</p>
 </div>
 <div id="git-setup" class="section level2">
 <h2>git Setup</h2>
+<p>Note: If you publish your own <code>public</code> folder (instead of using a service like Netlify) you don’t need to create a submodule. You can skip this section and set the <code>knitr::opts_knit(root.dir = '')</code> to the local git repo of your project.</p>
 <p>For our purposes, we’ll assume your project repo exists Github. I strongly recommend Jenny Bryan’s bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a> if you would like a tutorial on working with git locally and on Github.</p>
 <pre class="r"><code>Timothys-MacBook-Pro:blog Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
 Cloning into &#39;/Users/Tim/website2/content/blog/git-blogdown-workflow&#39;...
@@ -49,15 +54,15 @@ Unpacking objects: 100% (10/10), done.</code></pre>
 knitr::read_chunk(path = &#39;path_name/script.R&#39;)
 ```</code></pre>
 <p>This will initialize the script within the blog’s <code>.Rmd</code> environment and allow us to call the code chunks.</p>
-<p>In the <code>.R</code> script, code chunks will be delimited by the following decoration.</p>
+<p>In the <code>.R</code> script, code chunks will be delimited by this decoration:</p>
 <pre class="r"><code>## ---- chunk_name ----</code></pre>
 <p>To call that chunk within the <code>.Rmd</code> session of this blog, we need to do the following:</p>
 <pre><code>```{r chunk_name}
 ```</code></pre>
 <p>That will execute the chunk within this session. The results will also be available to use within the blog’s <code>.Rmd</code> environment.</p>
 <p>Let’s work through an example.</p>
-<div id="example" class="section level3">
-<h3>Example</h3>
+<div id="example-1-the-basics" class="section level3">
+<h3>Example 1: The Basics</h3>
 <p>We’ll start simple by working with the R script <a href="https://github.com/tmastny/git-blogdown-workflow/blob/master/chunks.R"><code>chunks.R</code></a>.</p>
 <p>Before we can call the chunks in our file, we need to initialize the <code>.R</code> script with <code>read_chunk</code>.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
 <pre><code>```{r}
@@ -100,12 +105,12 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 c     F      F    
-## 2 c     T      T    
-## 3 a     T      T    
-## 4 b     F      T    
-## 5 c     F      F    
-## 6 a     T      T</code></pre>
+## 1 a     T      T    
+## 2 a     T      T    
+## 3 a     F      F    
+## 4 c     T      T    
+## 5 a     F      F    
+## 6 a     T      F</code></pre>
 <p>You do need to be careful with this data. Any future chunks you call from <code>chunks.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
@@ -133,15 +138,25 @@ d &lt;- NULL</code></pre>
   geom_line(aes(x = attempt, y = success_ratio, color = switch))</code></pre>
 <p><img src="/blog/2018-01-16-git-blogdown-project-workflow_files/figure-html/plot_results-1.png" width="480" /></p>
 </div>
+<div id="example-2-external-data-with-here" class="section level3">
+<h3>Example 2: External Data with <code>here</code></h3>
+<p>The last example was nice, but a little unrealistic. Usually we use R to work with external data. And when we work with external data we need to be careful of an additonal complication.</p>
+<p>Again, we’ll do this by example. This time looking at the R script <a href="https://github.com/tmastny/git-blogdown-workflow/blob/master/fit_model.R"><code>fit_model.R</code></a>.</p>
+<pre class="r"><code>knitr::read_chunk(&#39;git-blogdown-workflow/fit_model.R&#39;)</code></pre>
+<p>As you browse this model and the repo, you’ll notice that our goal is to analysis the dataset <code>tidied_periodization.csv</code><a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>.</p>
+<p>The first chunk in <code>fit_model.R</code> seems reasonable enough, so let’s try it:</p>
+<pre class="r"><code>d &lt;- read_csv(file = &#39;tidied_periodization.csv&#39;)</code></pre>
+<pre><code>## Error: &#39;tidied_periodization.csv&#39; does not exist in current working directory (&#39;/Users/Tim/website2/content/blog&#39;).</code></pre>
+<p>Ah! The problem is that a file name with no path implies that the file <code>tidied_periodization.csv</code> is in the current working directory, which is now <code>website2/content</code> or where ever your blog post lives.</p>
+<p>Assuming the file is in the working directory of <code>fit_model.R</code> works well when executed in the project environment, but fails for the blog post.</p>
+<p>The solution<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a></p>
 </div>
-<div id="chunks-with-external-data" class="section level2">
-<h2>Chunks with External Data</h2>
-<p>The last example was nice, but a little unrealistic. Usually we use R to work with external data. Working with external data is similar, but we need to be careful of one complication.</p>
-<p>Again, we’ll do this by example. This time looking at two R scripts, <code>fit_model.R</code> and <code>analyze.R</code>.</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>You can include the chunk option <code>echo=FALSE</code> if you don’t want to show it on your blog post. See <a href="https://yihui.name/knitr/options/">here</a> for more details.<a href="#fnref1">↩</a></p></li>
+<li id="fn1"><p>You can include the chunk option <code>echo=FALSE</code> if you don’t want to show <code>read_chunk</code> in your blog post. See <a href="https://yihui.name/knitr/options/">here</a> for more details.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>We tidied this data set in a previous <a href="https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/">blog post</a>.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>You could create a symbolic link between <code>website2/content</code> and <code>website2/content/git-blogdown-workflow</code> but I think that is an unneeded level of overhead. And creating those symbolic links varies between Linux and Windows.<a href="#fnref3">↩</a></p></li>
 </ol>
 </div>
