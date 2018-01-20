@@ -1,7 +1,7 @@
 ---
 title: Use git to Blog(down) About Your Projects
 author: ~
-date: '2018-01-17'
+date: '2018-01-20'
 slug: git-blogdown-projects-workflow
 categories: []
 tags: []
@@ -24,7 +24,7 @@ Here's the scenario: I'm working on my project, using a git repo to track change
 
 But how do I utilize all the work I've already done in the project? I've curated the data, built the plots, and saved my complicated analysis as a [`.RDS` file](https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/). I'd like to reuse that work, and as a one forum user put it "copying rmarkdown files is a nonstarter."
 
-Inspired by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio forum, I'd like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We'll look at these tools:
+Inspired by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio forum, I'd like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We'll look at
 
 - [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)  
 - knitr [code externalization](https://yihui.name/knitr/demo/externalization/)
@@ -33,9 +33,23 @@ I'll demonstrate this workflow by example. This [Github repo](https://github.com
 
 ## git Setup
 
-Note: If you publish your own `public` folder (instead of using a service like Netlify) you don't need to create a submodule. You can skip this section and set the `knitr::opts_knit(root.dir = '')` to the local git repo of your project.
+For our purposes, we'll assume your project repo exists Github. If you don't feel comfortable with command line `git clone/pull/add/commit/push`, I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html). The tutorial will teach you the basics of working with git locally and on Github.
 
-For our purposes, we'll assume your project repo exists Github. I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html) if you would like a tutorial on working with git locally and on Github.
+The purpose of the submodule is to make the contents of your project easily available and accessible. For example, your `.Rmd` posts can utilize all the data and functions without copy/pasting. And services like Netlify can automatically pull the the project's contents from their github repo without needing a local copy of the project's file in your website's repo. 
+
+All this while maintaining version control and a connection to the project's origin/master so you can incorporate updates.
+
+Note that if you build your own `public` folder to serve your website, you don't need to create a submodule and you can skip to the next section where I introduce `knitr::opts_knit(root.dir = '')`.
+
+### Creating the Submodule
+
+I recommend putting the project submodule in the same directory as your blog post. All my blog posts live here:
+
+```{r, eval=FALSE}
+website2/content/blog
+```
+
+So that is where I want to put a copy of my project. We do that with the `submodule` command:
 
 ```{r, eval = FALSE}
 Timothys-MacBook-Pro:blog Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
@@ -46,8 +60,60 @@ remote: Total 10 (delta 0), reused 7 (delta 0), pack-reused 0
 Unpacking objects: 100% (10/10), done.
 ```
 
+When we `git add/commit/push` the changes to the [website2 repo](https://github.com/tmastny/website2) you'll notice that the folder icon has changed. This indicates that repo is now tracking a reference to the project repo at a certain commit, rather than a copy of those files at a moment in time.
+
+![](/blog/github_pic.png)
+
+In fact, if you click the folder you will be taken to the [git-blogdown-workflow Github repo](https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8).
+
+This is exactly what we want. Instead of being a static copy of the project's file, we have a version controlled copy that is linked to the master branch. Updates to the submodule are not pulled in automatically, however.
+
+### Updating the Submodule. 
+
+On a normal git repo, to receive the latest changes to your local branch you use `git pull`. But `git pull` only brings in changes to the top level git repo, which is the website's repo. And this is by design.
+
+Imagine you write a post that includes content from a project submodule. Months later a teammate makes an update that changes a feature your blog post depends on. If the submodule was updated automatically with pull, your blog posts could unexpectedly break in surprising ways. 
+
+Therefore, to avoid unexpected conflicts we need to explicitly receive updates from submodules.
+
+The first method is to navigate to the submodule and use `git fetch/merge`. For example,
+```{r, eval=FALSE}
+Timothys-MacBook-Pro:blog Tim$ cd git-blogdown-workflow/
+Timothys-MacBook-Pro:git-blogdown-workflow Tim$ git fetch
+remote: Counting objects: 3, done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 3 (delta 1), reused 3 (delta 1), pack-reused 0
+Unpacking objects: 100% (3/3), done.
+From https://github.com/tmastny/git-blogdown-workflow
+   3149843..e207121  master     -> origin/master
+Timothys-MacBook-Pro:git-blogdown-workflow Tim$ git merge origin/master
+Updating 3149843..e207121
+Fast-forward
+ plot_model.R | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+ create mode 100644 plot_model.R
+```
+
+Note that `git pull`, the shortcut for `git fetch/merge` used on normal git repos does not work for submodules.
+
+Or if you want to update all your submodules, you can use the shortcut `git submodule update --remote`:
+
+```{r, eval=FALSE}
+Timothys-MacBook-Pro:blog Tim$ git submodule update --remote
+Submodule path 'git-blogdown-workflow': checked out 'ce0d3a2f200eac6cd2a2980110137f7917e30b1d'
+remote: Counting objects: 6, done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 6 (delta 3), reused 5 (delta 2), pack-reused 0
+Unpacking objects: 100% (6/6), done.
+From https://github.com/tmastny/periodization-meta-analysis
+   b29483b..de596ae  master     -> origin/master
+Submodule path 'periodization-meta-analysis': checked out 'de596aed6a5535f7f4cdd270644e7993625b3f78'
+```
+
+But remember, pulling unexpected changes from your submodules can break your blog posts. 
 
 ## Code Externalization by Chunks
+
 
 To utilize external `.R` scripts, we first need to use `knitr::read_chunk`. 
 

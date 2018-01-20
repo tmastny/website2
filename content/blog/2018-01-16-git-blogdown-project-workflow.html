@@ -1,7 +1,7 @@
 ---
 title: Use git to Blog(down) About Your Projects
 author: ~
-date: '2018-01-17'
+date: '2018-01-20'
 slug: git-blogdown-projects-workflow
 categories: []
 tags: []
@@ -16,7 +16,10 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#git-setup">git Setup</a></li>
+<li><a href="#git-setup">git Setup</a><ul>
+<li><a href="#creating-the-submodule">Creating the Submodule</a></li>
+<li><a href="#updating-the-submodule.">Updating the Submodule.</a></li>
+</ul></li>
 <li><a href="#code-externalization-by-chunks">Code Externalization by Chunks</a><ul>
 <li><a href="#example-1-the-basics">Example 1: The Basics</a></li>
 <li><a href="#r-setup">r setup</a></li>
@@ -29,7 +32,7 @@ output:
 <h2>Introduction</h2>
 <p>Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.</p>
 <p>But how do I utilize all the work I’ve already done in the project? I’ve curated the data, built the plots, and saved my complicated analysis as a <a href="https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/"><code>.RDS</code> file</a>. I’d like to reuse that work, and as a one forum user put it “copying rmarkdown files is a nonstarter.”</p>
-<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We’ll look at these tools:</p>
+<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We’ll look at</p>
 <ul>
 <li><a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a><br />
 </li>
@@ -39,14 +42,62 @@ output:
 </div>
 <div id="git-setup" class="section level2">
 <h2>git Setup</h2>
-<p>Note: If you publish your own <code>public</code> folder (instead of using a service like Netlify) you don’t need to create a submodule. You can skip this section and set the <code>knitr::opts_knit(root.dir = '')</code> to the local git repo of your project.</p>
-<p>For our purposes, we’ll assume your project repo exists Github. I strongly recommend Jenny Bryan’s bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a> if you would like a tutorial on working with git locally and on Github.</p>
+<p>For our purposes, we’ll assume your project repo exists Github. If you don’t feel comfortable with command line <code>git clone/pull/add/commit/push</code>, I strongly recommend Jenny Bryan’s bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a>. The tutorial will teach you the basics of working with git locally and on Github.</p>
+<p>The purpose of the submodule is to make the contents of your project easily available and accessible. For example, your <code>.Rmd</code> posts can utilize all the data and functions without copy/pasting. And services like Netlify can automatically pull the the project’s contents from their github repo without needing a local copy of the project’s file in your website’s repo.</p>
+<p>All this while maintaining version control and a connection to the project’s origin/master so you can incorporate updates.</p>
+<p>Note that if you build your own <code>public</code> folder to serve your website, you don’t need to create a submodule and you can skip to the next section where I introduce <code>knitr::opts_knit(root.dir = '')</code>.</p>
+<div id="creating-the-submodule" class="section level3">
+<h3>Creating the Submodule</h3>
+<p>I recommend putting the project submodule in the same directory as your blog post. All my blog posts live here:</p>
+<pre class="r"><code>website2/content/blog</code></pre>
+<p>So that is where I want to put a copy of my project. We do that with the <code>submodule</code> command:</p>
 <pre class="r"><code>Timothys-MacBook-Pro:blog Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
 Cloning into &#39;/Users/Tim/website2/content/blog/git-blogdown-workflow&#39;...
 remote: Counting objects: 10, done.
 remote: Compressing objects: 100% (7/7), done.
 remote: Total 10 (delta 0), reused 7 (delta 0), pack-reused 0
 Unpacking objects: 100% (10/10), done.</code></pre>
+<p>When we <code>git add/commit/push</code> the changes to the <a href="https://github.com/tmastny/website2">website2 repo</a> you’ll notice that the folder icon has changed. This indicates that repo is now tracking a reference to the project repo at a certain commit, rather than a copy of those files at a moment in time.</p>
+<div class="figure">
+<img src="/blog/github_pic.png" />
+
+</div>
+<p>In fact, if you click the folder you will be taken to the <a href="https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8">git-blogdown-workflow Github repo</a>.</p>
+<p>This is exactly what we want. Instead of being a static copy of the project’s file, we have a version controlled copy that is linked to the master branch. Updates to the submodule are not pulled in automatically, however.</p>
+</div>
+<div id="updating-the-submodule." class="section level3">
+<h3>Updating the Submodule.</h3>
+<p>On a normal git repo, to receive the latest changes to your local branch you use <code>git pull</code>. But <code>git pull</code> only brings in changes to the top level git repo, which is the website’s repo. And this is by design.</p>
+<p>Imagine you write a post that includes content from a project submodule. Months later a teammate makes an update that changes a feature your blog post depends on. If the submodule was updated automatically with pull, your blog posts could unexpectedly break in surprising ways.</p>
+<p>Therefore, to avoid unexpected conflicts we need to explicitly receive updates from submodules.</p>
+<p>The first method is to navigate to the submodule and use <code>git fetch/merge</code>. For example,</p>
+<pre class="r"><code>Timothys-MacBook-Pro:blog Tim$ cd git-blogdown-workflow/
+Timothys-MacBook-Pro:git-blogdown-workflow Tim$ git fetch
+remote: Counting objects: 3, done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 3 (delta 1), reused 3 (delta 1), pack-reused 0
+Unpacking objects: 100% (3/3), done.
+From https://github.com/tmastny/git-blogdown-workflow
+   3149843..e207121  master     -&gt; origin/master
+Timothys-MacBook-Pro:git-blogdown-workflow Tim$ git merge origin/master
+Updating 3149843..e207121
+Fast-forward
+ plot_model.R | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+ create mode 100644 plot_model.R</code></pre>
+<p>Note that <code>git pull</code>, the shortcut for <code>git fetch/merge</code> used on normal git repos does not work for submodules.</p>
+<p>Or if you want to update all your submodules, you can use the shortcut <code>git submodule update --remote</code>:</p>
+<pre class="r"><code>Timothys-MacBook-Pro:blog Tim$ git submodule update --remote
+Submodule path &#39;git-blogdown-workflow&#39;: checked out &#39;ce0d3a2f200eac6cd2a2980110137f7917e30b1d&#39;
+remote: Counting objects: 6, done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 6 (delta 3), reused 5 (delta 2), pack-reused 0
+Unpacking objects: 100% (6/6), done.
+From https://github.com/tmastny/periodization-meta-analysis
+   b29483b..de596ae  master     -&gt; origin/master
+Submodule path &#39;periodization-meta-analysis&#39;: checked out &#39;de596aed6a5535f7f4cdd270644e7993625b3f78&#39;</code></pre>
+<p>But remember, pulling unexpected changes from your submodules can break your blog posts.</p>
+</div>
 </div>
 <div id="code-externalization-by-chunks" class="section level2">
 <h2>Code Externalization by Chunks</h2>
@@ -94,7 +145,7 @@ monty_hall_sim &lt;- function (door, switch) {
 <p>This really helps with portability and maintainability. We haven’t copied any code or scripts. The project script <code>chunks.R</code> is being pull from the repo, so if the file is modified there, it will be modified here as well.</p>
 <p>And another useful feature is that calling <code>simulate_function</code> evalutes the code in the <code>.Rmd</code> environment of the blog post. So we can use the function within the post!</p>
 <pre class="r"><code>monty_hall_sim(&#39;a&#39;, TRUE)</code></pre>
-<pre><code>## [1] FALSE</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 <p>This is nice. We can now easily add simple, exploratory examples to the blog post that we wouldn’t want cluttering the <code>.R</code> script.</p>
 <p>Let’s call the next chunk:</p>
 <pre><code>```{r run_simulation}
@@ -110,12 +161,12 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 a     T      F    
-## 2 b     T      F    
-## 3 a     T      F    
-## 4 c     T      T    
-## 5 b     F      F    
-## 6 b     F      T</code></pre>
+## 1 a     F      F    
+## 2 c     F      F    
+## 3 b     T      T    
+## 4 a     F      T    
+## 5 c     F      F    
+## 6 a     T      T</code></pre>
 <p>You do need to be careful with this data. Any future chunks you call from <code>chunks.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
