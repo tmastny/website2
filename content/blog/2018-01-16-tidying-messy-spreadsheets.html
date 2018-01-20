@@ -237,7 +237,7 @@ d$outcome &lt;- as.numeric(d$outcome)</code></pre>
 ## 17   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
 ## 18   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
 ## # ... with 2 more variables: outcome_measurements &lt;chr&gt;, outcome &lt;dbl&gt;</code></pre>
-<p>As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation just to toss it out, but only studies 35 adn 47 are missing this data. We can easily go back to the source and see what’s going on.</p>
+<p>As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation to toss it out, but only studies 35 and 47 are missing this data. We can easily go back to the source and see what’s going on.</p>
 <p>Referring back to the original data, it looks like the missing data is a strange encoding of some smaller muscles like elbow flexors and triceps. I’m going to exclude it, because it would probably take some manual data manipulation to fix. Also, in the next blog post I’m going to focus on the squat and bench so it won’t matter in the long run.</p>
 <p>So let’s try it without those rows:</p>
 <pre class="r"><code>d &lt;- d[-c(114, 115, 120, 121, 122, 123, 90, 91, 96, 97, 98, 99, 102, 103, 108, 109, 110, 111),]</code></pre>
@@ -264,7 +264,7 @@ d$outcome &lt;- as.numeric(d$outcome)</code></pre>
 <ol>
 <li id="fn1"><p>Sometimes we can’t easily fix spatial relations. For example, Excel pivot tables are notorious for the complicated use of whitespace and empty cells. For more advanced spreadsheet munging, check out <a href="https://cran.r-project.org/web/packages/tidyxl/vignettes/tidyxl.html">tidyxl</a> package.<a href="#fnref1">↩</a></p></li>
 <li id="fn2"><p>ES stands for effect size. We’ll talk about that in the next blog post<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>Check out <a href="https://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and?noredirect=1&amp;lq=1">this</a> stackoverflow answer for another example<a href="#fnref3">↩</a></p></li>
+<li id="fn3"><p>Check out <a href="https://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and?noredirect=1&amp;lq=1">this</a> Stack Overflow answer for another example<a href="#fnref3">↩</a></p></li>
 <li id="fn4"><p><code>mutate_if(is.character, funs(factor(.))) %&gt;%</code> transforms each character column to a factor column for easy grouping. I believe <code>r-base</code> data frames do this automatically, but either <code>readxl</code> or <code>tibble</code> doesn’t.<a href="#fnref4">↩</a></p></li>
 </ol>
 </div>

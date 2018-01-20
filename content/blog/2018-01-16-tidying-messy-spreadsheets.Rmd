@@ -136,7 +136,7 @@ Let's look at all the relevant data for study one.
 d %>% filter(Number == 1) %>% select(-N, -Number)
 ```
 
-If we read closely, we can see that there were three unique protocols in study one. Each protocol has a unique pre, post, and sd measurement. We can exploit that grouped structure^[Check out [this](https://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and?noredirect=1&lq=1) stackoverflow answer for another example] by dividing the data into those groups and then spreading the `outcome_measurements` to a column containing the numeric `outcome`.
+If we read closely, we can see that there were three unique protocols in study one. Each protocol has a unique pre, post, and sd measurement. We can exploit that grouped structure^[Check out [this](https://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and?noredirect=1&lq=1) Stack Overflow answer for another example] by dividing the data into those groups and then spreading the `outcome_measurements` to a column containing the numeric `outcome`.
 
 ```{r}
 d %>% 
@@ -159,7 +159,7 @@ We got an error, but we can work with this. It tells us where `spread` sees iden
 d[c(114, 115, 120, 121, 122, 123, 90, 91, 96, 97, 98, 99, 102, 103, 108, 109, 110, 111),]
 ```
 
-As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation just to toss it out, but only studies 35 adn 47 are missing this data. We can easily go back to the source and see what's going on.
+As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation to toss it out, but only studies 35 and 47 are missing this data. We can easily go back to the source and see what's going on.
 
 Referring back to the original data, it looks like the missing data is a strange encoding of some smaller muscles like elbow flexors and triceps. I'm going to exclude it, because it would probably take some manual data manipulation to fix. Also, in the next blog post I'm going to focus on the squat and bench so it won't matter in the long run.
 
