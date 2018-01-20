@@ -77,6 +77,9 @@ Let's work through an example.
 
 ### Example 1: The Basics
 
+### r setup
+I would encourage you to turn off cache for code utilization. First, since you are pull in external data, in my experience the caching system has gotten confused over the status of a variable. Second, you shouldn't need to do lengthly computations within the blog `.Rmd` environment. Those should be saved as a `.RDS` in your git submodule. We'll work through an example of that latter. 
+
 We'll start simple by working with the R script [`chunks.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/chunks.R).
 
 Before we can call the chunks in our file, we need to initialize the `.R` script with `read_chunk`.^[You can include the chunk option `echo=FALSE` if you don't want to show `read_chunk` in your blog post. See [here](https://yihui.name/knitr/options/) for more details.] 

@@ -29,20 +29,20 @@ output:
 <h2>Introduction</h2>
 <p>I want this post to be an introduction to cleaning and preparing a messy spreadsheet as part of a data science pipeline. Instead of presenting a final product, I’d like to emphasize exploration as a natural part of tidying. My approach will follow Hadley Wickham’s tidy data principles outlined in his <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">tidy data</a> paper. At the end, our data should satisfy these three characteristics:</p>
 <ul>
-<li><p>one variable per column</p></li>
-<li><p>one observation per row</p></li>
-<li><p>each type of observational unit forms a table</p></li>
+<li>one variable per column</li>
+<li>one observation per row</li>
+<li>each type of observational unit forms a table</li>
 </ul>
 </div>
 <div id="why-tidy" class="section level2">
 <h2>Why Tidy?</h2>
-<p>In educational environments, data is served in a convenient format that is ready to be subjected to an array of algorithms from which we hope to drive some insight. But as Hadley explains in his <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">paper</a>, the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself. In his article, Hadley identifies tidy data as data that is ready to be analyzed by statistical programs. That’s our goal here.</p>
+<p>In educational environments, data is often served in a format convenient for statistical algorithms. The student can apply an array of methods and try to derive some insight. But as Hadley explains in his <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">paper</a>, the reality is that the data scientists spend 80% of their time preparing data, and only 20% on the analysis itself. In his article, Hadley identifies tidy data as data that is ready to be analyzed by statistical programs. That’s our goal here.</p>
 </div>
 <div id="the-data" class="section level2">
 <h2>The Data</h2>
-<p>I’ll be tidying Greg Nuckol’s spreadsheet of periodization studies on strength training found on his website <a href="https://www.strongerbyscience.com/periodization-data/">Strong By Science</a>. I choose this dataset because Greg shared it and encouraged others to analyze it, which I think is awesome. In a future blog post, I am going to conduct a Bayesian meta-analysis and share my results.</p>
+<p>I’ll be tidying Greg Nuckol’s spreadsheet of periodization studies on strength training found on his website <a href="https://www.strongerbyscience.com/periodization-data/">Strong By Science</a>. I choose this dataset because Greg shared it and encouraged others to analyze it, which I think is awesome. In a future blog post, I am going to conduct a Bayesian meta-analysis of this data and share my results.</p>
 <p>To be clear, the phrase “cleaning the dataset” is non-judgmental and I’m not trying to pick on Greg. When building this spreadsheet, Greg had more important things to do than to make it friendly for computers, especially when tidy data can sacrifice human readability and has various other <a href="https://simplystatistics.org/2016/02/17/non-tidy-data/">trade-offs</a>.</p>
-<p>I think these sorts of exercises develop fundamental skills for the aspiring data science and thought I would contribute my own example. I commend Greg’s own analysis and his willingness to share his data, and I’m happy to go through the exercise of cleaning it up.</p>
+<p>I think these sorts of exercises develop fundamental skills for the aspiring data science and I thought I would contribute my own example. I commend Greg’s own analysis and his willingness to share his data, and I’m happy to go through the exercise of cleaning it up.</p>
 </div>
 <div id="follow-along" class="section level2">
 <h2>Follow Along</h2>
@@ -60,7 +60,7 @@ output:
 <p>Luckily, we can easily correct this spatial dependence:<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> the first five variables always inherit the data from the previous row. We can code that as follows:</p>
 <pre class="r"><code>library(tidyverse)
 library(magrittr)
-d &lt;- readxl::read_excel(&#39;periodization-meta-analysis/Periodization Stuff.xlsx&#39;)</code></pre>
+d &lt;- readxl::read_excel(&#39;Periodization Stuff.xlsx&#39;)</code></pre>
 <pre class="r"><code>for (i in 1:nrow(d)) {
   if (is.na(d[i,1])) {
     d[i, c(1, 2, 3, 4, 5)] = d[i - 1, c(1, 2, 3, 4, 5)]
@@ -79,14 +79,14 @@ d &lt;- readxl::read_excel(&#39;periodization-meta-analysis/Periodization Stuff.
 ## 1 https://www.dropbox.com/s/kyqean4j8zlfae9/Screenshot%202017-06-19%2009.…</code></pre>
 <p>But we can coerce our vector to numeric, which changes any characters to NAs.</p>
 <pre class="r"><code>d$`Other 1 pre` &lt;- as.numeric(d$`Other 1 pre`)</code></pre>
-<p>While exploring the file and figuring out how to clean it, I use filters and <code>head(d)</code> all the time. An easy way to improve the appearance of the console output is by hiding some of the less critical, text heavy columns using <code>dplyr::select</code>:</p>
+<p>Whenever I’m exploring a dataset and figuring out how to clean it, I use filters and <code>head</code> all the time. An easy way to improve the appearance of the console output is by hiding some of the less critical, text heavy columns using <code>dplyr::select</code>:</p>
 <pre class="r"><code>d %&lt;&gt;%
   select(
     -`Measurements at 3+ time points?`, -Author, -`Study Title`,
     -`Participants (training status)`, -Age, -Sex, -`Length (weeks)`,
     -`Intensity Closest to 1RM test`, -`Volume Equated?`, -Issues)</code></pre>
 <p>This makes the output more manageable and informative. Run this early in your pipeline and either delete or comment it out when you are finished so you can preserve all the data.</p>
-<p>Next, you should notice that the last 70 columns are all numeric, with names such as squat, bench, LBM, etc. This violates the second principle of tidy data: we should have <em>one observation per row</em>. Instead, we have one study for row, with multiple observations per study (squat, bench, LBM, etc) as columns. We need to gather the columns into one row:</p>
+<p>Next, you should notice that the last 70 columns are all numeric, with names such as squat, bench, LBM, etc. This violates the second principle of tidy data: we should have <em>one observation per row</em>. Instead, we have one program type (per study) per row, with multiple observations (squat, bench, LBM, etc) for each program type as columns. We need to gather the columns into one row:</p>
 <pre class="r"><code>d %&lt;&gt;%
   gather(type, outcome, `LBM Pre`:`ES 1 vs. 3__4`)</code></pre>
 <p>Let’s take a closer look at the variables we’ve gathered:</p>
@@ -127,7 +127,7 @@ d &lt;- readxl::read_excel(&#39;periodization-meta-analysis/Periodization Stuff.
 ## [67] &quot;% increase__9&quot;          &quot;ES pre/post__9&quot;        
 ## [69] &quot;ES 1 vs. 2/2 vs. 3__4&quot;  &quot;ES 1 vs. 3__4&quot;</code></pre>
 <p>Okay, first we can safely ignore anything with “ES”<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> or “%” in the name. Those are calculated, not observed quantities.</p>
-<p>Now I see a pattern in the rest of the column names. Each outcome is named something like <strong>“[LBM/Bench/Squat] [Pre/Post/SD]”</strong>. We actually have two different variables in one column, which violates the first tidy principle: <em>one variable per column</em>. We need to separate the columns so we have a variable for outcome types such as LBM, bench, squat, etc. and outcome measurements such as pre, post, and SD:</p>
+<p>Now I see a pattern in the rest of the column names. Each outcome is named something like <strong>“[LBM/Bench/Squat] [Pre/Post/SD]”</strong>. This means we actually have two different variables in one column, which violates the first tidy principle: <em>one variable per column</em>. We need to separate the columns so we have a variable for outcome types such as LBM, bench, squat, etc. and outcome measurements such as pre, post, and SD:</p>
 <pre class="r"><code>d %&lt;&gt;%
   mutate(type = str_to_lower(type)) %&gt;%
   filter(
@@ -135,9 +135,9 @@ d &lt;- readxl::read_excel(&#39;periodization-meta-analysis/Periodization Stuff.
     str_detect(type, &#39; post&#39;) |
     str_detect(type, &#39; sd&#39;)) &amp;
     not(str_detect(type, &quot;/&quot;))) %&gt;%
-    separate(
-      type, c(&#39;outcome_type&#39;, &#39;outcome_measurements&#39;), 
-      &#39; (?=(pre$|post$|sd$))&#39;)</code></pre>
+  separate(
+    type, c(&#39;outcome_type&#39;, &#39;outcome_measurements&#39;), 
+    &#39; (?=(pre$|post$|sd$))&#39;)</code></pre>
 <p>This gives us</p>
 <pre class="r"><code>head(d %&gt;% select(Number, outcome_type, outcome_measurements, outcome))</code></pre>
 <pre><code>## # A tibble: 6 x 4
@@ -187,7 +187,7 @@ d$outcome &lt;- as.numeric(d$outcome)</code></pre>
 ## 16 NP              5x10RM (78.9%); … bench        post             1.41   
 ## 17 NP              6x8RM (83.3%); w… bench        post             1.43   
 ## 18 LP/BP           5x10RM for 4 wee… bench        post             1.60</code></pre>
-<p>If we read closely, we can see that there were three unique protocols in study one. Each protocol has a unique pre, post, and sd measurement. We can exploit that grouped structure<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> by dividing the data into those groups and then spread the <code>outcome_measurements</code> to a column containing the <code>outcome</code> numeric.</p>
+<p>If we read closely, we can see that there were three unique protocols in study one. Each protocol has a unique pre, post, and sd measurement. We can exploit that grouped structure<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> by dividing the data into those groups and then spreading the <code>outcome_measurements</code> to a column containing the numeric <code>outcome</code>.</p>
 <pre class="r"><code>d %&gt;% 
   filter(Number == 1) %&gt;%
   select(-N, -Number) %&gt;%
@@ -237,8 +237,8 @@ d$outcome &lt;- as.numeric(d$outcome)</code></pre>
 ## 17   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
 ## 18   47.0    NA &lt;NA&gt;            &lt;NA&gt;              mt          
 ## # ... with 2 more variables: outcome_measurements &lt;chr&gt;, outcome &lt;dbl&gt;</code></pre>
-<p>As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation just to toss it out, but let’s go to the source to see if we are missing anything.</p>
-<p>Referring back to the original data, it looks like the missing data is a strange encoding of some smaller muscles like elbow flexors and triceps. I’m going to exclude it, because it would probably take some manual data manipulation to fix. Also, in the next blog post I’m going to focus on squat and bench so it won’t matter in the long run.</p>
+<p>As expected, lots of missing data. Seemingly important data such as Program Label, Details, and participants. There is a temptation just to toss it out, but only studies 35 adn 47 are missing this data. We can easily go back to the source and see what’s going on.</p>
+<p>Referring back to the original data, it looks like the missing data is a strange encoding of some smaller muscles like elbow flexors and triceps. I’m going to exclude it, because it would probably take some manual data manipulation to fix. Also, in the next blog post I’m going to focus on the squat and bench so it won’t matter in the long run.</p>
 <p>So let’s try it without those rows:</p>
 <pre class="r"><code>d &lt;- d[-c(114, 115, 120, 121, 122, 123, 90, 91, 96, 97, 98, 99, 102, 103, 108, 109, 110, 111),]</code></pre>
 <pre class="r"><code>d %&lt;&gt;% 
@@ -251,7 +251,7 @@ d$outcome &lt;- as.numeric(d$outcome)</code></pre>
 </div>
 <div id="final-product" class="section level2">
 <h2>Final Product</h2>
-<p>We could call <code>write.csv</code> on our dataset right now and be done with it. It would be shareable, but not repeatable. Not only that, but our dataset would be incomplete. Remember we deleted a bunch of columns with <code>dplyr:select</code> to make it easier to see on the command line.</p>
+<p>We could call <code>write.csv</code> on our dataset right now and be done with it. The data would be shareable, but the process isn’t very repeatable. Not only that, but our dataset would be incomplete. Remember we deleted a bunch of columns with <code>dplyr:select</code> to make it easier to see on the command line.</p>
 <p>For these reasons, I would encourage you to translate your interactive commands into a standalone <code>.R</code> script that exists in an isolated environment only containing the original data, such as <a href="https://github.com/tmastny/periodization-meta-analysis/blob/master/tidier.R">the one</a> I made for this blog post. The isolated environment eliminates forgotten dependencies in the interactive working environment, an <code>.R</code> script solves the repeatibility problem, and posting on Github improves our sharing.</p>
 </div>
 <div id="conclusion" class="section level2">

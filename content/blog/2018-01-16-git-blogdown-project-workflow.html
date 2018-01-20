@@ -19,6 +19,7 @@ output:
 <li><a href="#git-setup">git Setup</a></li>
 <li><a href="#code-externalization-by-chunks">Code Externalization by Chunks</a><ul>
 <li><a href="#example-1-the-basics">Example 1: The Basics</a></li>
+<li><a href="#r-setup">r setup</a></li>
 <li><a href="#example-2-external-data-with-here">Example 2: External Data with <code>here</code></a></li>
 </ul></li>
 </ul>
@@ -63,6 +64,10 @@ knitr::read_chunk(path = &#39;path_name/script.R&#39;)
 <p>Let’s work through an example.</p>
 <div id="example-1-the-basics" class="section level3">
 <h3>Example 1: The Basics</h3>
+</div>
+<div id="r-setup" class="section level3">
+<h3>r setup</h3>
+<p>I would encourage you to turn off cache for code utilization. First, since you are pull in external data, in my experience the caching system has gotten confused over the status of a variable. Second, you shouldn’t need to do lengthly computations within the blog <code>.Rmd</code> environment. Those should be saved as a <code>.RDS</code> in your git submodule. We’ll work through an example of that latter.</p>
 <p>We’ll start simple by working with the R script <a href="https://github.com/tmastny/git-blogdown-workflow/blob/master/chunks.R"><code>chunks.R</code></a>.</p>
 <p>Before we can call the chunks in our file, we need to initialize the <code>.R</code> script with <code>read_chunk</code>.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
 <pre><code>```{r}
@@ -89,7 +94,7 @@ monty_hall_sim &lt;- function (door, switch) {
 <p>This really helps with portability and maintainability. We haven’t copied any code or scripts. The project script <code>chunks.R</code> is being pull from the repo, so if the file is modified there, it will be modified here as well.</p>
 <p>And another useful feature is that calling <code>simulate_function</code> evalutes the code in the <code>.Rmd</code> environment of the blog post. So we can use the function within the post!</p>
 <pre class="r"><code>monty_hall_sim(&#39;a&#39;, TRUE)</code></pre>
-<pre><code>## [1] TRUE</code></pre>
+<pre><code>## [1] FALSE</code></pre>
 <p>This is nice. We can now easily add simple, exploratory examples to the blog post that we wouldn’t want cluttering the <code>.R</code> script.</p>
 <p>Let’s call the next chunk:</p>
 <pre><code>```{r run_simulation}
@@ -105,12 +110,12 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 a     T      T    
-## 2 a     T      T    
-## 3 a     F      F    
+## 1 a     T      F    
+## 2 b     T      F    
+## 3 a     T      F    
 ## 4 c     T      T    
-## 5 a     F      F    
-## 6 a     T      F</code></pre>
+## 5 b     F      F    
+## 6 b     F      T</code></pre>
 <p>You do need to be careful with this data. Any future chunks you call from <code>chunks.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
