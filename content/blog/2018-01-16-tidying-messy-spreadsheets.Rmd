@@ -15,7 +15,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
                       results='show', cache=FALSE, autodep=FALSE)
-knitr::opts_knit$set(root.dir = 'periodization-meta-analysis/')
+knitr::opts_knit$set(root.dir = 'external_data/periodization-meta-analysis/')
 ```
 ```{r, echo=FALSE}
 knitr::read_chunk("tidier.R")
