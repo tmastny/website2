@@ -15,7 +15,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
                       results='show', cache=FALSE, autodep=FALSE)
-knitr::read_chunk("periodization-meta-analysis/tidier.R")
+knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
 ```
 
 ## Introduction
@@ -35,13 +35,13 @@ I'll demonstrate this workflow by example. This [Github repo](https://github.com
 
 For our purposes, we'll assume your project repo exists Github. If you don't feel comfortable with command line `git clone/pull/add/commit/push`, I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html). The tutorial will teach you the basics of working with git locally and on Github.
 
-The purpose of the submodule is to make the contents of your project easily available and accessible. For example, your `.Rmd` posts can utilize all the data and functions without copy/pasting. And services like Netlify can automatically pull the the project's contents from their github repo without needing a local copy of the project's file in your website's repo. 
+The purpose of the submodule is to make the contents of your project easily available and accessible. We want your `.Rmd` posts to utilize all the data and functions without copy/pasting. And services like Netlify should be able tothe project's contents from their github repo without needing a local copy of the project's file in your website's repo. 
 
 All this while maintaining version control and a connection to the project's origin/master so you can incorporate updates.
 
 Note that if you build your own `public` folder to serve your website, you don't need to create a submodule and you can skip to the next section where I introduce `knitr::opts_knit(root.dir = '')`.
 
-### Creating the Submodule
+### Creating
 
 I recommend putting the project submodule in the same directory as your blog post. All my blog posts live here:
 
@@ -60,7 +60,7 @@ remote: Total 10 (delta 0), reused 7 (delta 0), pack-reused 0
 Unpacking objects: 100% (10/10), done.
 ```
 
-When we `git add/commit/push` the changes to the [website2 repo](https://github.com/tmastny/website2) you'll notice that the folder icon has changed. This indicates that repo is now tracking a reference to the project repo at a certain commit, rather than a copy of those files at a moment in time.
+When we `git add/commit/push` the changes to the [website2 repo](https://github.com/tmastny/website2) you'll notice that the folder icon has changed. This indicates that website's repo is now tracking the project's repo at a certain commit, rather than a copy of those files at a moment in time.
 
 ![](/blog/github_pic.png)
 
@@ -68,11 +68,11 @@ In fact, if you click the folder you will be taken to the [git-blogdown-workflow
 
 This is exactly what we want. Instead of being a static copy of the project's file, we have a version controlled copy that is linked to the master branch. Updates to the submodule are not pulled in automatically, however.
 
-### Updating the Submodule. 
+### Updating
 
-On a normal git repo, to receive the latest changes to your local branch you use `git pull`. But `git pull` only brings in changes to the top level git repo, which is the website's repo. And this is by design.
+On a normal git repo, to receive the latest changes to your local branch you use `git pull`. But `git pull` only brings in changes to the top level git repo, which is the website's repo. This is by design.
 
-Imagine you write a post that includes content from a project submodule. Months later a teammate makes an update that changes a feature your blog post depends on. If the submodule was updated automatically with pull, your blog posts could unexpectedly break in surprising ways. 
+Imagine you write a post that includes content from a project submodule. Months later a teammate changes a project feature your blog post depends on. If the submodule was updated automatically with pull, your blog posts could break unexpectedly. 
 
 Therefore, to avoid unexpected conflicts we need to explicitly receive updates from submodules.
 
@@ -114,12 +114,37 @@ But remember, pulling unexpected changes from your submodules can break your blo
 
 ## Code Externalization by Chunks
 
+Now our blog posts lives in
 
-To utilize external `.R` scripts, we first need to use `knitr::read_chunk`. 
+```{r, eval=FALSE}
+website2/content/blog
+```
+
+and we have a project submodule here:
+
+```{r, eval=FALSE}
+website2/content/blog/git-blogdown-workflow
+```
+
+By default `knitr` assumes that the root directory is the one that the `.Rmd` lives in, so in this case `/blog`. However, we'd like our blog post to execute code that thinks its root is `/git-blogdown-workflow`. 
+
+We can change this default behavior in the setup chunk of the `.Rmd` with `knitr::opts_knit$set(root.dir = ...)`^[If you build your own `public` folder to deploy at your website, point `knitr::opts_knit$set(root.dir = ...)` to wherever the local copy of your project's repo is.]. For example, here is the setup chunk I have in the beginning of this blog post:
+````
+```{r setup, include=FALSE}`r ''`
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
+```
+````
+Note that I strongly recommend setting `cache` and `autodep` to false in the chunk options. In my experience, reading in external data can confuse the cache resulting in data existing where it shouldn't. And if you want to use the cache because the blog post is doing a lot of expensive calculations, I recommend moving that code into a project `.R` script that saves the results as `.RDS` files, which you can then read into your blog post.
+
+Now that our `.Rmd` thinks it lives in the project directory `git-blogdown-workflow`, we can start using the project's files.
+
+Here are the two most common procedures. First, to utilize external `.R` scripts within the blog post's `.Rmd` we need to use `knitr::read_chunk`. 
 
 ````
 ```{r}`r ''`
-knitr::read_chunk(path = 'path_name/script.R')
+knitr::read_chunk(path = 'your_script.R')
 ```
 ````
 This will initialize the script within the blog's `.Rmd` environment and allow us to call the code chunks.
@@ -143,25 +168,22 @@ Let's work through an example.
 
 ### Example 1: The Basics
 
-### r setup
-I would encourage you to turn off cache for code utilization. First, since you are pull in external data, in my experience the caching system has gotten confused over the status of a variable. Second, you shouldn't need to do lengthly computations within the blog `.Rmd` environment. Those should be saved as a `.RDS` in your git submodule. We'll work through an example of that latter. 
-
-We'll start simple by working with the R script [`chunks.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/chunks.R).
+We'll start simple by working with the R script [`sim.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/sim.R).
 
 Before we can call the chunks in our file, we need to initialize the `.R` script with `read_chunk`.^[You can include the chunk option `echo=FALSE` if you don't want to show `read_chunk` in your blog post. See [here](https://yihui.name/knitr/options/) for more details.] 
 
 ````
 ```{r}`r ''`
-knitr::read_chunk(path = 'git-blogdown-workflow/chunks.R')
+knitr::read_chunk(path = 'sim.R')
 ```
 ````
 ```{r}
-knitr::read_chunk(path = 'git-blogdown-workflow/chunks.R')
+knitr::read_chunk(path = 'sim.R')
 ```
 
 This does not execute the code, but allows your blog post's `.Rmd` environment to utilize chunks from that `.R` script. 
 
-After we've initialized the script with `read_chunk`, we can now call the code via the code externalization decorators we've added to the source code of `chunks.R`. For example,
+After we've initialized the script with `read_chunk`, we can now call the code via the code externalization decorators we've added to the source code of `sim.R`. For example,
 
 ````
 ```{r simulate_function}`r ''`
@@ -171,7 +193,7 @@ which produces
 ```{r simulate_function}
 ```
 
-This really helps with portability and maintainability. We haven't copied any code or scripts. The project script `chunks.R` is being pull from the repo, so if the file is modified there, it will be modified here as well. 
+This really helps with portability and maintainability. We haven't copied any code or scripts. The project script `sim.R` is being pull from the repo, so if the file is modified there, it will be modified here as well. 
 
 And another useful feature is that calling `simulate_function` evalutes the code in the `.Rmd` environment of the blog post. So we can use the function within the post!
 
@@ -194,7 +216,7 @@ Now we have the tibble `d` in our blog environment. For example, we can show
 head(d)
 ```
 
-You do need to be careful with this data. Any future chunks you call from `chunks.R` evaulate the code in the current environment. So if `d` were gone, the next chunk would fail:
+You do need to be careful with this data. Any future chunks you call from `sim.R` evaulate the code in the current environment. So if `d` were gone, the next chunk would fail:
 ```{r}
 a <- d
 d <- NULL
@@ -222,25 +244,71 @@ d <- a
 ```{r plot_results, fig.width=5, fig.height=4}
 ```
 
-### Example 2: External Data with `here`
+### Example 2: External Data
 
-The last example was nice, but a little unrealistic. Usually we use R to work with external data. And when we work with external data we need to be careful of an additonal complication.
+The last example was nice, but a little unrealistic. Usually we use R to work with external data.
 
-Again, we'll do this by example. This time looking at the R script [`fit_model.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/fit_model.R). 
+Again, we'll do this by example. This time we want to showcase [`fit_model.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/fit_model.R). 
 ```{r}
-knitr::read_chunk('git-blogdown-workflow/fit_model.R')
+knitr::read_chunk('fit_model.R')
 ```
 
+This script fits a linear model to the `tidied_periodization.csv`^[We tidied this data set in a previous [blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/).] and plots the results.
 
-As you browse this model and the repo, you'll notice that our goal is to analysis the dataset `tidied_periodization.csv`^[We tidied this data set in a previous [blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/).].
-
-The first chunk in `fit_model.R` seems reasonable enough, so let's try it:
-```{r read_data, error = TRUE}
+Let's try the first chunk:
+````
+```{r read_data}`r ''`
+```
+````
+```{r read_data}
 ```
 
-Ah! The problem is that a file name with no path implies that the file `tidied_periodization.csv` is in the current working directory, which is now `website2/content` or where ever your blog post lives.
+Even though our blog post's `.Rmd` is actually in the directory above `tidied_periodization.csv`, we can read file as if the `.Rmd` was in the project's directory. This is because we called `knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')` in our setup chunk.
 
-Assuming the file is in the working directory of `fit_model.R` works well when executed in the project environment, but fails for the blog post.
+The next two chunks involve fitting and saving a linear model.
+```{r, eval=FALSE}
+# copied from fit_model.R for reference
+## ---- fit_model ----
+m <- lm(post ~ pre, data = d)
+
+## ---- save_fit ----
+saveRDS(m, file = 'saved_model.rds')
+```
+
+Often we'd like to show how to fit the model, but we don't want to do the computation in the blog post. For me, writing a blog post is 90% rewriting and reorganizing and waiting to fit models is very disruptive, especially when working with machine learning algorithms or Bayesian packages such as [brms](https://github.com/paul-buerkner/brms) or [rstan](https://github.com/stan-dev/rstan) that take a very long time to fit.
+
+There is a straightforward way to accomplish this. First we call the `fit_model` chunk without evaluating it, so we can show how to fit the model.
+````
+```{r fit_model, eval=FALSE}`r ''`
+```
+````
+```{r fit_model, eval=FALSE}
+```
+
+Next, we load the model from the `.RDS` file within the project, with `echo=FALSE` so it doesn't disrupt the narrative of the post.
+
+````
+```{r, echo=FALSE}`r ''`
+m <- readRDS('saved_model.rds')
+```
+````
+```{r, echo=FALSE}
+m <- readRDS('saved_model.rds')
+```
+
+And even though we haven't executed `fit_model.R` linearly, we can still execute the final chunk because we've read in the model:
+````
+```{r plot_model}`r ''`
+```
+````
+```{r plot_model, fig.width=5, fig.height=4}
+```
+
+## Conclusion
+
+I think creating submodules of a project repo is a natural way to blog about a project in a way.
+
+Thanks to [Yihui Xie](https://yihui.name/knitr/demo/externalization/), `knitr` and`blogdown` are flexible enough to accomdate code externalization and changes to the working directory^[Changing the root/working directory in `knitr` has a long history. See [here](https://github.com/yihui/knitr/issues/38) an early feature request and [here](https://github.com/yihui/knitr/issues/277) for the creation of `root.dir`. And by no means am I first to notice the utility of this. Phil Mike Jones [blogged](https://philmikejones.wordpress.com/2015/05/20/set-root-directory-knitr/) in 2015 and there was a Stack Overflow [question](https://stackoverflow.com/questions/30237310/setting-work-directory-in-knitr-using-opts-chunksetroot-dir-doesnt-wor) posted around the same time. All of these were very helpful when writing this post.]
 
 The solution^[You could create a symbolic link between `website2/content` and `website2/content/git-blogdown-workflow` but I think that is an unneeded level of overhead. And creating those symbolic links varies between Linux and Windows.]
 

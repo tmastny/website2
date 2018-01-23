@@ -1,0 +1,42 @@
+---
+title: Women and the Bench Press
+author: ~
+date: '2018-02-01'
+slug: women-weak-bench-press
+categories: []
+tags: []
+description: How to use Git to improve blogdown and project workflow 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
+```
+
+## Introduction
+
+For raw meet data, see this website: http://www.openpowerlifting.org/ and their Github: https://github.com/sstangl/openpowerlifting
+
+
+Ideas:
+
+- Greg Nuckols looked at relative differences between men and women. Men tend to squat and deadlift roughly 50-60% more than woman, but bench 114% more. Why do men bench disproportionally more than women, compared to the other competitive lifts?
+- Could it have something to do with their absolute amount of lean bodymass?
+    - https://www.strongerbyscience.com/how-to-get-strong-what-is-strong/
+- Greg's article on allometric scaling and the Nuckols Index
+    - https://www.strongerbyscience.com/whos-the-most-impressive-powerlifter/
+    
+- Bench press strength related to upper-body thickness
+    - https://www.strongerbyscience.com/how-to-bench/#At_the_end_of_the_day8230
+
+I have a really good idea I need to find some time to work on. First, I want to fit a model (allometric) to the men's data. Then I input the women's weights (controlling for their body %) and use graphical posterior predictive checks to generate what the model thinks women should be capable of, and compare it to what they actually are capable of.
+
+
+
+
+
