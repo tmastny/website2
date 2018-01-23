@@ -1,7 +1,7 @@
 ---
 title: Use git to Blog(down) About Your Projects
 author: ~
-date: '2018-01-20'
+date: '2018-01-23'
 slug: git-blogdown-projects-workflow
 categories: []
 tags: []
@@ -15,7 +15,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
                       results='show', cache=FALSE, autodep=FALSE)
-knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
+knitr::opts_knit$set(root.dir = 'external_data/git-blogdown-workflow/')
 ```
 
 ## Introduction
@@ -26,34 +26,39 @@ But how do I utilize all the work I've already done in the project? I've curated
 
 Inspired by [this discussion](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) on the RStudio forum, I'd like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We'll look at
 
-- [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)  
+- [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) 
+- knitr [working directories](https://github.com/yihui/knitr/issues/277)
 - knitr [code externalization](https://yihui.name/knitr/demo/externalization/)
 
 I'll demonstrate this workflow by example. This [Github repo](https://github.com/tmastny/git-blogdown-workflow) will be the external project we'd like to blog about. And this very post is where we'd like to do it. This means you should also follow the `.Rmd` for this post found on my website's [Github repo](https://github.com/tmastny/website2/blob/master/content/blog/2018-01-16-git-blogdown-project-workflow.Rmd).
 
 ## git Setup
 
-For our purposes, we'll assume your project repo exists Github. If you don't feel comfortable with command line `git clone/pull/add/commit/push`, I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html). The tutorial will teach you the basics of working with git locally and on Github.
+For our purposes, we'll assume your project repo exists on Github. If you don't feel comfortable with command line `git clone/pull/add/commit/push`, I strongly recommend Jenny Bryan's bookdown on [git for R users](http://happygitwithr.com/index.html). The tutorial will teach you the basics of working with git locally and on Github.
 
-The purpose of the submodule is to make the contents of your project easily available and accessible. We want your `.Rmd` posts to utilize all the data and functions without copy/pasting. And services like Netlify should be able tothe project's contents from their github repo without needing a local copy of the project's file in your website's repo. 
+The purpose of the submodule is to make the contents of your project easily available and accessible. We want your `.Rmd` posts to utilize all the data and functions without copy/pasting. And we want to maintain version control and a connection to the project's origin/master so you can incorporate updates.
 
-All this while maintaining version control and a connection to the project's origin/master so you can incorporate updates.
-
-Note that if you build your own `public` folder to serve your website, you don't need to create a submodule and you can skip to the next section where I introduce `knitr::opts_knit(root.dir = '')`.
+For me, git submodules are preferrable to other local clones of your project's git repo, because they organize all data your blog uses in one place, and also have an added layer of version control that you'll see in the next section. 
 
 ### Creating
 
-I recommend putting the project submodule in the same directory as your blog post. All my blog posts live here:
+All my blog posts live here:
 
 ```{r, eval=FALSE}
 website2/content/blog
 ```
 
+I like to create a subdirectory that will hold all my future project data. 
+
+```{r, eval=FALSE}
+website2/content/blog/external_data
+```
+
 So that is where I want to put a copy of my project. We do that with the `submodule` command:
 
 ```{r, eval = FALSE}
-Timothys-MacBook-Pro:blog Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
-Cloning into '/Users/Tim/website2/content/blog/git-blogdown-workflow'...
+Timothys-MacBook-Pro:external_data Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
+Cloning into '/Users/Tim/website2/content/blog/external_data/git-blogdown-workflow'...
 remote: Counting objects: 10, done.
 remote: Compressing objects: 100% (7/7), done.
 remote: Total 10 (delta 0), reused 7 (delta 0), pack-reused 0
@@ -68,7 +73,7 @@ In fact, if you click the folder you will be taken to the [git-blogdown-workflow
 
 This is exactly what we want. Instead of being a static copy of the project's file, we have a version controlled copy that is linked to the master branch. Updates to the submodule are not pulled in automatically, however.
 
-### Updating
+### Updating and Version Control
 
 On a normal git repo, to receive the latest changes to your local branch you use `git pull`. But `git pull` only brings in changes to the top level git repo, which is the website's repo. This is by design.
 
@@ -136,7 +141,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
 ```
 ````
-Note that I strongly recommend setting `cache` and `autodep` to false in the chunk options. In my experience, reading in external data can confuse the cache resulting in data existing where it shouldn't. And if you want to use the cache because the blog post is doing a lot of expensive calculations, I recommend moving that code into a project `.R` script that saves the results as `.RDS` files, which you can then read into your blog post.
+Note that I strongly recommend setting `cache` and `autodep` to false in the chunk options. In my experience, reading in external data can confuse the cache resulting in data existing where it shouldn't. And if you want to use the cache because the blog post is doing a lot of expensive calculations, I recommend moving that code into a `.R` script within the project that saves the results as `.RDS` files, which you can then read into your blog post.
 
 Now that our `.Rmd` thinks it lives in the project directory `git-blogdown-workflow`, we can start using the project's files.
 
@@ -193,7 +198,7 @@ which produces
 ```{r simulate_function}
 ```
 
-This really helps with portability and maintainability. We haven't copied any code or scripts. The project script `sim.R` is being pull from the repo, so if the file is modified there, it will be modified here as well. 
+This helps with portability and maintainability. We haven't copied any code or scripts. The project script `sim.R` is being pull from the repo, so if the file is modified there, it will be modified here as well. 
 
 And another useful feature is that calling `simulate_function` evalutes the code in the `.Rmd` environment of the blog post. So we can use the function within the post!
 
@@ -201,7 +206,7 @@ And another useful feature is that calling `simulate_function` evalutes the code
 monty_hall_sim('a', TRUE)
 ```
 
-This is nice. We can now easily add simple, exploratory examples to the blog post  that we wouldn't want cluttering the `.R` script. 
+This is nice. We can easily add simple, exploratory examples to the blog post that we wouldn't want cluttering the `.R` script. 
 
 Let's call the next chunk:
 ````
@@ -253,7 +258,7 @@ Again, we'll do this by example. This time we want to showcase [`fit_model.R`](h
 knitr::read_chunk('fit_model.R')
 ```
 
-This script fits a linear model to the `tidied_periodization.csv`^[We tidied this data set in a previous [blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/).] and plots the results.
+This script fits a linear model to `tidied_periodization.csv`^[We tidied this data set in a previous [blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/).] and plots the results.
 
 Let's try the first chunk:
 ````
@@ -306,11 +311,22 @@ And even though we haven't executed `fit_model.R` linearly, we can still execute
 
 ## Conclusion
 
-I think creating submodules of a project repo is a natural way to blog about a project in a way.
+The key takeaway is that we can make our `.Rmd` file think that it exists in our project directory by calling
+```{r, eval=FALSE}
+knitr::opts_knit$set(root.dir = ...)
+```
+And with code externalization, you can interactively execute your source code to blog about your methods, or to share your final results.
 
-Thanks to [Yihui Xie](https://yihui.name/knitr/demo/externalization/), `knitr` and`blogdown` are flexible enough to accomdate code externalization and changes to the working directory^[Changing the root/working directory in `knitr` has a long history. See [here](https://github.com/yihui/knitr/issues/38) an early feature request and [here](https://github.com/yihui/knitr/issues/277) for the creation of `root.dir`. And by no means am I first to notice the utility of this. Phil Mike Jones [blogged](https://philmikejones.wordpress.com/2015/05/20/set-root-directory-knitr/) in 2015 and there was a Stack Overflow [question](https://stackoverflow.com/questions/30237310/setting-work-directory-in-knitr-using-opts-chunksetroot-dir-doesnt-wor) posted around the same time. All of these were very helpful when writing this post.]
+I also think project submodules are a natural way to organize your work within your blog or website's repo, as opposed to [symbolic links](https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445) which are more invisible and can change between operating systems.
 
-The solution^[You could create a symbolic link between `website2/content` and `website2/content/git-blogdown-workflow` but I think that is an unneeded level of overhead. And creating those symbolic links varies between Linux and Windows.]
+## Acknowledgements
+
+Thanks to [Yihui Xie](https://yihui.name/knitr/demo/externalization/), `knitr` and `blogdown` are flexible enough to accomdate code externalization and changes to the working directory. 
+
+Changing the root/working directory in `knitr` has a long history. See [here](https://github.com/yihui/knitr/issues/38) an early feature request and [here](https://github.com/yihui/knitr/issues/277) for the creation of `root.dir`. And by no means am I first to notice the utility of this. Phil Mike Jones [blogged about this](https://philmikejones.wordpress.com/2015/05/20/set-root-directory-knitr/) in 2015 and there was a Stack Overflow [question](https://stackoverflow.com/questions/30237310/setting-work-directory-in-knitr-using-opts-chunksetroot-dir-doesnt-wor) posted around the same time. All of these were very helpful when writing this post.
+
+Also thanks to [Jenny Bryan](https://twitter.com/JennyBryan?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor) for her excellent [git tutorial](http://happygitwithr.com/index.html). 
+
 
 
 
