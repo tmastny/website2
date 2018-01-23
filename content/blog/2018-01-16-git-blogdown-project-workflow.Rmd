@@ -71,7 +71,9 @@ When we `git add/commit/push` the changes to the [website2 repo](https://github.
 
 In fact, if you click the folder you will be taken to the [git-blogdown-workflow Github repo](https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8).
 
-This is exactly what we want. Instead of being a static copy of the project's file, we have a version controlled copy that is linked to the master branch. Updates to the submodule are not pulled in automatically, however.
+This is exactly what we want. Instead of being a static copy of the project's file, we have a version controlled copy that is linked to the master branch.
+
+
 
 ### Updating and Version Control
 

@@ -65,7 +65,7 @@ Unpacking objects: 100% (10/10), done.</code></pre>
 
 </div>
 <p>In fact, if you click the folder you will be taken to the <a href="https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8">git-blogdown-workflow Github repo</a>.</p>
-<p>This is exactly what we want. Instead of being a static copy of the project’s file, we have a version controlled copy that is linked to the master branch. Updates to the submodule are not pulled in automatically, however.</p>
+<p>This is exactly what we want. Instead of being a static copy of the project’s file, we have a version controlled copy that is linked to the master branch.</p>
 </div>
 <div id="updating-and-version-control" class="section level3">
 <h3>Updating and Version Control</h3>
@@ -172,12 +172,12 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 b     T      F    
-## 2 a     F      F    
-## 3 c     F      T    
-## 4 a     F      F    
-## 5 a     T      F    
-## 6 a     F      F</code></pre>
+## 1 c     F      F    
+## 2 c     F      F    
+## 3 a     T      T    
+## 4 a     T      T    
+## 5 a     F      T    
+## 6 c     F      F</code></pre>
 <p>You do need to be careful with this data. Any future chunks you call from <code>sim.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
