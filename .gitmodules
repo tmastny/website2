@@ -1,6 +1,0 @@
-[submodule "content/blog/periodization-meta-analysis"]
-	path = content/blog/external_data/periodization-meta-analysis
-	url = https://github.com/tmastny/periodization-meta-analysis.git
-[submodule "content/blog/git-blogdown-workflow"]
-	path = content/blog/external_data/git-blogdown-workflow
-	url = https://github.com/tmastny/git-blogdown-workflow.git
