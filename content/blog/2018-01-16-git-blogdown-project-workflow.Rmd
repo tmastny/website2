@@ -71,7 +71,7 @@ When we `git add/commit/push` the changes to the [website2 repo](https://github.
 
 In fact, if you click the folder you will be taken to the [git-blogdown-workflow Github repo](https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8). This is exactly what we want. Instead of a static copy of the project's file, we have a version controlled copy that is linked to the project's Github repo.
 
-Lastly, you should also edit your `config.toml` file to ignore your `external_data` folder, or where ever you plan to put your submodules.
+Lastly, you should also edit your [`config.toml`](https://bookdown.org/yihui/blogdown/configuration.html#options) file to ignore your `external_data` folder, or where ever you plan to put your submodules.
 ```{r, eval=FALSE}
 ignoreFiles = ["\\.Rmd$", "_files$", "_cache$",
                "blogdown$", "external_data$"]

@@ -65,7 +65,7 @@ Unpacking objects: 100% (10/10), done.</code></pre>
 
 </div>
 <p>In fact, if you click the folder you will be taken to the <a href="https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8">git-blogdown-workflow Github repo</a>. This is exactly what we want. Instead of a static copy of the project’s file, we have a version controlled copy that is linked to the project’s Github repo.</p>
-<p>Lastly, you should also edit your <code>config.toml</code> file to ignore your <code>external_data</code> folder, or where ever you plan to put your submodules.</p>
+<p>Lastly, you should also edit your <a href="https://bookdown.org/yihui/blogdown/configuration.html#options"><code>config.toml</code></a> file to ignore your <code>external_data</code> folder, or where ever you plan to put your submodules.</p>
 <pre class="r"><code>ignoreFiles = [&quot;\\.Rmd$&quot;, &quot;_files$&quot;, &quot;_cache$&quot;,
                &quot;blogdown$&quot;, &quot;external_data$&quot;]</code></pre>
 <p>Since Hugo <a href="https://bookdown.org/yihui/blogdown/configuration.html">can’t build <code>.Rmd</code> files</a>, <code>blogdown</code> compiles your <code>.Rmd</code> to <code>.html</code>. These <code>.html</code> files include all the necessary data, so there is no reason for Hugo to copy the submodules to the <code>public/</code> directory.</p>
@@ -175,12 +175,12 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 a     T      F    
-## 2 a     F      F    
-## 3 a     F      T    
+## 1 c     F      F    
+## 2 c     F      F    
+## 3 b     T      T    
 ## 4 c     T      T    
-## 5 c     F      F    
-## 6 b     F      F</code></pre>
+## 5 c     T      T    
+## 6 c     F      T</code></pre>
 <p>You do need to be careful with this data. Any future chunks you call from <code>sim.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
