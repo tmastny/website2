@@ -38,7 +38,7 @@ For our purposes, we'll assume your project repo exists on Github. If you don't 
 
 The purpose of the submodule is to make the contents of your project easily available and accessible. We want your `.Rmd` posts to utilize all the data and functions without copy/pasting. And we want to maintain version control and a connection to the project's origin/master so you can incorporate updates.
 
-For me, git submodules are preferable to other local clones of your project's Github repo. First, I organizing the projects my blog uses within the website's directory structure. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.
+For me, git submodules are preferable to other local clones of your project's Github repo. First, I like organizing the projects my blog uses within the website's directory structure. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.
 
 ### Creating
 

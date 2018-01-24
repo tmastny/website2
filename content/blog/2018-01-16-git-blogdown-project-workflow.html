@@ -45,7 +45,7 @@ output:
 <h2>git Setup</h2>
 <p>For our purposes, we’ll assume your project repo exists on Github. If you don’t feel comfortable with command line <code>git clone/pull/add/commit/push</code>, I strongly recommend Jenny Bryan’s bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a>. The tutorial will teach you the basics of working with git locally and on Github.</p>
 <p>The purpose of the submodule is to make the contents of your project easily available and accessible. We want your <code>.Rmd</code> posts to utilize all the data and functions without copy/pasting. And we want to maintain version control and a connection to the project’s origin/master so you can incorporate updates.</p>
-<p>For me, git submodules are preferable to other local clones of your project’s Github repo. First, I organizing the projects my blog uses within the website’s directory structure. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.</p>
+<p>For me, git submodules are preferable to other local clones of your project’s Github repo. First, I like organizing the projects my blog uses within the website’s directory structure. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.</p>
 <div id="creating" class="section level3">
 <h3>Creating</h3>
 <p>All my blog posts live here:</p>
@@ -175,12 +175,12 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 b     F      F    
-## 2 c     T      T    
-## 3 a     T      T    
-## 4 c     F      F    
+## 1 c     F      F    
+## 2 b     T      T    
+## 3 c     F      F    
+## 4 b     T      T    
 ## 5 a     F      F    
-## 6 b     T      F</code></pre>
+## 6 c     T      F</code></pre>
 <p>You do need to be careful with this data. Any future chunks you call from <code>sim.R</code> evaluate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
