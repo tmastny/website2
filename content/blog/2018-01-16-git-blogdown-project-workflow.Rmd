@@ -6,7 +6,7 @@ slug: git-blogdown-projects-workflow
 categories: []
 tags: []
 description: How to use Git to improve blogdown and project workflow 
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true 
@@ -38,7 +38,7 @@ For our purposes, we'll assume your project repo exists on Github. If you don't 
 
 The purpose of the submodule is to make the contents of your project easily available and accessible. We want your `.Rmd` posts to utilize all the data and functions without copy/pasting. And we want to maintain version control and a connection to the project's origin/master so you can incorporate updates.
 
-For me, git submodules are preferrable to other local clones of your project's git repo, because they organize all data your blog uses in one place, and also have an added layer of version control that you'll see in the next section. 
+For me, git submodules are preferrable to other local clones of your project's Github repo. First, I organizing the projects my blog uses within the website's directory structre. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.
 
 ### Creating
 
@@ -48,13 +48,13 @@ All my blog posts live here:
 website2/content/blog
 ```
 
-I like to create a subdirectory that will hold all my future project data. 
+I like creating a subdirectory that will hold the submodules for any project: 
 
 ```{r, eval=FALSE}
 website2/content/blog/external_data
 ```
 
-So that is where I want to put a copy of my project. We do that with the `submodule` command:
+Then we can create the submodule with the `submodule` command:
 
 ```{r, eval = FALSE}
 Timothys-MacBook-Pro:external_data Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
@@ -67,19 +67,23 @@ Unpacking objects: 100% (10/10), done.
 
 When we `git add/commit/push` the changes to the [website2 repo](https://github.com/tmastny/website2) you'll notice that the folder icon has changed. This indicates that website's repo is now tracking the project's repo at a certain commit, rather than a copy of those files at a moment in time.
 
-![](/blog/github_pic.png)
+![](/blog/github_dir.png)
 
-In fact, if you click the folder you will be taken to the [git-blogdown-workflow Github repo](https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8).
+In fact, if you click the folder you will be taken to the [git-blogdown-workflow Github repo](https://github.com/tmastny/git-blogdown-workflow/tree/314984302b4e1576acf6a6af8edfcb69d702c3f8). This is exactly what we want. Instead of a static copy of the project's file, we have a version controlled copy that is linked to the project's Github repo.
 
-This is exactly what we want. Instead of being a static copy of the project's file, we have a version controlled copy that is linked to the master branch.
+Lastly, you should also edit your `config.toml` file to ignore your `external_data` folder, or where ever you plan to put your submodules.
+```{r, eval=FALSE}
+ignoreFiles = ["\\.Rmd$", "_files$", "_cache$",
+               "blogdown$", "external_data$"]
+```
 
-
+Since Hugo [can't build `.Rmd` files](https://bookdown.org/yihui/blogdown/configuration.html), `blogdown` compiles your `.Rmd` to `.html`. These `.html` files include all the necessary data, so there is no reason for Hugo to copy the submodules to the `public/` directory.
 
 ### Updating and Version Control
 
 On a normal git repo, to receive the latest changes to your local branch you use `git pull`. But `git pull` only brings in changes to the top level git repo, which is the website's repo. This is by design.
 
-Imagine you write a post that includes content from a project submodule. Months later a teammate changes a project feature your blog post depends on. If the submodule was updated automatically with pull, your blog posts could break unexpectedly. 
+Imagine you write a post that includes content from a project submodule. Months later a teammate changes a feature your blog post depends on. If the submodule was updated automatically with pull your blog posts could break unexpectedly. 
 
 Therefore, to avoid unexpected conflicts we need to explicitly receive updates from submodules.
 
@@ -130,20 +134,20 @@ website2/content/blog
 and we have a project submodule here:
 
 ```{r, eval=FALSE}
-website2/content/blog/git-blogdown-workflow
+website2/content/blog/external_data/git-blogdown-workflow
 ```
 
-By default `knitr` assumes that the root directory is the one that the `.Rmd` lives in, so in this case `/blog`. However, we'd like our blog post to execute code that thinks its root is `/git-blogdown-workflow`. 
+By default `knitr` assumes that the root directory is the one that the `.Rmd` lives in, so in this case `blog/`. However, we'd like our blog post to execute code that thinks its root is `git-blogdown-workflow/`. 
 
-We can change this default behavior in the setup chunk of the `.Rmd` with `knitr::opts_knit$set(root.dir = ...)`^[If you build your own `public` folder to deploy at your website, point `knitr::opts_knit$set(root.dir = ...)` to wherever the local copy of your project's repo is.]. For example, here is the setup chunk I have in the beginning of this blog post:
+We can change this default behavior in the setup chunk of the `.Rmd` with `knitr::opts_knit$set(root.dir = ...)`. For example, here is the setup chunk I have in the beginning of this blog post:
 ````
 ```{r setup, include=FALSE}`r ''`
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
                       results='show', cache=FALSE, autodep=FALSE)
-knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
+knitr::opts_knit$set(root.dir = 'external_data/git-blogdown-workflow/')
 ```
 ````
-Note that I strongly recommend setting `cache` and `autodep` to false in the chunk options. In my experience, reading in external data can confuse the cache resulting in data existing where it shouldn't. And if you want to use the cache because the blog post is doing a lot of expensive calculations, I recommend moving that code into a `.R` script within the project that saves the results as `.RDS` files, which you can then read into your blog post.
+Note that I strongly recommend setting `cache` and `autodep` to false in the chunk options. In my experience, reading in external data can confuse the cache resulting in data existing where it shouldn't. And if you want to use the cache because the blog post is doing a lot of expensive calculations, I recommend moving that code into a `.R` script within the project. Then you can save the results as `.RDS` file, which you can read into your blog post.
 
 Now that our `.Rmd` thinks it lives in the project directory `git-blogdown-workflow`, we can start using the project's files.
 
@@ -177,7 +181,7 @@ Let's work through an example.
 
 We'll start simple by working with the R script [`sim.R`](https://github.com/tmastny/git-blogdown-workflow/blob/master/sim.R).
 
-Before we can call the chunks in our file, we need to initialize the `.R` script with `read_chunk`.^[You can include the chunk option `echo=FALSE` if you don't want to show `read_chunk` in your blog post. See [here](https://yihui.name/knitr/options/) for more details.] 
+Before we can call the chunks in our file, we need to initialize the `.R` script with `read_chunk`.^[You can include the chunk option `echo=FALSE` if you don't want to show `read_chunk` in your blog post. See [here](https://yihui.name/knitr/options/) for more chunk options.] 
 
 ````
 ```{r}`r ''`
@@ -270,7 +274,7 @@ Let's try the first chunk:
 ```{r read_data}
 ```
 
-Even though our blog post's `.Rmd` is actually in the directory above `tidied_periodization.csv`, we can read file as if the `.Rmd` was in the project's directory. This is because we called `knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')` in our setup chunk.
+Even though our blog post's `.Rmd` is actually in the directory above `tidied_periodization.csv`, we can read file as if the `.Rmd` was in the project's directory. This is because we changed the root directory in our setup chunk.
 
 The next two chunks involve fitting and saving a linear model.
 ```{r, eval=FALSE}
@@ -282,9 +286,9 @@ m <- lm(post ~ pre, data = d)
 saveRDS(m, file = 'saved_model.rds')
 ```
 
-Often we'd like to show how to fit the model, but we don't want to do the computation in the blog post. For me, writing a blog post is 90% rewriting and reorganizing and waiting to fit models is very disruptive, especially when working with machine learning algorithms or Bayesian packages such as [brms](https://github.com/paul-buerkner/brms) or [rstan](https://github.com/stan-dev/rstan) that take a very long time to fit.
+Often we'd like to show how to fit the model, but we don't want to do the computation in the blog post. For me, writing a blog post is 90% rewriting and reorganizing. Waiting to fit models is very disruptive, especially when working with machine learning algorithms or Bayesian packages such as [brms](https://github.com/paul-buerkner/brms) or [rstan](https://github.com/stan-dev/rstan) that take a very long time to fit.
 
-There is a straightforward way to accomplish this. First we call the `fit_model` chunk without evaluating it, so we can show how to fit the model.
+There is a straightforward way work-around. First we call the `fit_model` chunk without evaluating it, so we can show how to fit the model.
 ````
 ```{r fit_model, eval=FALSE}`r ''`
 ```
