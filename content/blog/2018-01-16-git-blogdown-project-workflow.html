@@ -33,7 +33,7 @@ output:
 <h2>Introduction</h2>
 <p>Here’s the scenario: I’m working on my project, using a git repo to track changes. I’m excited about the project or a certain result, and I’d like to tell everyone about it by making a blog post with blogdown.</p>
 <p>But how do I utilize all the work I’ve already done in the project? I’ve curated the data, built the plots, and saved my complicated analysis as a <a href="https://www.fromthebottomoftheheap.net/2012/04/01/saving-and-loading-r-objects/"><code>.RDS</code> file</a>. I’d like to reuse that work, and as a one forum user put it “copying rmarkdown files is a nonstarter.”</p>
-<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the RStudio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We’ll look at</p>
+<p>Inspired by <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">this discussion</a> on the R Studio forum, I’d like to share my workflow that I use to blog about my projects with Hugo/blogdown/Netlify. We’ll look at</p>
 <ul>
 <li><a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules">git submodules</a></li>
 <li>knitr <a href="https://github.com/yihui/knitr/issues/277">working directories</a></li>
@@ -45,12 +45,12 @@ output:
 <h2>git Setup</h2>
 <p>For our purposes, we’ll assume your project repo exists on Github. If you don’t feel comfortable with command line <code>git clone/pull/add/commit/push</code>, I strongly recommend Jenny Bryan’s bookdown on <a href="http://happygitwithr.com/index.html">git for R users</a>. The tutorial will teach you the basics of working with git locally and on Github.</p>
 <p>The purpose of the submodule is to make the contents of your project easily available and accessible. We want your <code>.Rmd</code> posts to utilize all the data and functions without copy/pasting. And we want to maintain version control and a connection to the project’s origin/master so you can incorporate updates.</p>
-<p>For me, git submodules are preferrable to other local clones of your project’s Github repo. First, I organizing the projects my blog uses within the website’s directory structre. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.</p>
+<p>For me, git submodules are preferable to other local clones of your project’s Github repo. First, I organizing the projects my blog uses within the website’s directory structure. Second, submodules have an added layer of version control that handles project updates in a careful way. This helps to avoid breaking my posts due to a project update.</p>
 <div id="creating" class="section level3">
 <h3>Creating</h3>
 <p>All my blog posts live here:</p>
 <pre class="r"><code>website2/content/blog</code></pre>
-<p>I like creating a subdirectory that will hold the submodules for any project:</p>
+<p>I like creating a sub-directory that will hold the submodules for any project:</p>
 <pre class="r"><code>website2/content/blog/external_data</code></pre>
 <p>Then we can create the submodule with the <code>submodule</code> command:</p>
 <pre class="r"><code>Timothys-MacBook-Pro:external_data Tim$ git submodule add https://github.com/tmastny/git-blogdown-workflow.git
@@ -157,7 +157,7 @@ monty_hall_sim &lt;- function (door, switch) {
   return(door == prize)
 }</code></pre>
 <p>This helps with portability and maintainability. We haven’t copied any code or scripts. The project script <code>sim.R</code> is being pull from the repo, so if the file is modified there, it will be modified here as well.</p>
-<p>And another useful feature is that calling <code>simulate_function</code> evalutes the code in the <code>.Rmd</code> environment of the blog post. So we can use the function within the post!</p>
+<p>And another useful feature is that calling <code>simulate_function</code> evaluates the code in the <code>.Rmd</code> environment of the blog post. So we can use the function within the post!</p>
 <pre class="r"><code>monty_hall_sim(&#39;a&#39;, TRUE)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <p>This is nice. We can easily add simple, exploratory examples to the blog post that we wouldn’t want cluttering the <code>.R</code> script.</p>
@@ -175,13 +175,13 @@ d %&lt;&gt;%
 <pre><code>## # A tibble: 6 x 3
 ##   door  switch prize
 ##   &lt;chr&gt; &lt;lgl&gt;  &lt;lgl&gt;
-## 1 c     F      F    
-## 2 c     F      F    
-## 3 b     T      T    
-## 4 c     T      T    
-## 5 c     T      T    
-## 6 c     F      T</code></pre>
-<p>You do need to be careful with this data. Any future chunks you call from <code>sim.R</code> evaulate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
+## 1 b     F      F    
+## 2 c     T      T    
+## 3 a     T      T    
+## 4 c     F      F    
+## 5 a     F      F    
+## 6 b     T      F</code></pre>
+<p>You do need to be careful with this data. Any future chunks you call from <code>sim.R</code> evaluate the code in the current environment. So if <code>d</code> were gone, the next chunk would fail:</p>
 <pre class="r"><code>a &lt;- d
 d &lt;- NULL</code></pre>
 <pre><code>```{r plot_results}
@@ -253,10 +253,11 @@ m &lt;- readRDS(&#39;saved_model.rds&#39;)
 <pre class="r"><code>knitr::opts_knit$set(root.dir = ...)</code></pre>
 <p>And with code externalization, you can interactively execute your source code to blog about your methods, or to share your final results.</p>
 <p>I also think project submodules are a natural way to organize your work within your blog or website’s repo, as opposed to <a href="https://community.rstudio.com/t/whats-your-blogdown-workflow-to-include-work-from-other-projects/1445">symbolic links</a> which are more invisible and can change between operating systems.</p>
+<p>I would also like to point out that <a href="https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/">personal R packages</a>, as described by Hilary Parker and others, is another way to make personal projects more reusable and shareable. However, for small projects I think there is still a lot of overhead for creating packages (especially when trying to manage dependencies). Likewise, I’m not sure how to easily utilize the source code with <code>read_chunk</code> on an installed package. Therefore I’m not convinced they are the right tool for the job here.</p>
 </div>
 <div id="acknowledgements" class="section level2">
 <h2>Acknowledgements</h2>
-<p>Thanks to <a href="https://yihui.name/knitr/demo/externalization/">Yihui Xie</a>, <code>knitr</code> and <code>blogdown</code> are flexible enough to accomdate code externalization and changes to the working directory.</p>
+<p>Thanks to <a href="https://yihui.name/knitr/demo/externalization/">Yihui Xie</a>, <code>knitr</code> and <code>blogdown</code> are flexible enough to accommodate code externalization and changes to the working directory.</p>
 <p>Changing the root/working directory in <code>knitr</code> has a long history. See <a href="https://github.com/yihui/knitr/issues/38">here</a> an early feature request and <a href="https://github.com/yihui/knitr/issues/277">here</a> for the creation of <code>root.dir</code>. And by no means am I first to notice the utility of this. Phil Mike Jones <a href="https://philmikejones.wordpress.com/2015/05/20/set-root-directory-knitr/">blogged about this</a> in 2015 and there was a Stack Overflow <a href="https://stackoverflow.com/questions/30237310/setting-work-directory-in-knitr-using-opts-chunksetroot-dir-doesnt-wor">question</a> posted around the same time. All of these were very helpful when writing this post.</p>
 <p>Also thanks to <a href="https://twitter.com/JennyBryan?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor">Jenny Bryan</a> for her excellent <a href="http://happygitwithr.com/index.html">git tutorial</a>.</p>
 </div>
