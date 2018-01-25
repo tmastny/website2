@@ -21,6 +21,9 @@ blog = "blog/:slug/"
     name = "About"
     url = "/about/"
     weight = 3
+[[menu.main]]
+    name = "Subscribe"
+    url = "/index.xml"
 
 [params]
 preserveTaxonomyNames = true

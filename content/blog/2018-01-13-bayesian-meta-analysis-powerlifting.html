@@ -16,7 +16,7 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#data-cleaning">Data Cleaning</a></li>
+<li><a href="#the-data">The Data</a></li>
 <li><a href="#my-methodology">My Methodology</a></li>
 <li><a href="#future-work">Future Work</a></li>
 </ul>
@@ -28,18 +28,9 @@ output:
 <p>Greg studied percent changes of various outcomes (usually weight added to an exercise) at various permutations of exercises, time periods, and periodization methods. Consistent with open science principles, Greg shared his data set and encouraged people to do their own analysis. I have full confidence in Greg’s conclusions, but I like both Bayesian statistics and powerlifting so I thought this would be a fun way to combine the two.</p>
 <p>The goal of this blog post is to conduct a Bayesian meta-analysis of Greg’s collection of study outcomes. I really just want to have some fun and get in some practice, but I also think there are a few general advantages to my methods. First, in the article Greg expressed concern about some implausibly large effect sizes. The Bayesian approach is the ideal way to introduce regularization through [multi-level modeling] (<a href="https://cran.r-project.org/web/packages/rstanarm/vignettes/pooling.html" class="uri">https://cran.r-project.org/web/packages/rstanarm/vignettes/pooling.html</a>) and prior information. Second, as Matti Vuorre demonstrated in his <a href="https://mvuorre.github.io/post/2016/2016-09-29-bayesian-meta-analysis/">blog post</a>, it is easy to conduct Bayesian meta-analyses and benefit from the generative and distribution nature of the results. I’ll also introduce other various changes, tweaks, and “improvements” in my own methodology section.</p>
 </div>
-<div id="data-cleaning" class="section level2">
-<h2>Data Cleaning</h2>
-<p>I actually cleaned and tidied Greg’s spreadsheet in a previous blog post. That blog post is really an appendix to this one. If you’d like to know how I cleaned his spreadsheet using the <a href="https://www.tidyverse.org/">‘tidyverse’</a> set of tools. I encourage you to take a look. Often in data science we work with spreadsheets that are much messier, so that post would be a good starting point.</p>
-<p>Otherwise, form here on out all the analysis will be done a the tidied version of the spreadsheet, which can be found as a <code>.csv</code> in the <a href="https://github.com/tmastny/periodization-meta-analysis">github repo</a> I created for this blog post.</p>
-<p>You can find Greg’s spreadsheet <a href="https://docs.google.com/spreadsheets/d/1uT2ZZ_PZEf_4YefPMSSxanwLWayzhwsgC0rnv6XSgU4/edit#gid=0">here</a>. I love to see this sort of thing and am really glad that Greg made it as easy as possible to dive in.</p>
-<p>Before we run the numbers, we need to <a href="https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html">tidy the data</a> to make it friendly and useful for data science. If you’d like to skip this section, you can find both the script I used to tidy the data and the final product within the <a href="https://github.com/tmastny/periodization-meta-analysis">github repo</a> I created for this blog post.</p>
-<p>The first issue is that the spreadsheet is optimized for human reading instead of for processing with statistical software.</p>
-<div class="figure">
-<img src="/blog/spreadsheet_pic.png" />
-
-</div>
-<p>As you can see above, each observation is not completely filled out. This makes it easier to read, but can lead to difficulties when writing programs and scripts. Luckily there doesn’t seem to be other common <a href="http://blog.revolutionanalytics.com/2017/11/good-practices-spreadsheets.html">spreadsheet issues</a> formatting as data or formulas. There are a few merged cells, but they aren’t across rows and they are over studies that I won’t include in my analysis. I’ll discuss my inclusive criteria in the methodology section.</p>
+<div id="the-data" class="section level2">
+<h2>The Data</h2>
+<p>I actually cleaned and tidied Greg’s spreadsheet in a <a href="https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/">previous blog post</a>. Greg shared his version of the spreadsheet in his article, but all my analysis will start from <a href="https://github.com/tmastny/periodization-meta-analysis/blob/master/tidied_periodization.csv"><code>tidied_periodization.csv</code></a> found on the Github repo.</p>
 </div>
 <div id="my-methodology" class="section level2">
 <h2>My Methodology</h2>
