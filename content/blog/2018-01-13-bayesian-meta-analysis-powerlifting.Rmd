@@ -14,7 +14,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
-                      results='show', cache=TRUE, autodep=TRUE)
+                      results='show', cache=FALSE, autodep=FALSE)
+knitr::opts_knit$set(root.dir = 'external_data/periodization-meta-analysis/')
 ```
 
 ## Introduction
@@ -26,10 +27,117 @@ Greg studied percent changes of various outcomes (usually weight added to an exe
 
 The goal of this blog post is to conduct a Bayesian meta-analysis of Greg's collection of study outcomes. I really just want to have some fun and get in some practice, but I also think there are a few general advantages to my methods. First, in the article Greg expressed concern about some implausibly large effect sizes. The Bayesian approach is the ideal way to introduce regularization through [multi-level modeling] (https://cran.r-project.org/web/packages/rstanarm/vignettes/pooling.html) and prior information. Second, as Matti Vuorre demonstrated in his [blog post](https://mvuorre.github.io/post/2016/2016-09-29-bayesian-meta-analysis/), it is easy to conduct Bayesian meta-analyses and benefit from the generative and distribution nature of the results. I'll also introduce other various changes, tweaks, and "improvements" in my own methodology section. 
 
+## My Approach
+
+Greg decided to us a percent change approach, which was a useful approach for a mass audience, and as a means to avoid unrealistic standard deviations found in a few studies.
+
+However, to me Bayesian is all about quantifying uncertainty. Therefore, I am going to model effect sizes, but use the included standard deviations to estimate study-to-study error.
+
 ## The Data
 
-I actually cleaned and tidied Greg's spreadsheet in a [previous blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/). Greg shared his version of the spreadsheet in his article, but all my analysis will start from [`tidied_periodization.csv`](https://github.com/tmastny/periodization-meta-analysis/blob/master/tidied_periodization.csv) found on the Github repo.
+I'll be analyzing Greg's data set of periodization studies. He shared a spreadsheet of this data in his article, but I tidied the spreadsheet in a [previous blog post](https://timmastny.rbind.io/blog/tidying-messy-spreadsheets-dplyr/) to make it little more friendly for programmed computer analysis.
 
+In that previous blog post, my goal was to tidy the spreadsheet while preserving as much data as possible. When I began work on this blog post, I realized I was going to have to make some decisions about variable encoding that were non-obvious. I recorded all my additional data processing in [`factorizer.R`](https://github.com/tmastny/periodization-meta-analysis/blob/master/factorizer.R). 
+
+Therefore the actual data set I will be analyzing is [`factorized_periodization.csv`](https://github.com/tmastny/periodization-meta-analysis/blob/master/factorized_periodization.csv). I'm not going to go through the changes line-by-line, but I split the data based on 
+
+- trained and untrained populations
+- periodization and linear/undulating programs
+- study exclusion based on standard deviations and group analysis
+
+Let me know if you disagree with any of the decisions.
+
+Lastly, I wanted to discuss a methological issue with the data set. There is only a single, pre-treatment standard deviation reported in the data set.^[Since Greg used percent changes to avoid the standard deviation issues (and to adapt the work from his audience), I'm not sure if Greg choose to exclude the post-treatment standard deviations or if most of the studies did not include them. For example, [the one study](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4899398/) I have access to does have post-treatment standard deviations, but I wasn't able to get behind the pay wall for others.  ] This means there is an implicit modeling assumption that each individual within the study had the same response to the treatment. Of course, we know that this can't be the case. Greg himself has written about [non-responders](https://www.strongerbyscience.com/non-responders/) and hyper-responders to strength training so this is an acknowledged flaw in the model. 
+
+Even with this limitation, the added uncertainty from the pre-treatment standard deviation should let us better explore the variation in these studies.
+
+## Generative Modeling
+
+Besides the quantification of uncertainty, all Bayesian models are generative. This means we can simulate [fake data](http://andrewgelman.com/2009/09/04/fake-data_simul/) and compare it to the real data. I'll be using the package [bayesplot](https://github.com/stan-dev/bayesplot), which has a concise [vignette](https://cran.r-project.org/web/packages/bayesplot/vignettes/graphical-ppcs.html) introducing the approach. For further reference, I recommend reading [Bayesian Data Analysis](http://www.stat.columbia.edu/~gelman/book/) or [Data Analysis...](http://www.stat.columbia.edu/~gelman/arm/) for a more introductory, less Bayesian primer. 
+
+But what exactly is our model generating? Well, consider our data: a set of periodization studies with different populations, methods, and results. So we can actual simulate two things:
+
+1. We can simulate plausible replications of the same set of studies. So we consider hypothetical replications of the same studies, conducted the same way, but taking into account different sampling or treatment results. 
+
+2. We can simulate studies from the overall population of studies that could be conducted. Our Bayesian multi-level model estimates the mean and variance for this population by treating the actual data as a sample from that population. 
+
+Both approaches are useful, and give us a different insight into the results. Let's dive in.
+
+We'll fit a multi-level model estimating the effects size, with varying intercepts for each study variable. Greg also considered the length of the study, but when the length of study was included as a predictor of the effect size, the estimated slope was consistent with zero, and there were no predictive improvements as measured by information criteria. 
+
+```{r, echo=FALSE}
+knitr::read_chunk('fit_model.R')
+```
+
+```{r}
+library(tidyverse)
+library(brms)
+library(bayesplot)
+library(modelr)
+library(patchwork)
+```
+
+```{r read_factorized}
+```
+
+```{r full_model, eval=FALSE}
+```
+
+```{r, echo=FALSE}
+full_model <- readRDS('full_model.rds')
+```
+
+### Simulate Replications
+
+First, let's replicate the studies in the data set 500 times and see the variation in mean effect size across all groups (non-periodized, linear, etc.).
+
+```{r, fig.width=5, fig.height=4}
+pp_check(full_model, type = 'stat', stat = 'mean', nsamples = 500)
+```
+
+The observed mean, dark blue $T(y)$, is consistent with the distribution of means, but is biased to the right. Is that true of other test statistics? Let's look at the minimum.
+
+```{r, fig.width=5, fig.height=4}
+pp_check(full_model, type = 'stat', stat = 'min', nsamples = 500)
+```
+
+The observed minimum is totally unexpected. According to the model, the most probable minimum should have been at least below -0.25. What's going on? 
+
+First, it could be failure of the model. Although some people [do lose fitness](https://www.strongerbyscience.com/non-responders/) while training, you wouldn't expect the group average of to decrease. 
+
+It's worth noting another potential problem: [publication bias](http://andrewgelman.com/2017/10/02/response-comments-abandon-statistical-significance/). If journals only publish statistically significant results, in this case positive effect sizes with 95% confidence intervals excluding zero, the actual expected minimum wouldn't appear in our sample. So even if our sample estimates a reasonable average effect, they may not show the total variation. 
+
+### Simulate Future Studies
+
+Now let's generate studies from the total population of potential studies. Our model estimates the mean and variance of such a population from our real data. Each new study will be sampled from that distribution. 
+
+```{r, echo=FALSE}
+knitr::read_chunk('blog_plots.R')
+```
+
+```{r replicated_studies}
+```
+
+```{r mean_varying_studies, fig.width=5, fig.height=4}
+```
+
+Our mean is very consistent, but now we see large, but rare means around 12. 
+
+## Exclusion vs. Regularizing Priors
+
+I'd like to explore regularizing prior vs. exclusion of study number 4, O'Bryant. This study is problematic due to the large gains and unrealistically small standard deviations. 
+
+```{r}
+# d <- read_csv('factorized_periodization.csv')
+# d %>% 
+#   filter(Number == 4) %>%
+#   ggplot()
+```
+
+
+A quick word on the last criteria: I excluded one study that looked at geriatric women, because every other study focused on adults in their 20s to 30s. 
+
+Second, I excluded two studies based on unrealistic standard deviations. The Bayesian approach would be to keep the studies and add a regularizing prior. The problem was 
 
 ## My Methodology
 
@@ -46,15 +154,11 @@ Greg's general concern of implausible effects sizes is well warranted. The stand
 
 ## Future Work
 
-Short-term, I would like to see post-treatment standard deviations included in Greg's spreadsheet. The spreadsheet already contains pre-treatment standard deviations and those are the ones used to calculate the effect size. However, effect sizes (or the standard error of mean differences) can be calculated by pooling the standard deviations of the pre and post-treatment groups and it would be interesting to see if that leads to different results. Unfortunately, I do not have access to the majority of the studies, so it could be that all do not include the post-treatment standard deviations, but [the one study](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4899398/) I do have access does have post-treatment standard deviations.
-
 Long-term I would like to a move away from meta-analyses that model only statistical summaries of the study, to ones that include the raw data from studies when possible. As McElreath explains in Chapters 2 and 14 of his book [Statistical Rethinking](http://xcelab.net/rm/statistical-rethinking/), there is an inherent exchangeability between data and parameters within the Bayesian framework. This flexibility allows us to combine raw data and distributions of effect sizes in a principled way, without resorting to ad-hoc corrections or procedures. When using the actual data, we can move away from unrealistic assumptions of normality and the like data speak for itself. 
 
 Furthermore, shared and open data is an excellent contribution to the open science movement. Sharing data not only results in better meta-analyses, but also improves post-publication review^[Which as Gelman points out is more useful than pre-publication (peer) review, as shown [here](http://andrewgelman.com/2017/11/03/post-publication-review-succeeds-two-lines-edition/) and [here](http://andrewgelman.com/2016/12/16/an-efficiency-argument-for-post-publication-review/). Peer review is useful, but it isn't a [stamp of quality](http://andrewgelman.com/2016/02/01/peer-review-make-no-damn-sense/) and doesn't mean the results are correct.] by allowing other scientists to replication the study's statistical analyses and check for errors. 
 
 The next step is reproducible analyses, which means moving away from doing the calculations by hand or in Excel and into something like R or Python. As much as I appreciate Greg crunching the numbers and creating the plots, I have no way to verify his effort beyond starting from scratch by myself. I appreciate that is a much more significant hurdle since it requires teaching scientists programming skills, but ultimately I think it is valuable.
-
-I am not a part of the exercise science and physiology communities, so maybe I am preaching to the choir. Either way, I am thankful Greg wrote up his awesome article and hope to see more from him and others in the future.
 
 
 
