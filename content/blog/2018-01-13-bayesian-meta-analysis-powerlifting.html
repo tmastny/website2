@@ -22,6 +22,11 @@ output:
 <li><a href="#simulate-replications">Simulate Replications</a></li>
 <li><a href="#simulate-future-studies">Simulate Future Studies</a></li>
 </ul></li>
+<li><a href="#model-improvements">Model Improvements</a></li>
+<li><a href="#comparison-of-treatments">Comparison of treatments</a></li>
+<li><a href="#exclusion-vs.inclusion">Exclusion vs. Inclusion</a></li>
+<li><a href="#funnel-plot">Funnel Plot</a></li>
+<li><a href="#we-arent-modeling-the-real-thing">We aren’t modeling the real thing</a></li>
 <li><a href="#exclusion-vs.regularizing-priors">Exclusion vs. Regularizing Priors</a></li>
 <li><a href="#my-methodology">My Methodology</a></li>
 <li><a href="#future-work">Future Work</a></li>
@@ -36,6 +41,7 @@ output:
 </div>
 <div id="my-approach" class="section level2">
 <h2>My Approach</h2>
+<p><a href="http://areshenk-research-notes.com/doing-meta-analysis-i/" class="uri">http://areshenk-research-notes.com/doing-meta-analysis-i/</a></p>
 <p>Greg decided to us a percent change approach, which was a useful approach for a mass audience, and as a means to avoid unrealistic standard deviations found in a few studies.</p>
 <p>However, to me Bayesian is all about quantifying uncertainty. Therefore, I am going to model effect sizes, but use the included standard deviations to estimate study-to-study error.</p>
 </div>
@@ -83,7 +89,7 @@ library(patchwork)</code></pre>
 <p>The observed mean, dark blue <span class="math inline">\(T(y)\)</span>, is consistent with the distribution of means, but is biased to the right. Is that true of other test statistics? Let’s look at the minimum.</p>
 <pre class="r"><code>pp_check(full_model, type = &#39;stat&#39;, stat = &#39;min&#39;, nsamples = 500)</code></pre>
 <p><img src="/blog/2018-01-13-bayesian-meta-analysis-powerlifting_files/figure-html/unnamed-chunk-5-1.png" width="480" /></p>
-<p>The observed minimum is totally unexpected. According to the model, the most probable minimum should have been at least below -0.25. What’s going on?</p>
+<p>The observed minimum is totally unexpected. According to the model, the most probable minimums are at least below -0.25. What’s going on?</p>
 <p>First, it could be failure of the model. Although some people <a href="https://www.strongerbyscience.com/non-responders/">do lose fitness</a> while training, you wouldn’t expect the group average of to decrease.</p>
 <p>It’s worth noting another potential problem: <a href="http://andrewgelman.com/2017/10/02/response-comments-abandon-statistical-significance/">publication bias</a>. If journals only publish statistically significant results, in this case positive effect sizes with 95% confidence intervals excluding zero, the actual expected minimum wouldn’t appear in our sample. So even if our sample estimates a reasonable average effect, they may not show the total variation.</p>
 </div>
@@ -107,8 +113,37 @@ library(patchwork)</code></pre>
     full_model, type = &#39;stat&#39;, stat = &#39;mean&#39;, 
     nsamples = 500, allow_new_levels = TRUE, newdata = .)</code></pre>
 <p><img src="/blog/2018-01-13-bayesian-meta-analysis-powerlifting_files/figure-html/mean_varying_studies-1.png" width="480" /></p>
-<p>Our mean is very consistent, but now large, but rare means around 12.</p>
+<p>Our mean is consistent, but we also see some higher than expected means.</p>
 </div>
+</div>
+<div id="model-improvements" class="section level2">
+<h2>Model Improvements</h2>
+<p>Let’s try a new model where the response variable is modeled as an <a href="https://en.wikipedia.org/wiki/Exponentially_modified_Gaussian_distribution">exgaussian</a> distribution.<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<p>We would like our model to be very skeptical of negative effect sizes, but also be relatively uninformative where the mean effect size is.</p>
+<p>If we used prior information on the standard random-effects model, we could include a prior skeptical of negative values, but we would need to make it very confident about the mean.</p>
+<p>Therefore, we should include the exgaussian prior on the mean of the intercept!</p>
+<p>Alternatively, I maybe I should compare the effect sizes of the control to the treatment group</p>
+</div>
+<div id="comparison-of-treatments" class="section level2">
+<h2>Comparison of treatments</h2>
+<p>Estimating the average (or distribution) of treatments is only the first step. Now that we’ve calculating the entire joint posterior, we can direct compare the two treatments.</p>
+<p>The first step would be to look at the distribution of treatment differences.</p>
+<p>Second, we can directly ask our posterior the probably that one effect size is larger than another.</p>
+</div>
+<div id="exclusion-vs.inclusion" class="section level2">
+<h2>Exclusion vs. Inclusion</h2>
+<p>Both min and max, the most sensentive statistics to outliers, are mostly uneffected when the outlier is excluded.</p>
+<p>For priors, I should consider fitting the model without a global intercept, that way it would be easier to reason about the varying intercepts.</p>
+</div>
+<div id="funnel-plot" class="section level2">
+<h2>Funnel Plot</h2>
+<p>We know funnel plots have <a href="http://datacolada.org/58">problems</a>, but I think they are a nice exploratory tool.</p>
+</div>
+<div id="we-arent-modeling-the-real-thing" class="section level2">
+<h2>We aren’t modeling the real thing</h2>
+<p>But the important thing is that this is a useful approximate, because we can generate samples of the effects and take their differences. See page 70 of BDA and exercise 3 from 3.10.</p>
+<p>Why do it this way? Well it isn’t a modeling issue, but a data one. It is more time consuming to have to take and label all the different effect sizes between treatments.</p>
+<p>Page 214, section 8.4</p>
 </div>
 <div id="exclusion-vs.regularizing-priors" class="section level2">
 <h2>Exclusion vs. Regularizing Priors</h2>
@@ -123,21 +158,22 @@ library(patchwork)</code></pre>
 <div id="my-methodology" class="section level2">
 <h2>My Methodology</h2>
 <p>Moreover, we’d like to introduce regularization or shrinkage to combat the publication bias and other problems with <a href="http://andrewgelman.com/2016/08/30/publication-bias-occurs-within-as-well-as-between-projects/">forking paths</a>.</p>
-<p>Instead of the classical random effects meta-analysis<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>,</p>
+<p>Instead of the classical random effects meta-analysis<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>,</p>
 <p>In the article, Greg noted that he did not follow the classic methodology of a random effects model on effect sizes because some studies reported such small standard deviations that the effects sizes were totally implausible.</p>
 <p>Greg’s general concern of implausible effects sizes is well warranted. The standard criteria of statistical significant almost assures that the <a href="http://andrewgelman.com/2016/11/13/more-on-my-paper-with-john-carlin-on-type-m-and-type-s-errors/">effect size is exaggerated</a>. Gelman and Carlin call this phenomenon a Type M (magnitude) error. I strongly recommend reading <a href="http://www.stat.columbia.edu/~gelman/research/published/retropower_final.pdf">their excellent paper</a> on the subject, where they analyze suspect effect sizes using prior information.</p>
 </div>
 <div id="future-work" class="section level2">
 <h2>Future Work</h2>
 <p>Long-term I would like to a move away from meta-analyses that model only statistical summaries of the study, to ones that include the raw data from studies when possible. As McElreath explains in Chapters 2 and 14 of his book <a href="http://xcelab.net/rm/statistical-rethinking/">Statistical Rethinking</a>, there is an inherent exchangeability between data and parameters within the Bayesian framework. This flexibility allows us to combine raw data and distributions of effect sizes in a principled way, without resorting to ad-hoc corrections or procedures. When using the actual data, we can move away from unrealistic assumptions of normality and the like data speak for itself.</p>
-<p>Furthermore, shared and open data is an excellent contribution to the open science movement. Sharing data not only results in better meta-analyses, but also improves post-publication review<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> by allowing other scientists to replication the study’s statistical analyses and check for errors.</p>
+<p>Furthermore, shared and open data is an excellent contribution to the open science movement. Sharing data not only results in better meta-analyses, but also improves post-publication review<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> by allowing other scientists to replication the study’s statistical analyses and check for errors.</p>
 <p>The next step is reproducible analyses, which means moving away from doing the calculations by hand or in Excel and into something like R or Python. As much as I appreciate Greg crunching the numbers and creating the plots, I have no way to verify his effort beyond starting from scratch by myself. I appreciate that is a much more significant hurdle since it requires teaching scientists programming skills, but ultimately I think it is valuable.</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>Since Greg used percent changes to avoid the standard deviation issues (and to adapt the work from his audience), I’m not sure if Greg choose to exclude the post-treatment standard deviations or if most of the studies did not include them. For example, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4899398/">the one study</a> I have access to does have post-treatment standard deviations, but I wasn’t able to get behind the pay wall for others.<a href="#fnref1">↩</a></p></li>
-<li id="fn2"><p>I really like <a href="https://www.leeds.ac.uk/educol/documents/00002182.htm">this</a> introduction to effect sizes and meta-analyses.<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>Which as Gelman points out is more useful than pre-publication (peer) review, as shown <a href="http://andrewgelman.com/2017/11/03/post-publication-review-succeeds-two-lines-edition/">here</a> and <a href="http://andrewgelman.com/2016/12/16/an-efficiency-argument-for-post-publication-review/">here</a>. Peer review is useful, but it isn’t a <a href="http://andrewgelman.com/2016/02/01/peer-review-make-no-damn-sense/">stamp of quality</a> and doesn’t mean the results are correct.<a href="#fnref3">↩</a></p></li>
+<li id="fn2"><p><a href="https://www.hindawi.com/journals/cmmm/2017/7925106/">Here</a> and <a href="http://acadine.physics.jmu.edu/group/technical_notes/GC_peak_fitting/X_lan_Jorgenson.pdf">here</a> provide examples of the exgaussian in scientific modeling.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>I really like <a href="https://www.leeds.ac.uk/educol/documents/00002182.htm">this</a> introduction to effect sizes and meta-analyses.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Which as Gelman points out is more useful than pre-publication (peer) review, as shown <a href="http://andrewgelman.com/2017/11/03/post-publication-review-succeeds-two-lines-edition/">here</a> and <a href="http://andrewgelman.com/2016/12/16/an-efficiency-argument-for-post-publication-review/">here</a>. Peer review is useful, but it isn’t a <a href="http://andrewgelman.com/2016/02/01/peer-review-make-no-damn-sense/">stamp of quality</a> and doesn’t mean the results are correct.<a href="#fnref4">↩</a></p></li>
 </ol>
 </div>

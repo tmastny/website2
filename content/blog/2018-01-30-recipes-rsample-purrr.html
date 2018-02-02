@@ -1,0 +1,68 @@
+---
+title: Make a Book of recipes, feat. purrr and rsample
+author: ~
+date: '2018-02-20'
+slug: book-recipes-rsample-purrr
+categories: []
+tags: []
+description: Combining recipes, rsample, and purrr 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#recipes">Recipes</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><a href="http://appliedpredictivemodeling.com/">Max Kuhn</a>, the creator of the package <a href="https://github.com/topepo/caret">caret</a> and author of Applied Predictive Modeling has created some cool new packages since his move to RStudio. I’ve been really intrigued by <a href="https://github.com/topepo/rsample">rsample</a> and <a href="https://github.com/topepo/recipes">recipes</a>, which seem to be an movement towards a grammar of modeling.</p>
+<p>In this post, I’d like to briefly share how we can create a “book” of recipes with tibble and purrr to prepare the recipes for cross-validation in the rsample package.</p>
+</div>
+<div id="recipes" class="section level2">
+<h2>Recipes</h2>
+<p>The purprose of the recipes package is to transform raw data frames into a matrix format ready for consumption by statistical algorithms. The package standardizations the workflow for selecting outcomes, predictors, and data preprocessing.</p>
+<p>Max has an excellent tutorial on using recipes and rsample, but I’d like to extend the idea a litte bit.</p>
+<p>Instead of starting with a</p>
+<p>We want to create a book of recipes to evaluate different types of steps. This way we can understand if the preprocessing or variable selection effects the prediction.</p>
+<pre class="r"><code>library(AmesHousing)
+library(recipes)
+ames &lt;- make_ames()</code></pre>
+<pre class="r"><code>rec &lt;- recipe(Sale_Price ~ Neighborhood + House_Style + Year_Sold + Lot_Area, 
+              data = ames)
+rec</code></pre>
+<pre><code>## Data Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##    outcome          1
+##  predictor          4</code></pre>
+<pre class="r"><code>rec_training_set &lt;- prep(rec, training = ames, retain = TRUE, verbose = TRUE)
+rec_training_set</code></pre>
+<pre><code>## Data Recipe
+## 
+## Inputs:
+## 
+##       role #variables
+##    outcome          1
+##  predictor          4
+## 
+## Training data contained 2930 data points and no missing data.</code></pre>
+<pre class="r"><code>bake(rec_training_set, newdata = head(ames))</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   Lot_Area Neighborhood House_Style Year_Sold Sale_Price
+##      &lt;int&gt; &lt;fct&gt;        &lt;fct&gt;           &lt;int&gt;      &lt;int&gt;
+## 1    31770 North_Ames   One_Story        2010     215000
+## 2    11622 North_Ames   One_Story        2010     105000
+## 3    14267 North_Ames   One_Story        2010     172000
+## 4    11160 North_Ames   One_Story        2010     244000
+## 5    13830 Gilbert      Two_Story        2010     189900
+## 6     9978 Gilbert      Two_Story        2010     195500</code></pre>
+</div>

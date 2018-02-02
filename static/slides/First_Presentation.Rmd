@@ -1,0 +1,17 @@
+---
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    mathjax: null
+    nature:
+      highlightStyle: github
+      countIncrementalSlides: false
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+ggplot(mtcars, aes(x = hp, y = mpg)) +
+  geom_point() + 
+  geom_smooth()
+```
+

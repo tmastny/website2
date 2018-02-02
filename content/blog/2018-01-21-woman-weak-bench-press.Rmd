@@ -15,7 +15,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
                       results='show', cache=FALSE, autodep=FALSE)
-knitr::opts_knit$set(root.dir = 'git-blogdown-workflow/')
 ```
 
 ## Introduction
@@ -35,6 +34,14 @@ Ideas:
     - https://www.strongerbyscience.com/how-to-bench/#At_the_end_of_the_day8230
 
 I have a really good idea I need to find some time to work on. First, I want to fit a model (allometric) to the men's data. Then I input the women's weights (controlling for their body %) and use graphical posterior predictive checks to generate what the model thinks women should be capable of, and compare it to what they actually are capable of.
+
+## Embedded Test:
+
+here is how to embedded:
+
+```{r}
+#knitr::include_url('http://127.0.0.1:4321/slides/First_Presentation.html#1')
+```
 
 
 

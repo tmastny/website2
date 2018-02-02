@@ -29,6 +29,8 @@ The goal of this blog post is to conduct a Bayesian meta-analysis of Greg's coll
 
 ## My Approach
 
+http://areshenk-research-notes.com/doing-meta-analysis-i/
+
 Greg decided to us a percent change approach, which was a useful approach for a mass audience, and as a means to avoid unrealistic standard deviations found in a few studies.
 
 However, to me Bayesian is all about quantifying uncertainty. Therefore, I am going to model effect sizes, but use the included standard deviations to estimate study-to-study error.
@@ -101,7 +103,7 @@ The observed mean, dark blue $T(y)$, is consistent with the distribution of mean
 pp_check(full_model, type = 'stat', stat = 'min', nsamples = 500)
 ```
 
-The observed minimum is totally unexpected. According to the model, the most probable minimum should have been at least below -0.25. What's going on? 
+The observed minimum is totally unexpected. According to the model, the most probable minimums are at least below -0.25. What's going on? 
 
 First, it could be failure of the model. Although some people [do lose fitness](https://www.strongerbyscience.com/non-responders/) while training, you wouldn't expect the group average of to decrease. 
 
@@ -121,7 +123,51 @@ knitr::read_chunk('blog_plots.R')
 ```{r mean_varying_studies, fig.width=5, fig.height=4}
 ```
 
-Our mean is very consistent, but now we see large, but rare means around 12. 
+Our mean is consistent, but we also see some higher than expected means. 
+
+## Model Improvements
+
+Let's try a new model where the response variable is modeled as an [exgaussian](https://en.wikipedia.org/wiki/Exponentially_modified_Gaussian_distribution) distribution.^[[Here](https://www.hindawi.com/journals/cmmm/2017/7925106/) and [here](http://acadine.physics.jmu.edu/group/technical_notes/GC_peak_fitting/X_lan_Jorgenson.pdf) provide examples of the exgaussian in scientific modeling.]
+
+We would like our model to be very skeptical of negative effect sizes, but also be relatively uninformative where the mean effect size is. 
+
+If we used prior information on the standard random-effects model, we could include a prior skeptical of negative values, but we would need to make it very confident about the mean. 
+
+Therefore, we should include the exgaussian prior on the mean of the intercept!
+
+
+
+
+Alternatively, I maybe I should compare the effect sizes of the control to the treatment group
+
+
+## Comparison of treatments
+
+Estimating the average (or distribution) of treatments is only the first step. Now that we've calculating the entire joint posterior, we can direct compare the two treatments.
+
+The first step would be to look at the distribution of treatment differences.
+
+
+
+Second, we can directly ask our posterior the probably that one effect size is larger than another.
+
+
+## Exclusion vs. Inclusion
+Both min and max, the most sensentive statistics to outliers, are mostly uneffected when the outlier is excluded.
+
+For priors, I should consider fitting the model without a global intercept, that way it would be easier to reason about the varying intercepts. 
+
+## Funnel Plot
+
+We know funnel plots have [problems](http://datacolada.org/58), but I think they are a nice exploratory tool.
+
+## We aren't modeling the real thing
+
+But the important thing is that this is a useful approximate, because we can generate samples of the effects and take their differences. See page 70 of BDA and exercise 3 from 3.10.
+
+Why do it this way? Well it isn't a modeling issue, but a data one. It is more time consuming to have to take and label all the different effect sizes between treatments.
+
+Page 214, section 8.4
 
 ## Exclusion vs. Regularizing Priors
 

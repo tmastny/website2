@@ -1,0 +1,61 @@
+---
+title: Make a Book of recipes, feat. purrr and rsample
+author: ~
+date: '2018-02-20'
+slug: book-recipes-rsample-purrr
+categories: []
+tags: []
+description: Combining recipes, rsample, and purrr 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## Introduction 
+
+[Max Kuhn](http://appliedpredictivemodeling.com/), the creator of the package [caret](https://github.com/topepo/caret) and author of Applied Predictive Modeling has created some cool new packages since his move to RStudio. I've been really intrigued by [rsample](https://github.com/topepo/rsample) and [recipes](https://github.com/topepo/recipes), which seem to be an movement towards a grammar of modeling.
+
+
+In this post, I'd like to briefly share how we can create a "book" of recipes with tibble and purrr to prepare the recipes for cross-validation in the rsample package.
+
+## Recipes
+
+The purprose of the recipes package is to transform raw data frames into a matrix format ready for consumption by statistical algorithms. The package standardizations the workflow for selecting outcomes, predictors, and data preprocessing.
+
+Max has an excellent tutorial on using recipes and rsample, but I'd like to extend the idea a litte bit. 
+
+Instead of starting with a 
+
+We want to create a book of recipes to evaluate different types of steps. This way we can understand if the preprocessing or variable selection effects the prediction.
+
+
+
+```{r}
+library(AmesHousing)
+library(recipes)
+ames <- make_ames()
+```
+```{r}
+rec <- recipe(Sale_Price ~ Neighborhood + House_Style + Year_Sold + Lot_Area, 
+              data = ames)
+rec
+```
+
+```{r}
+rec_training_set <- prep(rec, training = ames, retain = TRUE, verbose = TRUE)
+rec_training_set
+```
+
+```{r}
+bake(rec_training_set, newdata = head(ames))
+```
+
+
+
+
