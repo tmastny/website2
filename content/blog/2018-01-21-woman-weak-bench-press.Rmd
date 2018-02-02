@@ -40,7 +40,7 @@ I have a really good idea I need to find some time to work on. First, I want to 
 here is how to embedded:
 
 ```{r}
-#knitr::include_url('http://127.0.0.1:4321/slides/First_Presentation.html#1')
+knitr::include_url('https://timmastny.rbind.io/slides/first_presentation#1')
 ```
 
 
