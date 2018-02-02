@@ -1,12 +1,12 @@
 ---
-title: Embed Slides in your blog
+title: Embed Slides in Your Blog
 author: ~
 date: '2018-02-02'
 slug: embed-slides-knitr-blogdown
 categories: []
 tags: []
 description: How embed slides into your blogdown website with knitr 
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true 
@@ -16,8 +16,9 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#upload-your-slideshow-to-your-website">Upload your slideshow to your website</a></li>
 <li><a href="#embed-in-one-line-of-code">Embed in one line of code</a></li>
+<li><a href="#specific-slides">Specific slides</a></li>
+<li><a href="#upload-your-slideshow-to-your-website">Upload your slideshow to your website</a></li>
 <li><a href="#future-work">Future work</a></li>
 <li><a href="#acknowledgements">Acknowledgements</a></li>
 </ul>
@@ -25,47 +26,70 @@ output:
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>This blog post will show you how to embedded your slides on your blogdown website. <a href="https://yihui.name/">Yihui Xie’s</a> knitr makes this very:</p>
-<pre class="r"><code>knitr::include_url(&#39;..&#39;)</code></pre>
+<p>It’s <a href="https://www.rstudio.com/conference/"><code>rstudio::conf</code></a> time and I’ve seen a lot of great presentations shared on twitter. Unfortunately I couldn’t come to the conference, but I thought I would do my part and write a short blog post on how to embed slideshows into a blog post. <a href="https://yihui.name/">Yihui Xie’s</a> knitr makes this very simple.</p>
+<p>But why would you want to embed your slideshow?</p>
+<ol style="list-style-type: decimal">
+<li><p>An embedded slideshow makes it easier to talk about in a larger context.</p></li>
+<li><p>You can show specific slides without taking screenshots.</p></li>
+<li><p>You could place a series of plots into a slide deck and show them in your blog post. Instead of using vertical space, which is very difficult for the reader, this efficiently uses horizontal space and encourages the reader to explore the plots.</p></li>
+</ol>
+</div>
+<div id="embed-in-one-line-of-code" class="section level2">
+<h2>Embed in one line of code</h2>
+<p>Embedding a slideshow is easy. If it has a URL, you can embed with a single line of code:</p>
+<pre class="r"><code>knitr::include_url(&#39;https://timmastny.rbind.io/slides/first_presentation#1&#39;)</code></pre>
+<iframe src="https://timmastny.rbind.io/slides/first_presentation#1" width="672" height="400px">
+</iframe>
+<p>Your entire presentation is now an HTML iframe embedded in your blog post. This means you can</p>
+<ul>
+<li>copy text and images</li>
+<li>advance slides</li>
+<li>click links</li>
+</ul>
+<p>Basically anything you can normally do with your slideshow.</p>
+<p>To advance, simply click the slideshow and use the arrow keys to go forward or back. Or mouse over and scroll.</p>
+</div>
+<div id="specific-slides" class="section level2">
+<h2>Specific slides</h2>
+<p>If you’d like to embed a specific slide, just reference that slide in the url. For example, I’ll change <code>#1</code> to <code>#2</code> in my url:</p>
+<pre class="r"><code>knitr::include_url(&#39;https://timmastny.rbind.io/slides/first_presentation#2&#39;)</code></pre>
+<iframe src="https://timmastny.rbind.io/slides/first_presentation#2" width="672" height="400px">
+</iframe>
+<p>This is a great replcaement for screenshots, because if you need to edit your slides your blog post updates automatically.</p>
 </div>
 <div id="upload-your-slideshow-to-your-website" class="section level2">
 <h2>Upload your slideshow to your website</h2>
-<p>Actually, your slides just need to be uploaded somewhere, but your website is the perfect place to do it. Yihui has a has a tutorial in the <a href="https://bookdown.org/yihui/blogdown/static-files.html">blogdown bookdown</a> about how to include and build your slideshows.</p>
-<p>I recommend you also read his <a href="https://blogdown-static.yihui.name/slides/xaringan#1">slideshow tutorial</a>, but here is a quick summary:</p>
+<p>You’ll notice that all my slides are hosted on my domain:</p>
+<pre class="r"><code>https://timmastny.rbind.io</code></pre>
+<p>Your website is the perfect place to host your slides, and Yihui has a tutorial in the <a href="https://bookdown.org/yihui/blogdown/static-files.html">blogdown bookdown</a> about how to include and build slideshows on your blogdown website.</p>
+<p>Moreover, my slides are written with Rmarkdown and can execute R code. I recommend you check out <a href="https://github.com/yihui/xaringan">xaringan</a>, Yihui’s R package for creating slideshows with Rmarkdown.</p>
+<p>He also has a <a href="https://blogdown-static.yihui.name/slides/xaringan#1">slideshow tutorial</a>, but here is a quick summary:</p>
 <ol style="list-style-type: decimal">
-<li><p>Install <a href="https://github.com/yihui/xaringan">xaringan</a>, Yihui’s R package for creating slideshows with R markdown.</p></li>
+<li><p>Install <a href="https://github.com/yihui/xaringan">xaringan</a>.</p></li>
 <li><p>Make a new slideshow with</p></li>
 </ol>
 <pre class="r"><code>File -&gt; New File -&gt; R Markdown -&gt; From Template -&gt; Ninja Presentation</code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li>Save it in your static directory.</li>
+<li>Save it somewhere in the static directory of your website.</li>
 </ol>
 <pre class="r"><code>static/slides/First_Presentation.html</code></pre>
-<p>This will give your slideshow the following url:</p>
-<pre class="r"><code>https://timmastny.rbind.io/slides/first_presentation#1</code></pre>
+<p>This location will give your slideshow the following url:</p>
+<pre class="eval"><code>https://timmastny.rbind.io/slides/first_presentation#1</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Assuming you are using the <code>blogdown::serve_site()</code> <a href="https://bookdown.org/yihui/blogdown/rstudio-ide.html">workflow</a>, you only need to change a few things to build your slides. First, create a new folder <code>R</code> at the top level of your website’s directory that contains a script <code>build.R</code>:</li>
 </ol>
 <pre class="r"><code>R/build.R</code></pre>
-<p>Then <code>build.R</code> only needs one line:</p>
+<p>And <code>build.R</code> only needs one line:</p>
 <pre class="r"><code>blogdown::build_dir(&quot;static&quot;)</code></pre>
 <p>Now you can write, build, and maintain your slideshows on your website!</p>
 </div>
-<div id="embed-in-one-line-of-code" class="section level2">
-<h2>Embed in one line of code</h2>
-<p>Embedding the slideshow is the easy part. After your slideshow is built and published by Netlify (or your equivalent service), you can embedded the slideshow with it’s URL by calling a single line of code:</p>
-<pre class="r"><code>knitr::include_url(&#39;https://timmastny.rbind.io/slides/first_presentation#1&#39;)</code></pre>
-<iframe src="https://timmastny.rbind.io/slides/first_presentation#1" width="672" height="400px">
-</iframe>
-<p>This includes the entire slideshow presentation as an HTML iframe in your website. This means you can treat the slides as if they were in their own window. This includes:</p>
-<ul>
-<li>copying text and images</li>
-<li>advancing slides</li>
-</ul>
-</div>
 <div id="future-work" class="section level2">
 <h2>Future work</h2>
+<p>I’d like to be able to use a relative reference to the slideshow’s HTML file in the <code>static/</code> directory, but I think <code>knitr::include_url()</code> requires a live URL. I’ll have to do more research.</p>
+<p>I’m also investigating to see if I can trim the iframe so I only see the slides and not the gray bars on the side.</p>
 </div>
 <div id="acknowledgements" class="section level2">
 <h2>Acknowledgements</h2>
+<p>This required so little work on my part, it is basically an undocumented feature of Yihui’s blogdown. <a href="https://bookdown.org/yihui/blogdown/static-files.html">Section 2.7</a> of the blogdown bookdown was very helpful, as well as his <a href="https://blogdown-static.yihui.name/">example website</a>.</p>
+<p>Shoutout to the the <a href="https://stackoverflow.com/a/45181338/6637133">Stackoverflow question</a> that got me thinking about embedding slides, and pointed me to the <a href="https://bookdown.org/yihui/bookdown/web-pages-and-shiny-apps.html">bookdown bookdown</a> section that explains <code>knitr::include_url()</code>.</p>
 </div>
