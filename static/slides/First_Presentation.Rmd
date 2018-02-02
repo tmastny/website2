@@ -17,6 +17,7 @@ ggplot(mtcars, aes(x = hp, y = mpg)) +
 
 ---
 
+https://github.com/yihui/xaringan
 ```{r, message=FALSE, warning=FALSE}
 ggplot(mtcars, aes(x = hp, y = wt)) +
   geom_point() + 
