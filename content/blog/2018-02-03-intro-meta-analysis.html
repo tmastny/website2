@@ -1,0 +1,46 @@
+---
+title: Mean Differences for Meta-Analyzes
+author: ~
+date: '2018-02-03'
+slug: meta-analysis-examples
+categories: []
+tags: []
+description: Introduction to meta-analyzes by example
+draft: false
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#mean-differences">Mean Differences</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This post will be a short introdction to mean differences, motivated by simulated and real data.</p>
+</div>
+<div id="mean-differences" class="section level2">
+<h2>Mean Differences</h2>
+<p>Imagine we have a set of studies:</p>
+<pre class="r"><code>library(tidyverse)
+d &lt;- tibble(study = 1:100)</code></pre>
+<p>and each study is measuring a treatment’s effect on some measurement. Before the treatment, suppose we have the following measurement in each study:</p>
+<pre class="r"><code>d$pre &lt;- rnorm(100, 100, 10)</code></pre>
+<p>Now, the treatment could have a variety of effects on the measurement. Here’s a few difference onces we’ll look into:</p>
+<pre class="r"><code>noise &lt;- rnorm(100, 0, 2)
+d$post1 &lt;- d$pre + 10 + noise
+d$post2 &lt;- 1.15 * d$pre + noise
+d$post3 &lt;- 0.5 * d$pre + 50 + noise</code></pre>
+<pre class="r"><code>d %&gt;%
+  gather(post_type, post, post1:post3) %&gt;%
+  ggplot() + 
+  geom_point(aes(x = pre, y = post)) +
+  geom_abline(intercept = 0, slope = 1) +
+  facet_wrap(~post_type)</code></pre>
+<p><img src="/blog/2018-02-03-intro-meta-analysis_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>

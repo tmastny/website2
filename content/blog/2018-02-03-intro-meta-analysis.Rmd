@@ -1,0 +1,61 @@
+---
+title: Mean Differences for Meta-Analyzes
+author: ~
+date: '2018-02-03'
+slug: meta-analysis-examples
+categories: []
+tags: []
+description: Introduction to meta-analyzes by example
+draft: false
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=TRUE, autodep=TRUE)
+```
+
+## Introduction
+
+This post will be a short introdction to mean differences, motivated by simulated and real data.
+
+## Mean Differences
+
+Imagine we have a set of studies:
+
+```{r}
+library(tidyverse)
+d <- tibble(study = 1:100)
+```
+
+and each study is measuring a treatment's effect on some measurement. Before the treatment, suppose we have the following measurement in each study:
+
+```{r}
+d$pre <- rnorm(100, 100, 10)
+```
+
+Now, the treatment could have a variety of effects on the measurement. Here's a few difference onces we'll look into:
+
+```{r}
+noise <- rnorm(100, 0, 2)
+d$post1 <- d$pre + 10 + noise
+d$post2 <- 1.15 * d$pre + noise
+d$post3 <- 0.5 * d$pre + 50 + noise
+```
+
+```{r}
+d %>%
+  gather(post_type, post, post1:post3) %>%
+  ggplot() + 
+  geom_point(aes(x = pre, y = post)) +
+  geom_abline(intercept = 0, slope = 1) +
+  facet_wrap(~post_type)
+```
+
+
+
+
+
+

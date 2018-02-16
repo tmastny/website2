@@ -57,7 +57,6 @@ knitr::include_url('https://timmastny.rbind.io/slides/first_presentation#2')
 
 This is a great replcaement for screenshots, because if you need to edit your slides your blog post updates automatically.
 
-
 ## Upload your slideshow to your website
 
 You'll notice that all my slides are hosted on my domain:
@@ -110,8 +109,6 @@ I'm also investigating to see if I can trim the iframe so I only see the slides 
 This required so little work on my part, it is basically an undocumented feature of Yihui's blogdown. [Section 2.7](https://bookdown.org/yihui/blogdown/static-files.html) of the blogdown bookdown was very helpful, as well as his [example website](https://blogdown-static.yihui.name/). 
 
 Shoutout to the the [Stackoverflow question](https://stackoverflow.com/a/45181338/6637133) that got me thinking about embedding slides, and pointed me to the [bookdown bookdown](https://bookdown.org/yihui/bookdown/web-pages-and-shiny-apps.html) section that explains `knitr::include_url()`. 
-
-
 
 
 

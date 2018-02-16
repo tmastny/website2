@@ -1,0 +1,4 @@
+unnamed-chunk-1	library	tidyverse	d	tibble
+unnamed-chunk-2	d	pre	rnorm
+unnamed-chunk-3	noise	rnorm	d	post1	pre	post2	post3
+unnamed-chunk-4	d	%>%	gather	post_type	post	post1	post3	ggplot	geom_point	aes	pre	geom_abline	facet_wrap
