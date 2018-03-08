@@ -6,7 +6,7 @@ slug: meta-analysis-examples
 categories: []
 tags: []
 description: Introduction to meta-analyzes by example
-draft: false
+draft: true
 output:
   blogdown::html_page:
     toc: true 
