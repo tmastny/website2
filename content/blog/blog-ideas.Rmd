@@ -6,7 +6,7 @@ slug: blog-ideas
 categories: []
 tags: []
 description: 
-draft: false
+draft: true
 output:
   blogdown::html_page:
     toc: true 
