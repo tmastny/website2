@@ -2,7 +2,7 @@
 title: 'My First Kaggle Contest and R Package'
 author: ~
 date: '2018-03-11'
-slug: kaggle-contest-callr
+slug: kaggle-contest-r-package
 categories: []
 tags: []
 description: 
