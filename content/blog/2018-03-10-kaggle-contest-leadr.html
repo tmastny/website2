@@ -1,0 +1,73 @@
+---
+title: 'My First Kaggle Contest and R Package'
+author: ~
+date: '2018-03-10'
+slug: kaggle-contest-callr
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#what-i-learned-about-r-packages">What I learned about R Packages</a><ul>
+<li><a href="#s3-tibble-and-pillar">S3, Tibble, and Pillar</a></li>
+<li><a href="#non-standard-evaluation">Non-Standard Evaluation</a></li>
+</ul></li>
+<li><a href="#what-i-learned-about-machine-learning">What I learned about Machine Learning</a><ul>
+<li><a href="#ensembles">Ensembles</a></li>
+<li><a href="#keras">Keras</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>I competed in my first Kaggle <a href="https://www.kaggle.com/c/unodatamining-2018-1">contest</a> and I learned a lot. My github repo was such a disorganized <a href="https://github.com/tmastny/machine_learning_class/tree/master/Contest1">mess</a> that I sometimes doubted I could even recreate these models. So I did the programmer thing:</p>
+<p><img src="https://imgs.xkcd.com/comics/automation.png" style="display: block; margin: auto;" /></p>
+<p>I felt that most of my time was spent recording results, saving models, and trying to organize folders in a structured way. Halfway through I realize this could be automated, so I created the R package <a href="https://github.com/tmastny/leadr"><code>leadr</code></a>.</p>
+<p>Within an R project, <code>leadr</code> maintains a personal dataset leaderboard for every model built. The package also handles model saving, and organization. By the time I unit tested, documented, and build a pkgdown <a href="https://tmastny.github.io/leadr/">website</a> <code>leadr</code> cost me days in the competition and my score no doubt suffered. Totally worth it.</p>
+</div>
+<div id="what-i-learned-about-r-packages" class="section level2">
+<h2>What I learned about R Packages</h2>
+<p>I used many resoruces to get started on my package. Hadley’s <a href="http://r-pkgs.had.co.nz/intro.html">R Packages</a>, Parker’s <a href="https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/">r package blog post</a>, and Broman’s <a href="http://kbroman.org/pkg_primer/">package primer</a>.</p>
+<p>I also recommend you look at <a href="https://github.com/r-lib/usethis">usethis</a>. This package automates many of the various small tasks you need to do while building a package.</p>
+<div id="s3-tibble-and-pillar" class="section level3">
+<h3>S3, Tibble, and Pillar</h3>
+<p>In the most recent versions of tibble, colored output to consoles is now supported. I became really intrigued at the idea of programmatically coloring outputs to highlight important data at the console.</p>
+<p>There is an excellent tibble <a href="https://cran.r-project.org/web/packages/tibble/vignettes/extending.html">vignette</a> on using the pillar package to customize tibble printing. This, along with a custom S3 object, allowed me to customize certain column printing. Unfortunately, I realized there is no way to pass arguments to the pillar formatting tool, so I had to resort to a global variable <a href="https://github.com/tmastny/leadr/blob/master/R/id.R#L29">hack</a>. I am still pleased at the results.</p>
+<p><img src="https://raw.githubusercontent.com/tmastny/leadr/master/vignettes/leadr_pic.png" style="display: block; margin: auto;" /></p>
+<p>I’d love to be able to highlight an entire row, but that seems out of reach since each column has it’s own unique pillar formatting.</p>
+</div>
+<div id="non-standard-evaluation" class="section level3">
+<h3>Non-Standard Evaluation</h3>
+<p>Hadley has been talking a lot recently about NSE, and there is a good <a href="http://dplyr.tidyverse.org/articles/programming.html">tutorial</a> on the <code>dplyr</code> website. I ended up using dynamic NSE in a <a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L81">few</a> <a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L69">different</a> places. In the latter instance,</p>
+<pre class="r"><code>filtered &lt;- model$pred %&gt;%
+  dplyr::filter_(paste(column_names, &quot;==&quot;, shQuote(column_values), collapse = &quot;&amp;&quot;))</code></pre>
+<p>I needed to use the deprecated underscored version that operates on strings, because I was filtering on an unknown number of columns (the <code>column_names</code> varies on the model). Therefore, I needed to use <code>paste</code>’s collapse functionality to programmatically concatenate as necessary. I wasn’t able to find any SO references to similiar situations, and haven’t come up with a NSE alternative.</p>
+</div>
+</div>
+<div id="what-i-learned-about-machine-learning" class="section level2">
+<h2>What I learned about Machine Learning</h2>
+<p>I spent most of my time learning new tools instead of trying to optimize my accuracy. Even though this set me behind, I think this was a wise investment for future competitions.</p>
+<div id="ensembles" class="section level3">
+<h3>Ensembles</h3>
+<p>One of my most enjoyable discoveries was stacked and blended ensembles. I wrote a brief tutorial as a leadr <a href="https://tmastny.github.io/leadr/articles/ensemble.html">vignette</a> that I recommend you check out. The basic idea can be summed up in this picture,</p>
+<p><img src="https://tmastny.github.io/leadr/articles/blended.png" style="display: block; margin: auto;" /></p>
+<p>taken from the article <a href="https://dnc1994.com/2016/05/rank-10-percent-in-first-kaggle-competition-en/">How to Rank 10% in Your First Kaggle Competition</a>. As a model is trained on a 5-fold cross-validation set, the predictions on each out-of-fold section become features for a new ensemble model.</p>
+</div>
+<div id="keras" class="section level3">
+<h3>Keras</h3>
+<p>I know Keras has a great new <a href="https://github.com/rstudio/keras">interface to R</a>, but I decided to use the Python version. Not only did I want to become more familiar with the Python side of data science, but I also wanted to take advantage of my Nvidia 970 on my PC while I built <code>caret</code> models on my laptop.</p>
+<p>While I did <a href="https://github.com/tmastny/machine_learning_class/blob/master/Contest1/models/image_generation/image_gen.ipynb">implement</a> a Convolution Neural Network and a Resnet, they did not perform as well as most other models. In my case, I think it was partly due to the fact that our training data set was small (178 observations) and that I don’t know how to effectively do regularization or dropout. Still a lot to learn for me here.</p>
+<p>One Keras feature I found immediately useful was the <a href="https://github.com/tmastny/machine_learning_class/blob/master/Contest1/scikit_learn/image_viewer.ipynb"><code>ImageDataGenerator</code></a> class. I was easily able to visualize various image transformations and print out images to explore the data.</p>
+<p><img src="https://raw.githubusercontent.com/tmastny/machine_learning_class/master/Contest1/data_set_wide.png" style="display: block; margin: auto;" /></p>
+<p>Each row is the same three pictures: untransformed, centered, and scaled respectively.</p>
+</div>
+</div>

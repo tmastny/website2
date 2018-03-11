@@ -1,0 +1,107 @@
+---
+title: 'Beyond Reprex: Units Tests with callr'
+author: ~
+date: '2018-03-09'
+slug: reprex-callr
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## Introduction
+
+I've been [thinking](https://github.com/tmastny/leadr/tree/master/tests/testthat) [a lot](https://github.com/rstudio/reticulate/pull/167/files#diff-9e2fec04c626523d0a05bcbf796135cf)
+about unit-tests recently: I've used them in my new `leadr` package, and to debug and test new features for [`reticulate`](https://github.com/rstudio/reticulate/pull/167) and [`knitr`](https://github.com/yihui/knitr/pull/1518). 
+
+In many ways, unit tests are the ultimate [reprex](http://reprex.tidyverse.org/articles/reprex-dos-and-donts.html) (reproducible example). Except rather than helping some one else to reproduce your problem, a unit test graciously reproduces the issue until your are able to fix the problem.  
+
+> "Whenever you are tempted to type something into a print statement or a debugger expression, write it as a test instead. — Martin Fowler" --- Hadley Wickham, [*R Packages*](http://r-pkgs.had.co.nz/tests.html)
+
+In this post, I'd like to share what I've learned about testing in R and why I think more [`callr`](https://github.com/r-lib/callr) could improve unit tests.
+
+## Function vs. Process
+
+Let's suppose we are testing knitr. The workhorse of the package is `knitr::knit`, which converts the `.Rmd` to `.md`. We can come up with various ways to test `knit`, but that's only testing the package function, not necessarily the process. 
+
+The actual knitr workflow for most people is clicking the **Knit** button in RStudio^[I've looked for the actual **Knit** button code in the RStudio [github repo](https://github.com/rstudio/rstudio) but couldn't find anything. I found references to the **Knit** button object, but not the actual code to run it. Maybe it is proprietary?] or using a shortcut like `cmd+shift+k`. 
+
+But if we dive deeper into knitting (alluded to in this [github issue](https://github.com/rstudio/rmarkdown/issues/17#issuecomment-37241816) and in these [slides](https://slides.yihui.name/2017-rstudio-conf-rmarkdown-Yihui-Xie.html#6)), we see that the **Knit** button is not the `knit` function. Most importantly (for our purposes, we'll ignore `rmarkdown::render`), the **Knit** button starts a new R session. 
+
+To come up with an effective unit test, we need to make sure we can replicating the process, not just the functional test. In this case, that means we should have one test that verifies `knitr::knit` in a new R session. 
+
+Often the function and process are the same, but occasionally they can conflict and you'll need tests to handle that.
+
+
+## Package Globals
+
+Some packages have global side-effects. My new package [`leadr`](https://github.com/tmastny/leadr) creates new files, modifies directories, and remembers the last model you saved. [`reticulate`](https://github.com/rstudio/reticulate) starts a Python session that persists in current R environment.
+
+When developing these packages like these, we need to generate and tests these side-effects within a unit-testing framework like [`testthat`](https://github.com/r-lib/testthat). [`callr`](https://github.com/r-lib/callr) provides a simple way to start a new R session within an R session, which allows package side-effects to be effectively tested.
+
+This post will evanglize `callr` within unit test frameworks by showing some examples from my own work.
+
+
+The original issue, as described in [#1505](https://github.com/yihui/knitr/issues/1505), was that modified cached Python chunks did not save the Python environment between sessions. This only occured when using the **Knit** button in RStudio, or by restarting R and calling `knitr::knit` or `rmarkdown::render`. 
+
+The reason I needed the **Knit** button or a restart to replicate the issue was because `reticulate` used package-level globals to create a Python session. So within an R session, the Python environment persisted and thus the chunk states' persisted. However, an R restart cleared the package globals and made a new Python session that didn't have the chunk's state.
+
+## Vignette Driven Development
+
+Using literate programming, `knitr` vignettes are executable package code. This provides another opportunity for less formal testing: error free vignette building. I've found this useful in a few contexts.
+
+First, 
+
+
+
+
+
+## Testing with callr
+
+The [`reprex`](http://reprex.tidyverse.org/articles/reprex-dos-and-donts.html) package workflow is a nice way to create a reproducible example for some one else to help you. But I wanted to fix the problem myself.
+
+I took a cue from Hadley Wickham and wanted to write a unit test to test rendering an R markdown document with caching, using the `reticulate` engine. Normally, [`testthat`](https://github.com/r-lib/testthat) for `cmd-shift-t` in RStudio
+
+
+
+### The Knit Button
+
+I've noticed that clicking the **Knit** button in RStudio is not quite the same as running `knitr::knit(...)` or `rmarkdown::render(...)` (alluded to in this [github issue](https://github.com/rstudio/rmarkdown/issues/17#issuecomment-37241816) and in these [slides](https://slides.yihui.name/2017-rstudio-conf-rmarkdown-Yihui-Xie.html#6)). In particular, it seems that clicking the **Knit** button starts a new R session and all the packages are reloaded.
+
+
+
+## Background
+
+In the last month, I started to explore the [`reticulate`](https://github.com/rstudio/reticulate) package, an R interface to Python. The feature I was most excited about was it's `knitr` engine, that allowed Python within `knitr` to presist across chunks.
+
+As I began to explored this feature, I noticed that the caching feature of rectiulate didn't work *sometimes*. The sometimes part made it interesting to debug, not knowing about the interworkings of `knitr` or `reticulate` before this venture. 
+
+This debugging lead me to [`reprex`](https://github.com/tidyverse/reprex) and [`callr`](https://github.com/r-lib/callr), cumulating in pull requests [#1518](https://github.com/yihui/knitr/pull/1518) to `knitr` and [#167](https://github.com/rstudio/reticulate/pull/167) to `reticulate`.
+
+In this post, I'd like to talk about some of testing techniques I've learned from this issue.
+
+## Question
+Is there a way to replicate clicking the `Knit` button within a unit testing framework (preferably [`testthat`](https://github.com/r-lib/testthat)) for an R package?
+
+For what I understand from this [SO question](https://stackoverflow.com/questions/32257970/knitr-inherits-variables-from-a-users-environment-even-with-envir-new-env) is that there is no good way to get a fresh R session without restarting.
+
+In my case, unless my call to `rmarkdown::render(..., envir = new.env())` occurs in the first test, knitting the `.Rmd` is not the same as clicking the **Knit** button because other tests can change package globals or create side-effects that persist through `render`.
+
+## Ideas
+Could it be done by creating a new R session within the `testthat` R session? 
+
+I also browsed through the `knitr` [unit tests](https://github.com/yihui/knitr/tree/master/tests/testit), but didn't noticed anything that might help.
+
+
+
+
+
+

@@ -1,0 +1,91 @@
+---
+title: 'My First Kaggle Contest and R Package'
+author: ~
+date: '2018-03-10'
+slug: kaggle-contest-callr
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## Introduction
+
+I competed in my first Kaggle [contest](https://www.kaggle.com/c/unodatamining-2018-1) and I learned a lot. My github repo was such a disorganized [mess](https://github.com/tmastny/machine_learning_class/tree/master/Contest1) that I sometimes doubted I could even recreate these models. So I did the programmer thing:
+
+```{r echo=FALSE, fig.align='center'}
+#![](https://imgs.xkcd.com/comics/automation.png)
+knitr::include_graphics('https://imgs.xkcd.com/comics/automation.png')
+```
+
+I felt that most of my time was spent recording results, saving models, and trying to organize folders in a structured way. Halfway through I realize this could be automated, so I created the R package [`leadr`](https://github.com/tmastny/leadr).
+
+Within an R project, `leadr` maintains a personal dataset leaderboard for every model built. The package also handles model saving, and organization. By the time I unit tested, documented, and build a pkgdown [website](https://tmastny.github.io/leadr/) `leadr` cost me days in the competition and my score no doubt suffered. Totally worth it. 
+
+## What I learned about R Packages
+
+I used many resoruces to get started on my package. Hadley's [R Packages](http://r-pkgs.had.co.nz/intro.html), Parker's [r package blog post](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), and Broman's [package primer](http://kbroman.org/pkg_primer/). 
+
+I also recommend you look at [usethis](https://github.com/r-lib/usethis). This package automates many of the various small tasks you need to do while building a package. 
+
+### S3, Tibble, and Pillar
+In the most recent versions of tibble, colored output to consoles is now supported. I became really intrigued at the idea of programmatically coloring outputs to highlight important data at the console.
+
+There is an excellent tibble [vignette](https://cran.r-project.org/web/packages/tibble/vignettes/extending.html) on using the pillar package to customize tibble printing. This, along with a custom S3 object, allowed me to customize certain column printing. Unfortunately, I realized there is no way to pass arguments to the pillar formatting tool, so I had to resort to a global variable [hack](https://github.com/tmastny/leadr/blob/master/R/id.R#L29). I am still pleased at the results. 
+
+```{r echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://raw.githubusercontent.com/tmastny/leadr/master/vignettes/leadr_pic.png")
+```
+
+I'd love to be able to highlight an entire row, but that seems out of reach since each column has it's own unique pillar formatting. 
+
+### Non-Standard Evaluation
+
+Hadley has been talking a lot recently about NSE, and there is a good [tutorial](http://dplyr.tidyverse.org/articles/programming.html) on the `dplyr` website. 
+I ended up using dynamic NSE in a [few](https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L81) [different](https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L69) places. In the latter instance, 
+
+```{r eval=FALSE}
+filtered <- model$pred %>%
+  dplyr::filter_(paste(column_names, "==", shQuote(column_values), collapse = "&"))
+```
+
+I needed to use the deprecated underscored version that operates on strings, because I was filtering on an unknown number of columns (the `column_names` varies on the model). Therefore, I needed to use `paste`'s collapse functionality to programmatically concatenate as necessary. I wasn't able to find any SO references to similiar situations, and haven't come up with a NSE alternative. 
+
+## What I learned about Machine Learning
+
+I spent most of my time learning new tools instead of trying to optimize my accuracy. Even though this set me behind, I think this was a wise investment for future competitions.
+
+### Ensembles
+
+One of my most enjoyable discoveries was stacked and blended ensembles. I wrote a brief tutorial as a leadr [vignette](https://tmastny.github.io/leadr/articles/ensemble.html) that I recommend you check out. The basic idea can be summed up in this picture, 
+
+```{r echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://tmastny.github.io/leadr/articles/blended.png")
+```
+
+taken from the article [How to Rank 10% in Your First Kaggle Competition](https://dnc1994.com/2016/05/rank-10-percent-in-first-kaggle-competition-en/). As a model is trained on a 5-fold cross-validation set, the predictions on each out-of-fold section become features for a new ensemble model. 
+
+### Keras
+
+I know Keras has a great new [interface to R](https://github.com/rstudio/keras), but I decided to use the Python version. Not only did I want to become more familiar with the Python side of data science, but I also wanted to take advantage of my Nvidia 970 on my PC while I built `caret` models on my laptop. 
+
+While I did [implement](https://github.com/tmastny/machine_learning_class/blob/master/Contest1/models/image_generation/image_gen.ipynb) a Convolution Neural Network and a Resnet, they did not perform as well as most other models. In my case, I think it was partly due to the fact that our training data set was small (178 observations) and that I don't know how to effectively do regularization or dropout. Still a lot to learn for me here.
+
+One Keras feature I found immediately useful was the [`ImageDataGenerator`](https://github.com/tmastny/machine_learning_class/blob/master/Contest1/scikit_learn/image_viewer.ipynb) class. I was easily able to visualize various image transformations and print out images to explore the data. 
+
+```{r echo=FALSE, fig.align='center'}
+knitr::include_graphics("https://raw.githubusercontent.com/tmastny/machine_learning_class/master/Contest1/data_set_wide.png")
+```
+
+Each row is the same three pictures: untransformed, centered, and scaled respectively. 
+
+
+

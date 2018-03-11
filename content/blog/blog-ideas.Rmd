@@ -19,6 +19,8 @@ library(reticulate)
 knitr::knit_engines$set(python = reticulate::eng_python)
 ```
 
+## Using non-standard analysis on variable columns
+
 ## Blog Ideas
 
 Best linear ordering of US states:
