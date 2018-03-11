@@ -28,16 +28,16 @@ knitr::include_graphics('https://imgs.xkcd.com/comics/automation.png')
 
 I felt that most of my time was spent recording results, saving models, and trying to organize folders in a structured way. Halfway through I realize this could be automated, so I created the R package [`leadr`](https://github.com/tmastny/leadr).
 
-Within an R project, `leadr` maintains a personal dataset leaderboard for every model built. The package also handles model saving, and organization. By the time I unit tested, documented, and build a pkgdown [website](https://tmastny.github.io/leadr/) `leadr` cost me days in the competition and my score no doubt suffered. Totally worth it. 
+Within an R project, `leadr` maintains a personal leaderboard for every model built. The package also handles model saving and organization. By the time I unit tested, documented, and built a pkgdown [website](https://tmastny.github.io/leadr/) `leadr` cost me days in the competition and my score no doubt suffered. Totally worth it. 
 
 ## What I learned about R Packages
 
-I used many resoruces to get started on my package. Hadley's [R Packages](http://r-pkgs.had.co.nz/intro.html), Parker's [r package blog post](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), and Broman's [package primer](http://kbroman.org/pkg_primer/). 
+I used many resoruces to get started on my package. Hadley's [R Packages](http://r-pkgs.had.co.nz/intro.html), Parker's [R package blog post](https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/), and Broman's [package primer](http://kbroman.org/pkg_primer/). 
 
 I also recommend you look at [usethis](https://github.com/r-lib/usethis). This package automates many of the various small tasks you need to do while building a package. 
 
 ### S3, Tibble, and Pillar
-In the most recent versions of tibble, colored output to consoles is now supported. I became really intrigued at the idea of programmatically coloring outputs to highlight important data at the console.
+When recent versions of tibble supported colored output to consoles, I became really intrigued at the idea of programmatically coloring outputs to highlight important data at the console.
 
 There is an excellent tibble [vignette](https://cran.r-project.org/web/packages/tibble/vignettes/extending.html) on using the pillar package to customize tibble printing. This, along with a custom S3 object, allowed me to customize certain column printing. Unfortunately, I realized there is no way to pass arguments to the pillar formatting tool, so I had to resort to a global variable [hack](https://github.com/tmastny/leadr/blob/master/R/id.R#L29). I am still pleased at the results. 
 
@@ -65,7 +65,7 @@ I spent most of my time learning new tools instead of trying to optimize my accu
 
 ### Ensembles
 
-One of my most enjoyable discoveries was stacked and blended ensembles. I wrote a brief tutorial as a leadr [vignette](https://tmastny.github.io/leadr/articles/ensemble.html) that I recommend you check out. The basic idea can be summed up in this picture, 
+One of my most enjoyable discoveries was stacked and blended ensembles. I wrote a brief tutorial as a leadr [vignette](https://tmastny.github.io/leadr/articles/ensemble.html) that I recommend you check out. The basic idea can be summed up in this picture
 
 ```{r echo=FALSE, fig.align='center'}
 knitr::include_graphics("https://tmastny.github.io/leadr/articles/blended.png")
@@ -86,6 +86,16 @@ knitr::include_graphics("https://raw.githubusercontent.com/tmastny/machine_learn
 ```
 
 Each row is the same three pictures: untransformed, centered, and scaled respectively. 
+
+## Conclusions
+
+I'm definitely aware of the limitations of complicated modeling:
+
+```{r echo=FALSE}
+blogdown::shortcode('tweet', '959953431510175744')
+```
+
+But I still think a Kaggle contest is a great opporunity to get some hands-on experience with data and to find some motivation for R packages. 
 
 
 

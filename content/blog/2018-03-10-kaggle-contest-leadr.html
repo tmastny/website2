@@ -24,6 +24,7 @@ output:
 <li><a href="#ensembles">Ensembles</a></li>
 <li><a href="#keras">Keras</a></li>
 </ul></li>
+<li><a href="#conclusions">Conclusions</a></li>
 </ul>
 </div>
 
@@ -32,15 +33,15 @@ output:
 <p>I competed in my first Kaggle <a href="https://www.kaggle.com/c/unodatamining-2018-1">contest</a> and I learned a lot. My github repo was such a disorganized <a href="https://github.com/tmastny/machine_learning_class/tree/master/Contest1">mess</a> that I sometimes doubted I could even recreate these models. So I did the programmer thing:</p>
 <p><img src="https://imgs.xkcd.com/comics/automation.png" style="display: block; margin: auto;" /></p>
 <p>I felt that most of my time was spent recording results, saving models, and trying to organize folders in a structured way. Halfway through I realize this could be automated, so I created the R package <a href="https://github.com/tmastny/leadr"><code>leadr</code></a>.</p>
-<p>Within an R project, <code>leadr</code> maintains a personal dataset leaderboard for every model built. The package also handles model saving, and organization. By the time I unit tested, documented, and build a pkgdown <a href="https://tmastny.github.io/leadr/">website</a> <code>leadr</code> cost me days in the competition and my score no doubt suffered. Totally worth it.</p>
+<p>Within an R project, <code>leadr</code> maintains a personal leaderboard for every model built. The package also handles model saving and organization. By the time I unit tested, documented, and built a pkgdown <a href="https://tmastny.github.io/leadr/">website</a> <code>leadr</code> cost me days in the competition and my score no doubt suffered. Totally worth it.</p>
 </div>
 <div id="what-i-learned-about-r-packages" class="section level2">
 <h2>What I learned about R Packages</h2>
-<p>I used many resoruces to get started on my package. Hadley’s <a href="http://r-pkgs.had.co.nz/intro.html">R Packages</a>, Parker’s <a href="https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/">r package blog post</a>, and Broman’s <a href="http://kbroman.org/pkg_primer/">package primer</a>.</p>
+<p>I used many resoruces to get started on my package. Hadley’s <a href="http://r-pkgs.had.co.nz/intro.html">R Packages</a>, Parker’s <a href="https://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/">R package blog post</a>, and Broman’s <a href="http://kbroman.org/pkg_primer/">package primer</a>.</p>
 <p>I also recommend you look at <a href="https://github.com/r-lib/usethis">usethis</a>. This package automates many of the various small tasks you need to do while building a package.</p>
 <div id="s3-tibble-and-pillar" class="section level3">
 <h3>S3, Tibble, and Pillar</h3>
-<p>In the most recent versions of tibble, colored output to consoles is now supported. I became really intrigued at the idea of programmatically coloring outputs to highlight important data at the console.</p>
+<p>When recent versions of tibble supported colored output to consoles, I became really intrigued at the idea of programmatically coloring outputs to highlight important data at the console.</p>
 <p>There is an excellent tibble <a href="https://cran.r-project.org/web/packages/tibble/vignettes/extending.html">vignette</a> on using the pillar package to customize tibble printing. This, along with a custom S3 object, allowed me to customize certain column printing. Unfortunately, I realized there is no way to pass arguments to the pillar formatting tool, so I had to resort to a global variable <a href="https://github.com/tmastny/leadr/blob/master/R/id.R#L29">hack</a>. I am still pleased at the results.</p>
 <p><img src="https://raw.githubusercontent.com/tmastny/leadr/master/vignettes/leadr_pic.png" style="display: block; margin: auto;" /></p>
 <p>I’d love to be able to highlight an entire row, but that seems out of reach since each column has it’s own unique pillar formatting.</p>
@@ -58,7 +59,7 @@ output:
 <p>I spent most of my time learning new tools instead of trying to optimize my accuracy. Even though this set me behind, I think this was a wise investment for future competitions.</p>
 <div id="ensembles" class="section level3">
 <h3>Ensembles</h3>
-<p>One of my most enjoyable discoveries was stacked and blended ensembles. I wrote a brief tutorial as a leadr <a href="https://tmastny.github.io/leadr/articles/ensemble.html">vignette</a> that I recommend you check out. The basic idea can be summed up in this picture,</p>
+<p>One of my most enjoyable discoveries was stacked and blended ensembles. I wrote a brief tutorial as a leadr <a href="https://tmastny.github.io/leadr/articles/ensemble.html">vignette</a> that I recommend you check out. The basic idea can be summed up in this picture</p>
 <p><img src="https://tmastny.github.io/leadr/articles/blended.png" style="display: block; margin: auto;" /></p>
 <p>taken from the article <a href="https://dnc1994.com/2016/05/rank-10-percent-in-first-kaggle-competition-en/">How to Rank 10% in Your First Kaggle Competition</a>. As a model is trained on a 5-fold cross-validation set, the predictions on each out-of-fold section become features for a new ensemble model.</p>
 </div>
@@ -70,4 +71,10 @@ output:
 <p><img src="https://raw.githubusercontent.com/tmastny/machine_learning_class/master/Contest1/data_set_wide.png" style="display: block; margin: auto;" /></p>
 <p>Each row is the same three pictures: untransformed, centered, and scaled respectively.</p>
 </div>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>I’m definitely aware of the limitations of complicated modeling:</p>
+{{% tweet "959953431510175744" %}}
+<p>But I still think a Kaggle contest is a great opporunity to get some hands-on experience with data and to find some motivation for R packages.</p>
 </div>

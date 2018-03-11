@@ -19,12 +19,6 @@ output:
 <li><a href="#function-vs.process">Function vs. Process</a></li>
 <li><a href="#package-globals">Package Globals</a></li>
 <li><a href="#vignette-driven-development">Vignette Driven Development</a></li>
-<li><a href="#testing-with-callr">Testing with callr</a><ul>
-<li><a href="#the-knit-button">The Knit Button</a></li>
-</ul></li>
-<li><a href="#background">Background</a></li>
-<li><a href="#question">Question</a></li>
-<li><a href="#ideas">Ideas</a></li>
 </ul>
 </div>
 
@@ -49,41 +43,19 @@ output:
 <h2>Package Globals</h2>
 <p>Some packages have global side-effects. My new package <a href="https://github.com/tmastny/leadr"><code>leadr</code></a> creates new files, modifies directories, and remembers the last model you saved. <a href="https://github.com/rstudio/reticulate"><code>reticulate</code></a> starts a Python session that persists in current R environment.</p>
 <p>When developing these packages like these, we need to generate and tests these side-effects within a unit-testing framework like <a href="https://github.com/r-lib/testthat"><code>testthat</code></a>. <a href="https://github.com/r-lib/callr"><code>callr</code></a> provides a simple way to start a new R session within an R session, which allows package side-effects to be effectively tested.</p>
-<p>This post will evanglize <code>callr</code> within unit test frameworks by showing some examples from my own work.</p>
+<pre class="r"><code>callr::r(
+  function() {
+    rmarkdown::render(here::here(), quiet = TRUE, envir = new.env())
+  })</code></pre>
 <p>The original issue, as described in <a href="https://github.com/yihui/knitr/issues/1505">#1505</a>, was that modified cached Python chunks did not save the Python environment between sessions. This only occured when using the <strong>Knit</strong> button in RStudio, or by restarting R and calling <code>knitr::knit</code> or <code>rmarkdown::render</code>.</p>
 <p>The reason I needed the <strong>Knit</strong> button or a restart to replicate the issue was because <code>reticulate</code> used package-level globals to create a Python session. So within an R session, the Python environment persisted and thus the chunk states’ persisted. However, an R restart cleared the package globals and made a new Python session that didn’t have the chunk’s state.</p>
+<p>This debugging lead me to <a href="https://github.com/tidyverse/reprex"><code>reprex</code></a> and <a href="https://github.com/r-lib/callr"><code>callr</code></a>, cumulating in pull requests <a href="https://github.com/yihui/knitr/pull/1518">#1518</a> to <code>knitr</code> and <a href="https://github.com/rstudio/reticulate/pull/167">#167</a> to <code>reticulate</code>.</p>
 </div>
 <div id="vignette-driven-development" class="section level2">
 <h2>Vignette Driven Development</h2>
-<p>Using literate programming, <code>knitr</code> vignettes are executable package code. This provides another opportunity for less formal testing: error free vignette building. I’ve found this useful in a few contexts.</p>
-<p>First,</p>
-</div>
-<div id="testing-with-callr" class="section level2">
-<h2>Testing with callr</h2>
-<p>The <a href="http://reprex.tidyverse.org/articles/reprex-dos-and-donts.html"><code>reprex</code></a> package workflow is a nice way to create a reproducible example for some one else to help you. But I wanted to fix the problem myself.</p>
-<p>I took a cue from Hadley Wickham and wanted to write a unit test to test rendering an R markdown document with caching, using the <code>reticulate</code> engine. Normally, <a href="https://github.com/r-lib/testthat"><code>testthat</code></a> for <code>cmd-shift-t</code> in RStudio</p>
-<div id="the-knit-button" class="section level3">
-<h3>The Knit Button</h3>
-<p>I’ve noticed that clicking the <strong>Knit</strong> button in RStudio is not quite the same as running <code>knitr::knit(...)</code> or <code>rmarkdown::render(...)</code> (alluded to in this <a href="https://github.com/rstudio/rmarkdown/issues/17#issuecomment-37241816">github issue</a> and in these <a href="https://slides.yihui.name/2017-rstudio-conf-rmarkdown-Yihui-Xie.html#6">slides</a>). In particular, it seems that clicking the <strong>Knit</strong> button starts a new R session and all the packages are reloaded.</p>
-</div>
-</div>
-<div id="background" class="section level2">
-<h2>Background</h2>
-<p>In the last month, I started to explore the <a href="https://github.com/rstudio/reticulate"><code>reticulate</code></a> package, an R interface to Python. The feature I was most excited about was it’s <code>knitr</code> engine, that allowed Python within <code>knitr</code> to presist across chunks.</p>
-<p>As I began to explored this feature, I noticed that the caching feature of rectiulate didn’t work <em>sometimes</em>. The sometimes part made it interesting to debug, not knowing about the interworkings of <code>knitr</code> or <code>reticulate</code> before this venture.</p>
-<p>This debugging lead me to <a href="https://github.com/tidyverse/reprex"><code>reprex</code></a> and <a href="https://github.com/r-lib/callr"><code>callr</code></a>, cumulating in pull requests <a href="https://github.com/yihui/knitr/pull/1518">#1518</a> to <code>knitr</code> and <a href="https://github.com/rstudio/reticulate/pull/167">#167</a> to <code>reticulate</code>.</p>
-<p>In this post, I’d like to talk about some of testing techniques I’ve learned from this issue.</p>
-</div>
-<div id="question" class="section level2">
-<h2>Question</h2>
-<p>Is there a way to replicate clicking the <code>Knit</code> button within a unit testing framework (preferably <a href="https://github.com/r-lib/testthat"><code>testthat</code></a>) for an R package?</p>
-<p>For what I understand from this <a href="https://stackoverflow.com/questions/32257970/knitr-inherits-variables-from-a-users-environment-even-with-envir-new-env">SO question</a> is that there is no good way to get a fresh R session without restarting.</p>
-<p>In my case, unless my call to <code>rmarkdown::render(..., envir = new.env())</code> occurs in the first test, knitting the <code>.Rmd</code> is not the same as clicking the <strong>Knit</strong> button because other tests can change package globals or create side-effects that persist through <code>render</code>.</p>
-</div>
-<div id="ideas" class="section level2">
-<h2>Ideas</h2>
-<p>Could it be done by creating a new R session within the <code>testthat</code> R session?</p>
-<p>I also browsed through the <code>knitr</code> <a href="https://github.com/yihui/knitr/tree/master/tests/testit">unit tests</a>, but didn’t noticed anything that might help.</p>
+<p>Vignettes, as executable package code, provide another opportunity for less formal testing: error free vignette building. I’ve found this useful in a few contexts.</p>
+<p>First, vignettes can be a nice way separate functions from process.</p>
+<p>Second, when developing a package, vignettes can be an excellent way to try out various APIs and workflows. For example, <a href="https://github.com/tmastny/leadr/blob/96b83278fa45874813277ea23312f80d76b341e3/R/model_tools.R#L100"><code>leadr::to_list</code></a> came about while writing a vignette, and I realized I needed an interface to <code>readRDS</code> to simplify reading in previously saved models.</p>
 </div>
 <div class="footnotes">
 <hr />

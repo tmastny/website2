@@ -47,60 +47,27 @@ Some packages have global side-effects. My new package [`leadr`](https://github.
 
 When developing these packages like these, we need to generate and tests these side-effects within a unit-testing framework like [`testthat`](https://github.com/r-lib/testthat). [`callr`](https://github.com/r-lib/callr) provides a simple way to start a new R session within an R session, which allows package side-effects to be effectively tested.
 
-This post will evanglize `callr` within unit test frameworks by showing some examples from my own work.
+```{r eval=FALSE}
+callr::r(
+  function() {
+    rmarkdown::render(here::here(), quiet = TRUE, envir = new.env())
+  })
+```
 
 
 The original issue, as described in [#1505](https://github.com/yihui/knitr/issues/1505), was that modified cached Python chunks did not save the Python environment between sessions. This only occured when using the **Knit** button in RStudio, or by restarting R and calling `knitr::knit` or `rmarkdown::render`. 
 
 The reason I needed the **Knit** button or a restart to replicate the issue was because `reticulate` used package-level globals to create a Python session. So within an R session, the Python environment persisted and thus the chunk states' persisted. However, an R restart cleared the package globals and made a new Python session that didn't have the chunk's state.
 
-## Vignette Driven Development
-
-Using literate programming, `knitr` vignettes are executable package code. This provides another opportunity for less formal testing: error free vignette building. I've found this useful in a few contexts.
-
-First, 
-
-
-
-
-
-## Testing with callr
-
-The [`reprex`](http://reprex.tidyverse.org/articles/reprex-dos-and-donts.html) package workflow is a nice way to create a reproducible example for some one else to help you. But I wanted to fix the problem myself.
-
-I took a cue from Hadley Wickham and wanted to write a unit test to test rendering an R markdown document with caching, using the `reticulate` engine. Normally, [`testthat`](https://github.com/r-lib/testthat) for `cmd-shift-t` in RStudio
-
-
-
-### The Knit Button
-
-I've noticed that clicking the **Knit** button in RStudio is not quite the same as running `knitr::knit(...)` or `rmarkdown::render(...)` (alluded to in this [github issue](https://github.com/rstudio/rmarkdown/issues/17#issuecomment-37241816) and in these [slides](https://slides.yihui.name/2017-rstudio-conf-rmarkdown-Yihui-Xie.html#6)). In particular, it seems that clicking the **Knit** button starts a new R session and all the packages are reloaded.
-
-
-
-## Background
-
-In the last month, I started to explore the [`reticulate`](https://github.com/rstudio/reticulate) package, an R interface to Python. The feature I was most excited about was it's `knitr` engine, that allowed Python within `knitr` to presist across chunks.
-
-As I began to explored this feature, I noticed that the caching feature of rectiulate didn't work *sometimes*. The sometimes part made it interesting to debug, not knowing about the interworkings of `knitr` or `reticulate` before this venture. 
-
 This debugging lead me to [`reprex`](https://github.com/tidyverse/reprex) and [`callr`](https://github.com/r-lib/callr), cumulating in pull requests [#1518](https://github.com/yihui/knitr/pull/1518) to `knitr` and [#167](https://github.com/rstudio/reticulate/pull/167) to `reticulate`.
 
-In this post, I'd like to talk about some of testing techniques I've learned from this issue.
+## Vignette Driven Development
 
-## Question
-Is there a way to replicate clicking the `Knit` button within a unit testing framework (preferably [`testthat`](https://github.com/r-lib/testthat)) for an R package?
+Vignettes, as executable package code, provide another opportunity for less formal testing: error free vignette building. I've found this useful in a few contexts.
 
-For what I understand from this [SO question](https://stackoverflow.com/questions/32257970/knitr-inherits-variables-from-a-users-environment-even-with-envir-new-env) is that there is no good way to get a fresh R session without restarting.
+First, vignettes can be a nice way separate functions from process. 
 
-In my case, unless my call to `rmarkdown::render(..., envir = new.env())` occurs in the first test, knitting the `.Rmd` is not the same as clicking the **Knit** button because other tests can change package globals or create side-effects that persist through `render`.
-
-## Ideas
-Could it be done by creating a new R session within the `testthat` R session? 
-
-I also browsed through the `knitr` [unit tests](https://github.com/yihui/knitr/tree/master/tests/testit), but didn't noticed anything that might help.
-
-
+Second, when developing a package, vignettes can be an excellent way to try out various APIs and workflows. For example, [`leadr::to_list`](https://github.com/tmastny/leadr/blob/96b83278fa45874813277ea23312f80d76b341e3/R/model_tools.R#L100) came about while writing a vignette, and I realized I needed an interface to `readRDS` to simplify reading in previously saved models. 
 
 
 
