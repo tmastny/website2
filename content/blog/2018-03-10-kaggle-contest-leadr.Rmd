@@ -6,7 +6,7 @@ slug: kaggle-contest-callr
 categories: []
 tags: []
 description: 
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true 
