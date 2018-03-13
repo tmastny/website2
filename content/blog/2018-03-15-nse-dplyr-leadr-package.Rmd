@@ -1,0 +1,317 @@
+---
+title: 'Standard Non-Standard Evaluation: Tidy Eval'
+author: ~
+date: '2018-03-13'
+slug: nse-tidy-eval-dplyr-leadr
+categories: []
+tags: []
+description: 
+draft: false
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## Introduction
+
+Hadley Wickham is creating awesome new resources for learning tidy eval: new [Advanced R](https://twitter.com/hadleywickham/status/972859220814155776) chapters, a [youtube video](https://www.youtube.com/watch?v=nERXS3ssntw), and [talks](https://twitter.com/rctatman/status/971908205700898823).
+
+I've been slowly working my way through this material, but you never really learn anything until you teach it. So I thought I'd share my understanding of tidy eval and how I've used in in my new package [leadr](https://tmastny.github.io/leadr/).
+
+## Typed Words and Variables
+
+The central issue tidy eval solves, as I understand it, is creating the distinction between typed words and variables.
+
+For example:
+```{r eval=FALSE}
+bar <- 4
+foo(bar)
+```
+
+The actual typed word is `bar`, but the value of variable `bar` is 4.
+
+Sometimes, however, we want the typed word to have meaning. For example,
+
+```{r}
+library(tidyverse)
+iris %>%
+  group_by(Species) %>%
+  summarise(n = n())
+```
+
+Note that `Species` has no value in the current R environment:
+
+```{r error=TRUE}
+Species
+```
+
+Yet in the function `group_by` the typed word `Species` to has special meaning: it refers to that column in the iris dataset.
+
+The rest of the post will be looking at various ways we can give typed words meaning. 
+
+## Strings
+
+Extending the example in the previous section, say we don't know the `group_by` variable ahead time and we read it in as a string:
+
+```{r error=TRUE}
+group_var <- "Species"
+iris %>%
+  group_by(group_var) %>%
+  summarise(n = n())
+```
+
+Reading the error message, `group_by` thinks that `group_var` is the column name. Remember, `group_by` just reads the words typed between the parentheses. It doesn't care about the value of the variable.
+
+So we need a way to tell `group_by` that it should use the value of `group_var`, not the actual thing typed out between the parentheses.
+
+We can do that by combining `rlang::sym`^[The base function `as.name` works as well if you don't want to import `rlang`.] with `!!`. `sym` makes the value of the variable a set of typed words, and `!!` tells `group_by`^[Or any other tidy eval function.] that it should use the value of the variable (which is a set of typed words) instead of the typed words actually in the parentheses.
+
+```{r error=TRUE}
+library(rlang)
+group_var <- "Species"
+group_var <- sym(group_var)
+iris %>%
+  group_by(!!group_var) %>%
+  summarise(n = n())
+```
+
+It bears repeating: `!!` tells `group_by` to use the value of the variable between the parentheses, and not the actual typed words between the parentheses.
+
+We can also see this from `group_by`'s perspective with `expr`. This is useful for debugging when the expressions get more complicated:
+
+```{r error=TRUE}
+group_var <- "Species"
+group_var <- sym(group_var)
+expr(
+  iris %>%
+    group_by(!!group_var) %>%
+    summarise(n = n())
+)
+```
+
+`expr` shows us the expression being evaluated.
+
+And the `sym`/`!!` pair works with functions too.
+
+```{r}
+grouper <- function(data, group_var) {
+  group_var <- sym(group_var)
+  data %>%
+    group_by(!!group_var) %>%
+    summarise(n = n())
+}
+grouper(iris, "Species")
+```
+
+## Expressions
+
+What we if want to use `Species` directly with `grouper` like we do with `group_by`? That is, we'd like to type in `Species` in the `group_var` argument for `grouper`.
+
+```{r error=TRUE}
+grouper(iris, Species)
+```
+
+Clearly we need to change something. `sym` converts a string to a set of typed words, but our argument is different. Instead of passing a string, we are passing the typed word `Species` which has no value in the environment.
+
+The solution is `rlang::expr`. 
+
+```{r error=TRUE}
+group_var <- expr(Species)
+iris %>%
+  group_by(!!group_var) %>%
+  summarise(n = n())
+```
+
+The variable `group_var` now represents the typed word `Species`.
+
+```{r}
+print(group_var)
+```
+
+Of course we still need `!!` to tell `group_by` to use the value of `group_var` and not the typed word `group_var` in the parentheses.
+
+Again, we can verify/debug this process by enclosing everything in `expr`:
+
+```{r}
+expr(
+  iris %>%
+  group_by(!!group_var) %>%
+  summarise(n = n())
+)
+```
+
+Without `!!`, `group_by` thinks we typed in `group_var`:
+```{r}
+expr(
+  iris %>%
+  group_by(group_var) %>%
+  summarise(n = n())
+)
+```
+
+### Functions
+
+Great, let's wrap this into a function!
+
+```{r error=TRUE}
+grouper <- function(data, group_var) {
+  group_expr <- expr(group_var)
+  data %>%
+    group_by(!!group_expr) %>%
+    summarise(n = n())
+}
+grouper(iris, Species)
+```
+
+Once we think about this, we start to understand how literal `expr` is. Before with `group_var <- expr(Species)`, `expr` created an expression from the typed word `Species` that we typed between the parentheses. Here, `group_expr <- expr(group_var)` is creating an expression from the typed word `group_var`.
+
+We can work around it like this:
+
+```{r error=TRUE}
+grouper <- function(data, group_var) {
+  data %>%
+    group_by(!!group_var) %>%
+    summarise(n = n())
+}
+grouper(iris, expr(Species))
+```
+
+But we don't want to have to wrap with `expr`. The whole point is to be able to write `Species` without worrying about strings or functions. 
+
+## Quosures
+
+We need a way to tell `expr` to not be so literal: don't make the typed words between the parentheses the expression. Rather, make the value of that variable (which itself is a set of typed words) the expression.
+
+We can solve this with `rlang::enquo`.
+
+```{r error=TRUE}
+grouper <- function(data, group_var) {
+  group_quo <- enquo(group_var)
+  print(group_quo)
+  data %>%
+    group_by(!!group_quo) %>%
+    summarise(n = n())
+}
+grouper(iris, Species)
+```
+
+Notice that `enquo` creates an object called a `quosure` that contains the expression (the typed word `Species`) and the environment in which it was typed. 
+
+This is crucial to solve the `expr` problem. `enquo` isn't being so literal to think that the words typed *in this environment* (like `group_var`) is the actual name to use. Rather, it looks to the previous environment `global` to see that we actually typed `Species`. 
+
+## Nested Functions
+
+Suppose `grouper` is part of a larger function:
+
+```{r error=TRUE}
+super_grouper <- function(data, super_group_var) {
+  # do other stuff
+  grouper(data, super_group_var)
+}
+super_grouper(iris, Species)
+```
+
+Here, `grouper` (within `super_grouper`) is trying to group on the column `super_group_var`. This lets us know the limitations of `enquo`.
+
+Look to the printed `quosure` object. First, notice that the environment is no longer the global environment where we actually typed `Species`. Rather, it is in the `super_grouper` environment where the typed name is `super_group_var`.
+
+Therefore, `enquo` can only find the typed name from the parent environment. 
+
+To make this work, `grouper` needs to think that the typed word in the parent environment is `Species`. That's exactly the problem same problem we solved with `!!` and `enquo` previously!
+
+```{r error=TRUE}
+super_grouper <- function(data, super_group_var) {
+  # do other stuff
+  grouper(data, !!enquo(super_group_var))
+}
+super_grouper(iris, Species)
+```
+
+
+
+## Parsing Expressions
+
+When reading and working with data, sometimes we need to convert strings to an R expression that can be evaluted.
+
+These expressions are different from the typed words we made from strings with `rlang::sym`^[As I learned by asking in [this](https://stackoverflow.com/a/47226350/6637133) stackoverflow question and in [this](https://github.com/r-lib/rlang/issues/116#issuecomment-372743789) Github issue.], because these expressions need to be evaluated as valid R code. 
+
+In this section, we'll use `rlang::parse_expr` to solve a situation I encountered when writing [`leadr::peak`](https://tmastny.github.io/leadr/reference/peak.html)^[[This](https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L69) is the source code.] using the techniques described in [this](https://stackoverflow.com/a/45134814/6637133) Stackoverflow answer.
+
+Suppose we are given the following data:
+
+```{r}
+col_names <- c("Sepal.Length", "Sepal.Width")
+col_values <- c(5.0, 3.6)
+```
+
+We need to use this data to filter the `iris` dataset. If we were to do it manually, it would look like this:
+
+```{r}
+iris %>% 
+  filter(Sepal.Length == 5.0 & Sepal.Width == 3.6)
+```
+
+We could handle it as before:
+```{r error=TRUE}
+iris %>%
+  filter(!!sym(col_names[1]) == col_values[1] &
+         !!sym(col_names[2]) == col_values[2])
+```
+
+But there's a catch. The length of `col_names` and `col_values` are **not** known ahead of time. 
+
+### Unknown Number of Columns
+
+If the data has multiple columns, we need to programmatically add a statement `col_names[n] == col_value[n]` for each pair of name and value. The `collapse` parameter in the base function `paste` does this^[The nice thing about this solution is that we can replace `"&"` with `"||"`. Other methods such as `!!!` only support `&` filters.]:
+
+```{r}
+collapsed <- paste(col_names, "==", col_values, collapse = "&")
+collapsed
+```
+
+`collapsed` is a string, so we might try `sym`:
+
+```{r error=TRUE}
+iris %>%
+  filter(!!sym(collapsed))
+```
+
+But it doesn't work, because `sym` creates the "name" of some object (that may or may not exist in the current environment), not code to be evaluated.
+
+We need `collapsed` to be evaluated as a valid R expression. We do this with `rlang::parse_expr`:
+
+```{r}
+iris %>%
+  filter(!!parse_expr(collapsed))
+```
+
+Using `expr`, we verify that the previous expression is evaluated as intended:
+
+```{r}
+expr(
+  iris %>%
+    filter(!!parse_expr(collapsed))
+)
+```
+
+This is exactly what we typed manually at the beginning of this section.
+
+## Conclusions
+
+Tidy eval really clicked for me when I thought about the difference between the typed words and variables. I'm not sure if this metaphor holds up to the formal definitions, but it has helped understand enough tidy eval to use it in my own work.
+
+I read a lot on the topic, but didn't include everything in the post. Here's some more recommended reading:
+
+  - Cool use of `purrr::map` with `quo`s: https://stackoverflow.com/questions/49075824/using-tidy-eval-for-multiple-dplyr-filter-conditions
+
+  - Some interesting examples of tidy eval in action https://stackoverflow.com/questions/46086755/what-is-the-tidyeval-way-of-using-dplyrfilter
+
+  - Overview of non-standard evaluation in base R and extensions in tidy eval: https://edwinth.github.io/blog/nse/
+
+
+

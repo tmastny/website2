@@ -1,0 +1,293 @@
+---
+title: 'Standard Non-Standard Evaluation: Tidy Eval'
+author: ~
+date: '2018-03-13'
+slug: nse-tidy-eval-dplyr-leadr
+categories: []
+tags: []
+description: 
+draft: false
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#typed-words-and-variables">Typed Words and Variables</a></li>
+<li><a href="#strings">Strings</a></li>
+<li><a href="#expressions">Expressions</a><ul>
+<li><a href="#functions">Functions</a></li>
+</ul></li>
+<li><a href="#quosures">Quosures</a></li>
+<li><a href="#nested-functions">Nested Functions</a></li>
+<li><a href="#parsing-expressions">Parsing Expressions</a><ul>
+<li><a href="#unknown-number-of-columns">Unknown Number of Columns</a></li>
+</ul></li>
+<li><a href="#conclusions">Conclusions</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Hadley Wickham is creating awesome new resources for learning tidy eval: new <a href="https://twitter.com/hadleywickham/status/972859220814155776">Advanced R</a> chapters, a <a href="https://www.youtube.com/watch?v=nERXS3ssntw">youtube video</a>, and <a href="https://twitter.com/rctatman/status/971908205700898823">talks</a>.</p>
+<p>I’ve been slowly working my way through this material, but you never really learn anything until you teach it. So I thought I’d share my understanding of tidy eval and how I’ve used in in my new package <a href="https://tmastny.github.io/leadr/">leadr</a>.</p>
+</div>
+<div id="typed-words-and-variables" class="section level2">
+<h2>Typed Words and Variables</h2>
+<p>The central issue tidy eval solves, as I understand it, is creating the distinction between typed words and variables.</p>
+<p>For example:</p>
+<pre class="r"><code>bar &lt;- 4
+foo(bar)</code></pre>
+<p>The actual typed word is <code>bar</code>, but the value of variable <code>bar</code> is 4.</p>
+<p>Sometimes, however, we want the typed word to have meaning. For example,</p>
+<pre class="r"><code>library(tidyverse)
+iris %&gt;%
+  group_by(Species) %&gt;%
+  summarise(n = n())</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+<p>Note that <code>Species</code> has no value in the current R environment:</p>
+<pre class="r"><code>Species</code></pre>
+<pre><code>## Error in eval(expr, envir, enclos): object &#39;Species&#39; not found</code></pre>
+<p>Yet in the function <code>group_by</code> the typed word <code>Species</code> to has special meaning: it refers to that column in the iris dataset.</p>
+<p>The rest of the post will be looking at various ways we can give typed words meaning.</p>
+</div>
+<div id="strings" class="section level2">
+<h2>Strings</h2>
+<p>Extending the example in the previous section, say we don’t know the <code>group_by</code> variable ahead time and we read it in as a string:</p>
+<pre class="r"><code>group_var &lt;- &quot;Species&quot;
+iris %&gt;%
+  group_by(group_var) %&gt;%
+  summarise(n = n())</code></pre>
+<pre><code>## Error in grouped_df_impl(data, unname(vars), drop): Column `group_var` is unknown</code></pre>
+<p>Reading the error message, <code>group_by</code> thinks that <code>group_var</code> is the column name. Remember, <code>group_by</code> just reads the words typed between the parentheses. It doesn’t care about the value of the variable.</p>
+<p>So we need a way to tell <code>group_by</code> that it should use the value of <code>group_var</code>, not the actual thing typed out between the parentheses.</p>
+<p>We can do that by combining <code>rlang::sym</code><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> with <code>!!</code>. <code>sym</code> makes the value of the variable a set of typed words, and <code>!!</code> tells <code>group_by</code><a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> that it should use the value of the variable (which is a set of typed words) instead of the typed words actually in the parentheses.</p>
+<pre class="r"><code>library(rlang)
+group_var &lt;- &quot;Species&quot;
+group_var &lt;- sym(group_var)
+iris %&gt;%
+  group_by(!!group_var) %&gt;%
+  summarise(n = n())</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+<p>It bears repeating: <code>!!</code> tells <code>group_by</code> to use the value of the variable between the parentheses, and not the actual typed words between the parentheses.</p>
+<p>We can also see this from <code>group_by</code>’s perspective with <code>expr</code>. This is useful for debugging when the expressions get more complicated:</p>
+<pre class="r"><code>group_var &lt;- &quot;Species&quot;
+group_var &lt;- sym(group_var)
+expr(
+  iris %&gt;%
+    group_by(!!group_var) %&gt;%
+    summarise(n = n())
+)</code></pre>
+<pre><code>## iris %&gt;% group_by(Species) %&gt;% summarise(n = n())</code></pre>
+<p><code>expr</code> shows us the expression being evaluated.</p>
+<p>And the <code>sym</code>/<code>!!</code> pair works with functions too.</p>
+<pre class="r"><code>grouper &lt;- function(data, group_var) {
+  group_var &lt;- sym(group_var)
+  data %&gt;%
+    group_by(!!group_var) %&gt;%
+    summarise(n = n())
+}
+grouper(iris, &quot;Species&quot;)</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+</div>
+<div id="expressions" class="section level2">
+<h2>Expressions</h2>
+<p>What we if want to use <code>Species</code> directly with <code>grouper</code> like we do with <code>group_by</code>? That is, we’d like to type in <code>Species</code> in the <code>group_var</code> argument for <code>grouper</code>.</p>
+<pre class="r"><code>grouper(iris, Species)</code></pre>
+<pre><code>## Error in is_symbol(x): object &#39;Species&#39; not found</code></pre>
+<p>Clearly we need to change something. <code>sym</code> converts a string to a set of typed words, but our argument is different. Instead of passing a string, we are passing the typed word <code>Species</code> which has no value in the environment.</p>
+<p>The solution is <code>rlang::expr</code>.</p>
+<pre class="r"><code>group_var &lt;- expr(Species)
+iris %&gt;%
+  group_by(!!group_var) %&gt;%
+  summarise(n = n())</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+<p>The variable <code>group_var</code> now represents the typed word <code>Species</code>.</p>
+<pre class="r"><code>print(group_var)</code></pre>
+<pre><code>## Species</code></pre>
+<p>Of course we still need <code>!!</code> to tell <code>group_by</code> to use the value of <code>group_var</code> and not the typed word <code>group_var</code> in the parentheses.</p>
+<p>Again, we can verify/debug this process by enclosing everything in <code>expr</code>:</p>
+<pre class="r"><code>expr(
+  iris %&gt;%
+  group_by(!!group_var) %&gt;%
+  summarise(n = n())
+)</code></pre>
+<pre><code>## iris %&gt;% group_by(Species) %&gt;% summarise(n = n())</code></pre>
+<p>Without <code>!!</code>, <code>group_by</code> thinks we typed in <code>group_var</code>:</p>
+<pre class="r"><code>expr(
+  iris %&gt;%
+  group_by(group_var) %&gt;%
+  summarise(n = n())
+)</code></pre>
+<pre><code>## iris %&gt;% group_by(group_var) %&gt;% summarise(n = n())</code></pre>
+<div id="functions" class="section level3">
+<h3>Functions</h3>
+<p>Great, let’s wrap this into a function!</p>
+<pre class="r"><code>grouper &lt;- function(data, group_var) {
+  group_expr &lt;- expr(group_var)
+  data %&gt;%
+    group_by(!!group_expr) %&gt;%
+    summarise(n = n())
+}
+grouper(iris, Species)</code></pre>
+<pre><code>## Error in grouped_df_impl(data, unname(vars), drop): Column `group_var` is unknown</code></pre>
+<p>Once we think about this, we start to understand how literal <code>expr</code> is. Before with <code>group_var &lt;- expr(Species)</code>, <code>expr</code> created an expression from the typed word <code>Species</code> that we typed between the parentheses. Here, <code>group_expr &lt;- expr(group_var)</code> is creating an expression from the typed word <code>group_var</code>.</p>
+<p>We can work around it like this:</p>
+<pre class="r"><code>grouper &lt;- function(data, group_var) {
+  data %&gt;%
+    group_by(!!group_var) %&gt;%
+    summarise(n = n())
+}
+grouper(iris, expr(Species))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+<p>But we don’t want to have to wrap with <code>expr</code>. The whole point is to be able to write <code>Species</code> without worrying about strings or functions.</p>
+</div>
+</div>
+<div id="quosures" class="section level2">
+<h2>Quosures</h2>
+<p>We need a way to tell <code>expr</code> to not be so literal: don’t make the typed words between the parentheses the expression. Rather, make the value of that variable (which itself is a set of typed words) the expression.</p>
+<p>We can solve this with <code>rlang::enquo</code>.</p>
+<pre class="r"><code>grouper &lt;- function(data, group_var) {
+  group_quo &lt;- enquo(group_var)
+  print(group_quo)
+  data %&gt;%
+    group_by(!!group_quo) %&gt;%
+    summarise(n = n())
+}
+grouper(iris, Species)</code></pre>
+<pre><code>## &lt;quosure&gt;
+##   expr: ^Species
+##   env:  global</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+<p>Notice that <code>enquo</code> creates an object called a <code>quosure</code> that contains the expression (the typed word <code>Species</code>) and the environment in which it was typed.</p>
+<p>This is crucial to solve the <code>expr</code> problem. <code>enquo</code> isn’t being so literal to think that the words typed <em>in this environment</em> (like <code>group_var</code>) is the actual name to use. Rather, it looks to the previous environment <code>global</code> to see that we actually typed <code>Species</code>.</p>
+</div>
+<div id="nested-functions" class="section level2">
+<h2>Nested Functions</h2>
+<p>Suppose <code>grouper</code> is part of a larger function:</p>
+<pre class="r"><code>super_grouper &lt;- function(data, super_group_var) {
+  # do other stuff
+  grouper(data, super_group_var)
+}
+super_grouper(iris, Species)</code></pre>
+<pre><code>## &lt;quosure&gt;
+##   expr: ^super_group_var
+##   env:  0x7f950b086310</code></pre>
+<pre><code>## Error in grouped_df_impl(data, unname(vars), drop): Column `super_group_var` is unknown</code></pre>
+<p>Here, <code>grouper</code> (within <code>super_grouper</code>) is trying to group on the column <code>super_group_var</code>. This lets us know the limitations of <code>enquo</code>.</p>
+<p>Look to the printed <code>quosure</code> object. First, notice that the environment is no longer the global environment where we actually typed <code>Species</code>. Rather, it is in the <code>super_grouper</code> environment where the typed name is <code>super_group_var</code>.</p>
+<p>Therefore, <code>enquo</code> can only find the typed name from the parent environment.</p>
+<p>To make this work, <code>grouper</code> needs to think that the typed word in the parent environment is <code>Species</code>. That’s exactly the problem same problem we solved with <code>!!</code> and <code>enquo</code> previously!</p>
+<pre class="r"><code>super_grouper &lt;- function(data, super_group_var) {
+  # do other stuff
+  grouper(data, !!enquo(super_group_var))
+}
+super_grouper(iris, Species)</code></pre>
+<pre><code>## &lt;quosure&gt;
+##   expr: ^Species
+##   env:  global</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   Species        n
+##   &lt;fct&gt;      &lt;int&gt;
+## 1 setosa        50
+## 2 versicolor    50
+## 3 virginica     50</code></pre>
+</div>
+<div id="parsing-expressions" class="section level2">
+<h2>Parsing Expressions</h2>
+<p>When reading and working with data, sometimes we need to convert strings to an R expression that can be evaluted.</p>
+<p>These expressions are different from the typed words we made from strings with <code>rlang::sym</code><a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>, because these expressions need to be evaluated as valid R code.</p>
+<p>In this section, we’ll use <code>rlang::parse_expr</code> to solve a situation I encountered when writing <a href="https://tmastny.github.io/leadr/reference/peak.html"><code>leadr::peak</code></a><a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> using the techniques described in <a href="https://stackoverflow.com/a/45134814/6637133">this</a> Stackoverflow answer.</p>
+<p>Suppose we are given the following data:</p>
+<pre class="r"><code>col_names &lt;- c(&quot;Sepal.Length&quot;, &quot;Sepal.Width&quot;)
+col_values &lt;- c(5.0, 3.6)</code></pre>
+<p>We need to use this data to filter the <code>iris</code> dataset. If we were to do it manually, it would look like this:</p>
+<pre class="r"><code>iris %&gt;% 
+  filter(Sepal.Length == 5.0 &amp; Sepal.Width == 3.6)</code></pre>
+<pre><code>##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1            5         3.6          1.4         0.2  setosa</code></pre>
+<p>We could handle it as before:</p>
+<pre class="r"><code>iris %&gt;%
+  filter(!!sym(col_names[1]) == col_values[1] &amp;
+         !!sym(col_names[2]) == col_values[2])</code></pre>
+<pre><code>##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1            5         3.6          1.4         0.2  setosa</code></pre>
+<p>But there’s a catch. The length of <code>col_names</code> and <code>col_values</code> are <strong>not</strong> known ahead of time.</p>
+<div id="unknown-number-of-columns" class="section level3">
+<h3>Unknown Number of Columns</h3>
+<p>If the data has multiple columns, we need to programmatically add a statement <code>col_names[n] == col_value[n]</code> for each pair of name and value. The <code>collapse</code> parameter in the base function <code>paste</code> does this<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a>:</p>
+<pre class="r"><code>collapsed &lt;- paste(col_names, &quot;==&quot;, col_values, collapse = &quot;&amp;&quot;)
+collapsed</code></pre>
+<pre><code>## [1] &quot;Sepal.Length == 5&amp;Sepal.Width == 3.6&quot;</code></pre>
+<p><code>collapsed</code> is a string, so we might try <code>sym</code>:</p>
+<pre class="r"><code>iris %&gt;%
+  filter(!!sym(collapsed))</code></pre>
+<pre><code>## Error in filter_impl(.data, quo): Evaluation error: object &#39;Sepal.Length == 5&amp;Sepal.Width == 3.6&#39; not found.</code></pre>
+<p>But it doesn’t work, because <code>sym</code> creates the “name” of some object (that may or may not exist in the current environment), not code to be evaluated.</p>
+<p>We need <code>collapsed</code> to be evaluated as a valid R expression. We do this with <code>rlang::parse_expr</code>:</p>
+<pre class="r"><code>iris %&gt;%
+  filter(!!parse_expr(collapsed))</code></pre>
+<pre><code>##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1            5         3.6          1.4         0.2  setosa</code></pre>
+<p>Using <code>expr</code>, we verify that the previous expression is evaluated as intended:</p>
+<pre class="r"><code>expr(
+  iris %&gt;%
+    filter(!!parse_expr(collapsed))
+)</code></pre>
+<pre><code>## iris %&gt;% filter(Sepal.Length == 5 &amp; Sepal.Width == 3.6)</code></pre>
+<p>This is exactly what we typed manually at the beginning of this section.</p>
+</div>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>Tidy eval really clicked for me when I thought about the difference between the typed words and variables. I’m not sure if this metaphor holds up to the formal definitions, but it has helped understand enough tidy eval to use it in my own work.</p>
+<p>I read a lot on the topic, but didn’t include everything in the post. Here’s some more recommended reading:</p>
+<ul>
+<li><p>Cool use of <code>purrr::map</code> with <code>quo</code>s: <a href="https://stackoverflow.com/questions/49075824/using-tidy-eval-for-multiple-dplyr-filter-conditions" class="uri">https://stackoverflow.com/questions/49075824/using-tidy-eval-for-multiple-dplyr-filter-conditions</a></p></li>
+<li><p>Some interesting examples of tidy eval in action <a href="https://stackoverflow.com/questions/46086755/what-is-the-tidyeval-way-of-using-dplyrfilter" class="uri">https://stackoverflow.com/questions/46086755/what-is-the-tidyeval-way-of-using-dplyrfilter</a></p></li>
+<li><p>Overview of non-standard evaluation in base R and extensions in tidy eval: <a href="https://edwinth.github.io/blog/nse/" class="uri">https://edwinth.github.io/blog/nse/</a></p></li>
+</ul>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The base function <code>as.name</code> works as well if you don’t want to import <code>rlang</code>.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Or any other tidy eval function.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>As I learned by asking in <a href="https://stackoverflow.com/a/47226350/6637133">this</a> stackoverflow question and in <a href="https://github.com/r-lib/rlang/issues/116#issuecomment-372743789">this</a> Github issue.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p><a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L69">This</a> is the source code.<a href="#fnref4">↩</a></p></li>
+<li id="fn5"><p>The nice thing about this solution is that we can replace <code>&quot;&amp;&quot;</code> with <code>&quot;||&quot;</code>. Other methods such as <code>!!!</code> only support <code>&amp;</code> filters.<a href="#fnref5">↩</a></p></li>
+</ol>
+</div>
