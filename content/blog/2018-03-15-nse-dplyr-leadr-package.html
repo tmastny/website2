@@ -205,7 +205,7 @@ grouper(iris, Species)</code></pre>
 super_grouper(iris, Species)</code></pre>
 <pre><code>## &lt;quosure&gt;
 ##   expr: ^super_group_var
-##   env:  0x7f950b086310</code></pre>
+##   env:  0x7ff7362e52d0</code></pre>
 <pre><code>## Error in grouped_df_impl(data, unname(vars), drop): Column `super_group_var` is unknown</code></pre>
 <p>Here, <code>grouper</code> (within <code>super_grouper</code>) is trying to group on the column <code>super_group_var</code>. This lets us know the limitations of <code>enquo</code>.</p>
 <p>Look to the printed <code>quosure</code> object. First, notice that the environment is no longer the global environment where we actually typed <code>Species</code>. Rather, it is in the <code>super_grouper</code> environment where the typed name is <code>super_group_var</code>.</p>
@@ -248,7 +248,7 @@ col_values &lt;- c(5.0, 3.6)</code></pre>
 <p>But there’s a catch. The length of <code>col_names</code> and <code>col_values</code> are <strong>not</strong> known ahead of time.</p>
 <div id="unknown-number-of-columns" class="section level3">
 <h3>Unknown Number of Columns</h3>
-<p>If the data has multiple columns, we need to programmatically add a statement <code>col_names[n] == col_value[n]</code> for each pair of name and value. The <code>collapse</code> parameter in the base function <code>paste</code> does this<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a>:</p>
+<p>If the input data has multiple columns, we need to programmatically add a statement like <code>col_names[n] == col_value[n]</code> for each pair of name and value. The <code>collapse</code> parameter in the base function <code>paste</code> does this<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a>:</p>
 <pre class="r"><code>collapsed &lt;- paste(col_names, &quot;==&quot;, col_values, collapse = &quot;&amp;&quot;)
 collapsed</code></pre>
 <pre><code>## [1] &quot;Sepal.Length == 5&amp;Sepal.Width == 3.6&quot;</code></pre>

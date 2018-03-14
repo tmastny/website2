@@ -267,7 +267,7 @@ But there's a catch. The length of `col_names` and `col_values` are **not** know
 
 ### Unknown Number of Columns
 
-If the data has multiple columns, we need to programmatically add a statement `col_names[n] == col_value[n]` for each pair of name and value. The `collapse` parameter in the base function `paste` does this^[The nice thing about this solution is that we can replace `"&"` with `"||"`. Other methods such as `!!!` only support `&` filters.]:
+If the input data has multiple columns, we need to programmatically add a statement like `col_names[n] == col_value[n]` for each pair of name and value. The `collapse` parameter in the base function `paste` does this^[The nice thing about this solution is that we can replace `"&"` with `"||"`. Other methods such as `!!!` only support `&` filters.]:
 
 ```{r}
 collapsed <- paste(col_names, "==", col_values, collapse = "&")
