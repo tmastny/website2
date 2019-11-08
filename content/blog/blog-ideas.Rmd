@@ -35,36 +35,18 @@ via word embeddings
 http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html
 
 
-## Try out some Python
+## Purrrr
 
-Python reticular code does not seem to work wtih caching.
+https://daranzolin.github.io/articles/2016-12/join-list-dataframes
 
-```{python}
-x = 2
+Note that you could use this method to bind df rows if we didn't have `map_dfr`:
+
+```{r eval=FALSE}
+# not ran
+df %>%
+  map(fun) %>%
+  reduce(bind_rows)
 ```
-
-```{python}
-print(x + 2)
-```
-
-## using callr to improve unit tests
-## Background
-I've noticed that clicking the **Knit** button in RStudio is not quite the same as running `knitr::knit(...)` or `rmarkdown::render(...)` (alluded to in this [github issue](https://github.com/rstudio/rmarkdown/issues/17#issuecomment-37241816) and in these [slides](https://slides.yihui.name/2017-rstudio-conf-rmarkdown-Yihui-Xie.html#6)). In particular, it seems that clicking the **Knit** button starts a new R session and all the packages are reloaded.
-
-I've looked for the actual **Knit** button code in the RStudio [github repo](https://github.com/rstudio/rstudio) but couldn't find anything. I found references to the **Knit** button object, but not the actual code to run it. Maybe it is proprietary? 
-
-## Question
-Is there a way to replicate clicking the `Knit` button within a unit testing framework (preferably [`testthat`](https://github.com/r-lib/testthat)) for an R package?
-
-For what I understand from this [SO question](https://stackoverflow.com/questions/32257970/knitr-inherits-variables-from-a-users-environment-even-with-envir-new-env) is that there is no good way to get a fresh R session without restarting.
-
-In my case, unless my call to `rmarkdown::render(..., envir = new.env())` occurs in the first test, knitting the `.Rmd` is not the same as clicking the **Knit** button because other tests can change package globals or create side-effects that persist through `render`.
-
-## Ideas
-Could it be done by creating a new R session within the `testthat` R session? 
-
-I also browsed through the `knitr` [unit tests](https://github.com/yihui/knitr/tree/master/tests/testit), but didn't noticed anything that might help.
-
 
 
 

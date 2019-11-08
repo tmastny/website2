@@ -17,11 +17,7 @@ output:
 <ul>
 <li><a href="#using-non-standard-analysis-on-variable-columns">Using non-standard analysis on variable columns</a></li>
 <li><a href="#blog-ideas">Blog Ideas</a></li>
-<li><a href="#try-out-some-python">Try out some Python</a></li>
-<li><a href="#using-callr-to-improve-unit-tests">using callr to improve unit tests</a></li>
-<li><a href="#background">Background</a></li>
-<li><a href="#question">Question</a></li>
-<li><a href="#ideas">Ideas</a></li>
+<li><a href="#purrrr">Purrrr</a></li>
 </ul>
 </div>
 
@@ -34,29 +30,12 @@ output:
 <p>Gender Binary <a href="http://bookworm.benschmidt.org/posts/2015-10-30-rejecting-the-gender-binary.html" class="uri">http://bookworm.benschmidt.org/posts/2015-10-30-rejecting-the-gender-binary.html</a></p>
 <p>via word embeddings <a href="http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html" class="uri">http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html</a></p>
 </div>
-<div id="try-out-some-python" class="section level2">
-<h2>Try out some Python</h2>
-<p>Python reticular code does not seem to work wtih caching.</p>
-<pre class="python"><code>x = 2</code></pre>
-<pre class="python"><code>print(x + 2)</code></pre>
-<pre><code>## 4</code></pre>
-</div>
-<div id="using-callr-to-improve-unit-tests" class="section level2">
-<h2>using callr to improve unit tests</h2>
-</div>
-<div id="background" class="section level2">
-<h2>Background</h2>
-<p>I’ve noticed that clicking the <strong>Knit</strong> button in RStudio is not quite the same as running <code>knitr::knit(...)</code> or <code>rmarkdown::render(...)</code> (alluded to in this <a href="https://github.com/rstudio/rmarkdown/issues/17#issuecomment-37241816">github issue</a> and in these <a href="https://slides.yihui.name/2017-rstudio-conf-rmarkdown-Yihui-Xie.html#6">slides</a>). In particular, it seems that clicking the <strong>Knit</strong> button starts a new R session and all the packages are reloaded.</p>
-<p>I’ve looked for the actual <strong>Knit</strong> button code in the RStudio <a href="https://github.com/rstudio/rstudio">github repo</a> but couldn’t find anything. I found references to the <strong>Knit</strong> button object, but not the actual code to run it. Maybe it is proprietary?</p>
-</div>
-<div id="question" class="section level2">
-<h2>Question</h2>
-<p>Is there a way to replicate clicking the <code>Knit</code> button within a unit testing framework (preferably <a href="https://github.com/r-lib/testthat"><code>testthat</code></a>) for an R package?</p>
-<p>For what I understand from this <a href="https://stackoverflow.com/questions/32257970/knitr-inherits-variables-from-a-users-environment-even-with-envir-new-env">SO question</a> is that there is no good way to get a fresh R session without restarting.</p>
-<p>In my case, unless my call to <code>rmarkdown::render(..., envir = new.env())</code> occurs in the first test, knitting the <code>.Rmd</code> is not the same as clicking the <strong>Knit</strong> button because other tests can change package globals or create side-effects that persist through <code>render</code>.</p>
-</div>
-<div id="ideas" class="section level2">
-<h2>Ideas</h2>
-<p>Could it be done by creating a new R session within the <code>testthat</code> R session?</p>
-<p>I also browsed through the <code>knitr</code> <a href="https://github.com/yihui/knitr/tree/master/tests/testit">unit tests</a>, but didn’t noticed anything that might help.</p>
+<div id="purrrr" class="section level2">
+<h2>Purrrr</h2>
+<p><a href="https://daranzolin.github.io/articles/2016-12/join-list-dataframes" class="uri">https://daranzolin.github.io/articles/2016-12/join-list-dataframes</a></p>
+<p>Note that you could use this method to bind df rows if we didn’t have <code>map_dfr</code>:</p>
+<pre class="r"><code># not ran
+df %&gt;%
+  map(fun) %&gt;%
+  reduce(bind_rows)</code></pre>
 </div>

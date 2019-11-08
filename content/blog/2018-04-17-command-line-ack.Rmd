@@ -1,0 +1,116 @@
+---
+title: 'Search Files in RStudio'
+author: ~
+date: '2018-04-21'
+slug: search-files-rstudio-ack
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## Introduction
+
+It's been a while since I've posted, but I've been staying busy with some other projects that I'll talk about soon. One thing I've been dealing with is [R](https://github.com/rstudio/reticulate) [packages](https://github.com/tmastny/leadr) and Kaggle [contests](https://github.com/tmastny/uno_ml_contest2). Both have a lot of code that I need to search through. 
+
+For example, I'll often google how to solve a problem and implement the solution. Days, weeks, or months later I'll encounter the problem again and realize I solved it before. Shortcuts like `command-f` are nice to search within a file, but don't help if you are in the wrong file.
+
+Here's a few ways I've learned how to efficiently search through text files.
+
+## RStudio
+
+RStudio also has an incredibly useful tool to search through text files. Most people are familiar with `command-f` for searching through files; `shift-command-f` launches a window to search through files.
+
+```{r echo=FALSE, out.width=400}
+knitr::include_graphics("/blog/find-in-files.png")
+```
+
+You can also customize the search type for certain extensions, or to exclude stuff like `.html` or `.md` which hides duplicate results if you work with a lot of knitr. 
+
+In the console page, a window of all the results will pop up:
+
+```{r echo=FALSE}
+knitr::include_graphics("/blog/console-window.png")
+```
+
+And the best part: if you click a line in the console window, it will open that file at that line in the text editor.
+
+```{r echo=FALSE}
+knitr::include_graphics("/blog/editor.png")
+```
+
+## Command-line
+
+It's important to acknowledge [command-line bullshitery](http://www.pgbovine.net/command-line-bullshittery.htm). Command-line tools can definitely be intimidating^[I remember when a professor suggested I run `man grep` to answer my question. I couldn't even figure out how to close the window and had to restart my terminal. It *is* a learnable skill though. I can now understand some pieces of `man` pages.] and arcane, but even the author admits they are useful:
+
+>  So perhaps what is more important to a researcher than programming ability is adeptness at dealing with command-line bullshittery, since that enables one to become 10x or even 100x more productive than peers by finding, installing, configuring, customizing, and remixing the appropriate pieces of free software.
+
+And of course this discussion isn't complete with a rebuttal: [On the Value of Command-Line “Bullshittery”](https://medium.com/@eytanadar/on-the-value-of-command-line-bullshittery-94dc19ec8c61). Either way, you may be interested in some ways the command-line can help.
+
+## ack
+
+[ack](https://beyondgrep.com/) is a nice command-line tool that smartly searches through plain-text. For example, let's look through one of my Kaggle contest [repos](https://github.com/tmastny/uno_ml_contest2):
+
+```{r eval=FALSE}
+ack step_
+```
+
+```{r echo=FALSE}
+knitr::include_graphics("/blog/ack1.png")
+```
+
+It has nice grouping, coloring, and highlighting. 
+
+We can even specify .R files with `--rr`:
+
+```{r eval=FALSE}
+ack --rr step_
+```
+
+There are many other [parameters](https://beyondgrep.com/documentation/) that helps you filter and customize the search. If you are working with blogdown or with knitr, `--nohtml` is useful to limit to source files rather than outputs.
+
+```{r eval=FALSE}
+ack --nohtml step_
+```
+
+And while you can't click the file to open the in RStudio, you can use a little command-line magic^[Unfortunately Atom doesn't support piping, so `ack --r -l brm | atom` doesn't work ([yet!](https://github.com/atom/atom/issues/1729)).] to open the files in editors that support the command-line like [Atom](https://atom.io/):
+
+```{r eval=FALSE}
+atom $(ack --rr -l step_)
+```
+
+As before `--rr` to filter on .R files, and `-l` returns just the file names that contain a match, which Atom opens. 
+
+### Searching File Names
+
+So far ack has feature parity with RStudio's `command-shift-f`. However, one really useful feature of ack is searching for text in file names, which doesn't have a nice parallel in RStudio. For example:
+
+```{r eval=FALSE}
+ack -g create
+```
+```{r echo=FALSE}
+knitr::include_graphics("/blog/ack2.png")
+```
+
+And you can send these off to an editor like before:
+
+```{r eval=FALSE}
+atom $(ack -g create)
+```
+
+
+## Github
+
+Lastly, I wanted to point out that Github's built-in search function for repos is actually pretty effective. I've been learning [knitr](https://github.com/tmastny/knitr) and [reticulate](https://github.com/tmastny/reticulate), and searching for code with Github has been very useful. The search also includes commits and issues, which may provide some context to the source code.
+
+
+
+
