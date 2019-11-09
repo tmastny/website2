@@ -281,7 +281,7 @@ calender week as the upload.
 This adds some complications, 
 so in this blog post I've 
 stuck with gaps. But check out my [gap vs. deadline](
-/blog/funneljoin-gaps
+/blog/funnel-charts-funneljoin-gaps-deadlines
 )
 blog post for a full analysis.
 ]. 
