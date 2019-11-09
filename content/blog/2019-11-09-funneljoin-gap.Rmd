@@ -32,38 +32,40 @@ and how we can work around that.
 
 ## Gaps vs. deadlines
 
-First, I'm going to try to come up with definitions for gap and deadline.
+![](/blog/gaps-deadlines.png)
 
 Gap
 
-* A gap is a period of time that the next event in the funnel is relevant.
+* if the next event must happen within a window of time, use gaps.
 
-For example,
-if a customer clicks on an ad, 
+Example:
+
+> if a customer clicks on an ad, 
 and then purchases the product 30 days later
 the company may not want to attribute that purchase to the ad.
 
 Deadline
 
-* A deadline is a date that the next event in the funnel
-  must happen before to be relevant.
+* if the next event must occur before a specific time, use deadlines.
 
-For example,
-Turbo Tax wants to know the conversion rate between uploading your
+Examples:
+
+> Turbo Tax wants to know the conversion rate between
+uploading your
 W-2s and filing your taxes. 
 But they only care if you file your taxes before April 15.
 
-Another example in my line of work:
-football coaches need to print off opponent reports before their upcoming game.
+> A football coaches need to print off opponent reports 
+before their upcoming game.
+
 
 ## How to model deadlines
 
-Gaps and deadlines model different business funnels,
-but out of the box `funneljoin` only supports gaps. 
+In the last blog post, I showed how `funneljoin` supports gaps.
+Let's figure out how we can model deadlines using `funneljoin`.
 
-Let's figure out how we can model deadlines using funneljoin.
-
-I'm going to start with the upload/submit/report logs again:
+I'm going to start with the upload/submit/report logs again. 
+Recall that the deadline to print is the same calendar week as the upload.
 
 ```{r}
 library(dplyr)
@@ -78,6 +80,8 @@ logs
 
 We want to separate the logs based on their deadline, 
 which is the week of the upload. 
+We can do that with `lubridate::floor_date` and
+`tidyr::nest`.
 
 ```{r}
 nested_events <- logs %>%
@@ -90,7 +94,8 @@ nested_events
 This gives us a set of events for each deadline period.
 
 Now, we want to apply the funnel and summary for the events 
-in each deadline period.
+in each deadline period. 
+We'll use `purrr::map` to calculate the conversions for each set of events.
 
 ```{r}
 customer_funnel <- function(.data) {
@@ -120,7 +125,7 @@ nested_events %>%
 ```
 
 In this case, 
-conversion percentage is the same whether we use gaps or deadline.
+the conversion percentages are the same whether we use gaps or deadline.
 
 However, this isn't real data. 
 The simulated data I created doesn't cover every scenario.
@@ -157,7 +162,7 @@ logs %>%
   select(date_upload, date_print)
 ```
 
-But the `funneljoin` finds the `firstafter` print data outside of the week
+But `funneljoin` finds the `firstafter` print date outside of the week
 of the upload (the group parameter for the data-frame).
 
 I want to find the `firstafter` inside the week of the upload 

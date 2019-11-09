@@ -45,7 +45,7 @@ rather than creating the funnel.</p>
 <h2>Customer usage funnels</h2>
 <p>In the funneljoin vignette, Emily uses ads as an example:
 she wants to find the proportion of users who buy something
-after they click an add.
+after they click an ad.
 I don’t work in ads, but customer usage funnels are also important for product design.</p>
 <p>One theory is that customers purchase a product to do a
 <a href="https://hbr.org/2016/09/know-your-customers-jobs-to-be-done">job</a>.
@@ -161,7 +161,7 @@ throughout the month.</p>
   ggplot(aes(week, n)) +
   geom_line()</code></pre>
 <p><img src="/blog/2019-11-08-funneljoin_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
-<p>We care about more than the first upload.
+<p>We care about each upload, not only the first one.
 We want to know if they are printing reports after any upload.</p>
 <p>Enter <code>any-firstafter</code>. This will find the first
 submit/print event after any user upload.</p>

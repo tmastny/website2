@@ -40,7 +40,7 @@ rather than creating the funnel.
 
 In the funneljoin vignette, Emily uses ads as an example: 
 she wants to find the proportion of users who buy something 
-after they click an add. 
+after they click an ad. 
 I don't work in ads, but customer usage funnels are also important for product design. 
 
 One theory is that customers purchase a product to do a
@@ -243,7 +243,7 @@ logs %>%
   geom_line()
 ```
 
-We care about more than the first upload.
+We care about each upload, not only the first one.
 We want to know if they are printing reports after any upload. 
 
 Enter `any-firstafter`. This will find the first 
