@@ -202,7 +202,7 @@ weekly_customer_funnel %>%
 ```
 
 ```{r}
-weekly_customer_funnel
+weekly_customer_funnel %>%
   summarize_funnel()
 ```
 
