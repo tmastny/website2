@@ -6,7 +6,7 @@ slug: funnel-charts-funneljoin-gaps-deadlines
 categories: []
 tags: []
 description: 
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true 
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 
 In my previous [blog post](/blog/funnel-join), 
 I explored the awesome [funneljoin](https://github.com/robinsones/funneljoin)
-package. 
+package.
 Check that post out for an overview of the package
 and some examples.
 

@@ -6,7 +6,7 @@ slug: funnel-charts-funneljoin-gaps-deadlines
 categories: []
 tags: []
 description: 
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true 
@@ -78,7 +78,7 @@ library(lubridate)
 
 logs &lt;- readRDS(&quot;funneljoin-logs.RDS&quot;)
 logs</code></pre>
-<pre><code>## # A tibble: 187 x 3
+<pre><code>## # A tibble: 1,759 x 3
 ##    date        user event 
 ##    &lt;date&gt;     &lt;int&gt; &lt;chr&gt; 
 ##  1 2020-01-06     1 upload
@@ -90,8 +90,8 @@ logs</code></pre>
 ##  7 2020-01-06     7 upload
 ##  8 2020-01-06     8 upload
 ##  9 2020-01-06     9 upload
-## 10 2020-01-06     1 upload
-## # … with 177 more rows</code></pre>
+## 10 2020-01-06    10 upload
+## # … with 1,749 more rows</code></pre>
 <p>We want to separate the logs based on their deadline,
 which is the week of the upload.
 We can do that with <code>lubridate::floor_date</code> and
@@ -136,10 +136,10 @@ We’ll use <code>purrr::map</code> to calculate the conversions for each set of
 <pre><code>## # A tibble: 4 x 4
 ##   deadline   nb_users nb_conversions pct_converted
 ##   &lt;date&gt;        &lt;int&gt;          &lt;int&gt;         &lt;dbl&gt;
-## 1 2020-01-05       30              9         0.3  
-## 2 2020-01-12       27             26         0.963
-## 3 2020-01-19       22             20         0.909
-## 4 2020-01-26       10             10         1</code></pre>
+## 1 2020-01-05      300            132         0.44 
+## 2 2020-01-12      250            184         0.736
+## 3 2020-01-19      174            150         0.862
+## 4 2020-01-26      118            118         1</code></pre>
 <p>In this case,
 the conversion percentages are the same whether we use gaps or deadline.</p>
 <p>However, this isn’t real data.
@@ -171,21 +171,21 @@ when looking for the next step in the funnel.</p>
     type = &quot;any-firstafter&quot;
   ) %&gt;%
   select(date_upload, date_print)</code></pre>
-<pre><code>## # A tibble: 1,749 x 3
+<pre><code>## # A tibble: 5,476 x 3
 ## # Groups:   week_upload.x.x [4]
 ##    week_upload.x.x date_upload date_print
 ##              &lt;dbl&gt; &lt;date&gt;      &lt;date&gt;    
-##  1               1 2020-01-06  2020-01-17
-##  2               1 2020-01-06  2020-01-24
-##  3               1 2020-01-06  2020-01-17
-##  4               1 2020-01-06  2020-01-24
-##  5               1 2020-01-06  2020-01-17
-##  6               1 2020-01-06  2020-01-24
-##  7               1 2020-01-06  2020-01-17
-##  8               1 2020-01-06  2020-01-24
-##  9               1 2020-01-06  2020-01-17
-## 10               1 2020-01-06  2020-01-24
-## # … with 1,739 more rows</code></pre>
+##  1               1 2020-01-06  2020-01-24
+##  2               1 2020-01-06  2020-01-31
+##  3               1 2020-01-06  2020-01-24
+##  4               1 2020-01-06  2020-01-31
+##  5               1 2020-01-06  2020-01-24
+##  6               1 2020-01-06  2020-01-31
+##  7               1 2020-01-06  2020-01-24
+##  8               1 2020-01-06  2020-01-31
+##  9               1 2020-01-06  2020-01-24
+## 10               1 2020-01-06  2020-01-31
+## # … with 5,466 more rows</code></pre>
 <p>But <code>funneljoin</code> finds the <code>firstafter</code> print date outside of the week
 of the upload (the group parameter for the data-frame).</p>
 <p>I want to find the <code>firstafter</code> inside the week of the upload

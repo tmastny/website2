@@ -6,7 +6,7 @@ slug: funnel-charts-funneljoin
 categories: []
 tags: []
 description: 
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true 
@@ -85,10 +85,10 @@ week_to_days <- list(
 
 ```{r, include=FALSE}
 user_weeks <- tibble(
-  user = rep(1:10, 3 * 4),
-  weeks = map(names(week_to_days), rep, 10 * 3) %>%
+  user = rep(1:100, 3 * 4),
+  weeks = map(names(week_to_days), rep, 100 * 3) %>%
     flatten_chr(),
-  days_after_start = map(flatten_dbl(week_to_days), ~rep(., 10 * 3)) %>% 
+  days_after_start = map(flatten_dbl(week_to_days), ~rep(., 100 * 3)) %>% 
     flatten_dbl(),
 )
 ```
@@ -201,7 +201,7 @@ logs %>%
 ```
 
 At some point, 
-all our our customers are submitting and printing uploaded data.
+almost all our our customers are submitting and printing uploaded data.
 But are they printing reports in time to be useful 
 (before the end of the week)?
 
@@ -209,14 +209,19 @@ But are they printing reports in time to be useful
 logs %>%
   customer_funnel("first-firstafter") %>%
   summarise(
-    avg_days_to_submit = mean(days_to_submit), 
-    avg_days_to_print = mean(days_to_print),
-    avg_time_to_complete_funnel = mean(days_to_submit + days_to_print)
+    avg_days_to_submit = mean(days_to_submit, na.rm = TRUE), 
+    avg_days_to_print = mean(days_to_print, na.rm = TRUE),
+    avg_time_to_complete_funnel = mean(
+      days_to_submit + days_to_print,
+      na.rm = TRUE
+    )
   )
 ```
 
-Something is definitely wrong. On average, customers are waiting printing 9 days
-after uploading. This gap is too big: the data is out-of-date after 5-6 days and
+Something is definitely wrong. 
+On average, 
+customers are printing 9 days after uploading. 
+This gap is too big: the data is out-of-date after 5-6 days and
 is no longer useful. What's going on?
 
 Are we using the right [funnel type](
@@ -228,7 +233,7 @@ https://robinsones.github.io/funneljoin/reference/after_join.html#details
 ![](/blog/funnel-types.png)
 
 `first-firstafter` finds the first upload, and then the first submit
-(then print) afterwords.
+(then print) afterwards.
 
 But this isn't a safe assumption. Our customers are uploading
 throughout the month.
@@ -253,14 +258,17 @@ submit/print event after any user upload.
 logs %>%
   customer_funnel("any-firstafter") %>%
   summarise(
-    avg_days_to_submit = mean(days_to_submit), 
-    avg_days_to_print = mean(days_to_print),
-    avg_time_to_complete_funnel = mean(days_to_submit + days_to_print)
+    avg_days_to_submit = mean(days_to_submit, na.rm = TRUE), 
+    avg_days_to_print = mean(days_to_print, na.rm = TRUE),
+    avg_time_to_complete_funnel = mean(
+      days_to_submit + days_to_print,
+      na.rm = TRUE
+    )
   )
 ```
 
 This looks better better for our customer. 
-However they are still taking almost 6 days on average to complete the funnel. That's right on the edge of being useless.
+However they are still taking 6 days on average to complete the funnel. That's right on the edge of being useless.
 
 ### Gaps
 
@@ -314,7 +322,7 @@ weekly_customer_funnel %>%
   summarize_funnel()
 ```
 
-Around 25% of data uploaded isn't printed off as a report.
+Around 30% of data uploaded isn't printed off as a report.
 What's going on? 
 Let's look at the trend over time.
 
