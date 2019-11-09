@@ -2,7 +2,7 @@
 title: 'Funnel Charts in R with funneljoin'
 author: ~
 date: '2019-11-08'
-slug: funneljoin
+slug: funnel-charts-funneljoin
 categories: []
 tags: []
 description: 
