@@ -1,0 +1,271 @@
+---
+title: 'Search Files in RStudio'
+author: ~
+date: '2019-11-08'
+slug: funneljoin
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## funneljoin
+
+[Emily Robinson](https://hookedondata.org) has an awesome new package
+[funneljoin](https://github.com/robinsones/funneljoin). I'm excited to see 
+her [slides](https://twitter.com/drob/status/1192834052203667456?s=20), but 
+in the meantime I dove into her
+[vignette](https://robinsones.github.io/funneljoin/articles/funneljoin.html).
+
+Her examples are around ads, but customer usage funnels are also important 
+for product design. We want to understand the paths customers take to get
+end results, and we want to know if bad design is causing customers
+to fall off. 
+
+I'm so excited about Emily's package, because this is the first 
+systematic approach to funnel analysis I've seen. 
+
+## Business Example
+
+```{r}
+library(dplyr)
+library(funneljoin)
+library(purrr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+
+set.seed(24)
+```
+
+```{r, include=FALSE}
+week_to_days <- list(
+  "one" = 0,
+  "two" = 7,
+  "three" = 14,
+  "four" = 21
+)
+```
+
+
+```{r, include=FALSE}
+user_weeks <- tibble(
+  user = rep(1:10, 3 * 4),
+  weeks = map(names(week_to_days), rep, 10 * 3) %>%
+    flatten_chr(),
+  days_after_start = map(flatten_dbl(week_to_days), ~rep(., 10 * 3)) %>% 
+    flatten_dbl(),
+)
+```
+
+```{r, include=FALSE}
+upload_weekly_props <- list(
+  "one" = 1,
+  "two" = 0.8,
+  "three" = 0.6,
+  "four" = 0.4
+)
+
+step_weekly_props <- list(
+  "one" = 0.4,
+  "two" = 0.6,
+  "three" = 0.8,
+  "four" = 1
+)
+  
+
+wide_funnel <- user_weeks %>%
+  mutate(upload = map_dbl(weeks, ~rbinom(1, 1, upload_weekly_props[[.]]))) %>%
+  mutate(submit = 
+    map_dbl(weeks, ~rbinom(1, 1, step_weekly_props[[.]])) * upload
+  ) %>%
+  mutate(print = 
+    map_dbl(weeks, ~rbinom(1, 1, step_weekly_props[[.]])) * submit
+  )
+
+wide_funnel
+```
+
+```{r, include=FALSE}
+event_logs <- wide_funnel %>%
+  pivot_longer(upload:print, names_to = "event") %>%
+  filter(value != 0) %>%
+  select(-value)
+
+event_logs
+```
+
+```{r, include=FALSE}
+logs <- event_logs %>%
+  mutate(skew = rbinom(n(), 1, 0.2)) %>%
+  mutate(date = case_when(
+    event == "upload" ~ as.Date("2020-01-06") + skew + days_after_start,
+    event == "submit" ~ as.Date("2020-01-08") + skew + days_after_start,
+    event == "print" ~ as.Date("2020-01-10") + skew + days_after_start,
+  )) %>%
+  arrange(date) %>%
+  select(date, user, event)
+```
+
+Suppose we have a logs dataset, indicating events on a platform. Our website is 
+a platform where customers can upload data, submit it to be analyzed, and print 
+a report. Our customer only gets value out of the platform when they print a 
+report, so we want to know what percentage of customers are printing after
+uploading. 
+
+However, not every customer who uploads will print a report. 
+1. system reliably could be low. They may have uploaded, but submissions are
+closed.
+
+2. turnaround time is too slow. Customers need reports to take action the
+week they upload. Even a few days late would be too slow. So customers may
+submit reports, but don't bother to print them because they came too late to 
+be useful.
+
+3. there may be a seasonal component. To meet quotas, printing reports may
+be more important later in the month.
+
+Therefore, we need to be careful analyzing the data. If customer's first report 
+is in January, but they didn't print out a report until February, our platform
+may be failing them. 
+
+We'll show a few ways that `funneljoin` can help us with this analysis.
+
+### Customer Logs
+
+Here's a dataset that records each upload, submission, and printing for our 
+users.
+
+```{r}
+logs
+```
+
+Let's analyze do some funnel analysis. I'll make this a function, since I'll be
+reusing the same funnel through-out the blog post.
+
+```{r}
+customer_funnel <- function(.data, type, ...) {
+  .data %>% 
+    funnel_start(
+      moment_type = "upload",
+      moment = "event",
+      tstamp = "date",
+      user = "user"
+    ) %>%
+    funnel_steps(
+      moment_types = c("submit", "print"),
+      type = type,
+      gap_col = TRUE,
+      ...
+    ) %>%
+    mutate(days_to_submit = .gap.x / 60 / 60 / 24) %>%
+    mutate(days_to_print = .gap.y / 60 / 60 / 24)
+}
+```
+
+```{r}
+logs %>%
+  customer_funnel("first-firstafter") %>%
+  summarise(mean(days_to_submit), mean(days_to_print))
+```
+
+But this is only looking at the time between the first upload, and the first
+submit/print afterwards.
+
+If we look at all uploads, they have a much shorter conversion gap. 
+
+```{r}
+logs %>%
+  customer_funnel("any-firstafter") %>%
+  summarise(mean(days_to_submit), mean(days_to_print))
+```
+
+What about the time to print within a 7 day window? Our customers need to
+print out that report this week. 
+
+```{r}
+weekly_customer_funnel <- logs %>%
+  customer_funnel(
+    "any-firstafter", max_gap = as.difftime(7, units = "days")
+  )
+
+weekly_customer_funnel %>%
+  summarise(mean(days_to_submit, na.rm = TRUE), mean(days_to_print, na.rm = TRUE))
+```
+
+```{r}
+weekly_customer_funnel
+  summarize_funnel()
+```
+
+But how do those conversions trend by week? One of our customer behaviors is that
+the end of the month is much more important to them. 
+
+```{r}
+weekly_customer_funnel %>%
+  mutate(upload_week = floor_date(date_upload, "week")) %>%
+  group_split(upload_week) %>%
+  map_dfr(summarize_conversions, date_print)
+```
+
+This confirms our suspicions that conversions is highly correlated with week.
+
+```{r}
+weekly_customer_funnel %>%
+  mutate(upload_week = floor_date(date_upload, "week")) %>%
+  nest(funnel = -upload_week) %>%
+  mutate(funnel = map(funnel, summarize_conversions, date_print)) %>%
+  unnest(funnel) %>%
+  arrange(upload_week)
+```
+
+Instead of using `max_gap`, you could also nest by upload week first, build
+and find the conversion for each nested data-frame. 
+
+## What I'd like to see
+
+As much as I love `funneljoin`, I think the 
+> `funnel -> nest -> map(summarize_conversion) -> unnest`
+
+workflow is a little clunky. 
+
+I think it would be cool if `funnel_start` respected a grouped data frame,
+when looking for the next step in the funnel.
+
+For example, we can pass a grouped data frame to `funnel_start`:
+
+```{r}
+logs %>%
+  mutate(week = week(date)) %>%
+  group_by(week) %>%
+  funnel_start(
+    moment_type = "upload",
+    moment = "event",
+    tstamp = "date",
+    user = "user"
+  ) %>%
+  funnel_steps(
+    moment_types = c("submit", "print"),
+    type = "any-firstafter"
+  ) %>%
+  select(date_upload, date_print)
+```
+
+But the output for `date_print` looks for the `firstafter` outside of the week
+of the upload (the group parameter for the data-frame).
+
+## Conclusion
+
+I absolutely love this package. Funnel plots and dashboards are frequently
+requested by data analysts, and this package provides a systematic interface
+to cleaning and analyzing this type of data.
+
+Definitely check it out the next time you need to create a funnel!
