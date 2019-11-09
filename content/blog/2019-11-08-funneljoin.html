@@ -1,0 +1,279 @@
+---
+title: 'Funnel Charts in R with funneljoin'
+author: ~
+date: '2019-11-08'
+slug: funneljoin
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#funneljoin">funneljoin</a></li>
+<li><a href="#customer-usage-funnels">Customer usage funnels</a><ul>
+<li><a href="#usage-example">Usage example</a></li>
+<li><a href="#funnel-types">Funnel types</a></li>
+<li><a href="#gaps">Gaps</a></li>
+<li><a href="#conversions">Conversions</a></li>
+</ul></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+
+<div id="funneljoin" class="section level2">
+<h2>funneljoin</h2>
+<p><a href="https://hookedondata.org">Emily Robinson</a> has an awesome new package
+<a href="https://github.com/robinsones/funneljoin">funneljoin</a>.
+<code>funneljoin</code> has an intuitive interface to create and analyze funnels.
+Be sure to check out her
+<a href="https://robinsones.github.io/funneljoin/articles/funneljoin.html">vignette</a>
+and her slides:</p>
+{{% tweet "1193202114446516225" %}}
+<p>I’m so excited about Emily’s package,
+because data analysts get requests for funnel charts all the time.
+With <code>funneljoin</code>, you don’t have to start from scratch:
+you can use your time and energy to understand the data,
+rather than creating the funnel.</p>
+</div>
+<div id="customer-usage-funnels" class="section level2">
+<h2>Customer usage funnels</h2>
+<p>In the funneljoin vignette, Emily uses ads as an example:
+she wants to find the proportion of users who buy something
+after they click an add.
+I don’t work in ads, but customer usage funnels are also important for product design.</p>
+<p>One theory is that customers purchase a product to do a
+<a href="https://hbr.org/2016/09/know-your-customers-jobs-to-be-done">job</a>.
+Suppose we see some customers who purchase the product,
+but don’t use it.</p>
+<p>We need to ask ourselves:</p>
+<ul>
+<li>is the platform making it difficult for them to do their job?</li>
+<li>do we understand the users’ job to be done?</li>
+</ul>
+<div id="usage-example" class="section level3">
+<h3>Usage example</h3>
+<p>Let’s take a look at some simulated<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> customer usage logs.</p>
+<pre class="r"><code>library(dplyr)
+library(funneljoin)
+library(purrr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+
+set.seed(24)</code></pre>
+<pre class="r"><code>logs</code></pre>
+<pre><code>## # A tibble: 187 x 3
+##    date        user event 
+##    &lt;date&gt;     &lt;int&gt; &lt;chr&gt; 
+##  1 2020-01-06     1 upload
+##  2 2020-01-06     2 upload
+##  3 2020-01-06     3 upload
+##  4 2020-01-06     4 upload
+##  5 2020-01-06     5 upload
+##  6 2020-01-06     6 upload
+##  7 2020-01-06     7 upload
+##  8 2020-01-06     8 upload
+##  9 2020-01-06     9 upload
+## 10 2020-01-06     1 upload
+## # … with 177 more rows</code></pre>
+<p>This dataset records each time a user
+uploads, submits, or prints
+using the website.</p>
+<p>Here’s the workflow. Customers</p>
+<ol style="list-style-type: decimal">
+<li>upload data</li>
+<li>submit data to be analyzed</li>
+<li>print off reports based on the analysis</li>
+</ol>
+<p>Additionally, here’s some assumptions about our customer.</p>
+<ol style="list-style-type: decimal">
+<li>They purchase our product to print reports.</li>
+<li>Reports are only useful for data uploaded in the same week<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</li>
+</ol>
+<p>Let’s use <code>funneljoin</code> to analyze our data set and see how many
+customers are successfully printing reports on data they’ve uploaded.</p>
+<p>I’ll make the funnel a function,
+since I’ll be reusing the same funnel through-out the blog post.</p>
+<pre class="r"><code>customer_funnel &lt;- function(.data, type, max_gap = NULL) {
+  .data %&gt;% 
+    funnel_start(
+      moment_type = &quot;upload&quot;,
+      moment = &quot;event&quot;,
+      tstamp = &quot;date&quot;,
+      user = &quot;user&quot;
+    ) %&gt;%
+    funnel_steps(
+      moment_types = c(&quot;submit&quot;, &quot;print&quot;),
+      type = type,
+      gap_col = TRUE,
+      max_gap = max_gap
+    ) %&gt;%
+    mutate(days_to_submit = .gap.x / 60 / 60 / 24) %&gt;%
+    mutate(days_to_print = .gap.y / 60 / 60 / 24)
+}</code></pre>
+<pre class="r"><code>logs %&gt;%
+  customer_funnel(&quot;first-firstafter&quot;) %&gt;%
+  summarize_funnel()</code></pre>
+<pre><code>## # A tibble: 3 x 4
+##   moment_type nb_step pct_cumulative pct_step
+##   &lt;fct&gt;         &lt;int&gt;          &lt;dbl&gt;    &lt;dbl&gt;
+## 1 upload           10              1       NA
+## 2 submit           10              1        1
+## 3 print            10              1        1</code></pre>
+<p>At some point,
+all our our customers are submitting and printing uploaded data.
+But are they printing reports in time to be useful
+(before the end of the week)?</p>
+<pre class="r"><code>logs %&gt;%
+  customer_funnel(&quot;first-firstafter&quot;) %&gt;%
+  summarise(
+    avg_days_to_submit = mean(days_to_submit), 
+    avg_days_to_print = mean(days_to_print),
+    avg_time_to_complete_funnel = mean(days_to_submit + days_to_print)
+  )</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   avg_days_to_submit avg_days_to_print avg_time_to_complete_funnel
+##                &lt;dbl&gt;             &lt;dbl&gt;                       &lt;dbl&gt;
+## 1                3.5               6.1                         9.6</code></pre>
+<p>Something is definitely wrong. On average, customers are waiting printing 9 days
+after uploading. This gap is too big: the data is out-of-date after 5-6 days and
+is no longer useful. What’s going on?</p>
+<p>Are we using the right <a href="https://robinsones.github.io/funneljoin/reference/after_join.html#details">funnel type</a>?</p>
+</div>
+<div id="funnel-types" class="section level3">
+<h3>Funnel types</h3>
+<p><img src="/blog/funnel-types.png" /></p>
+<p><code>first-firstafter</code> finds the first upload, and then the first submit
+(then print) afterwords.</p>
+<p>But this isn’t a safe assumption. Our customers are uploading
+throughout the month.</p>
+<pre class="r"><code>logs %&gt;%
+  filter(event == &quot;upload&quot;) %&gt;%
+  mutate(week = floor_date(date, &quot;week&quot;)) %&gt;%
+  group_by(week) %&gt;%
+  summarise(n = n()) %&gt;%
+  ggplot(aes(week, n)) +
+  geom_line()</code></pre>
+<p><img src="/blog/2019-11-08-funneljoin_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>We care about more than the first upload.
+We want to know if they are printing reports after any upload.</p>
+<p>Enter <code>any-firstafter</code>. This will find the first
+submit/print event after any user upload.</p>
+<pre class="r"><code>logs %&gt;%
+  customer_funnel(&quot;any-firstafter&quot;) %&gt;%
+  summarise(
+    avg_days_to_submit = mean(days_to_submit), 
+    avg_days_to_print = mean(days_to_print),
+    avg_time_to_complete_funnel = mean(days_to_submit + days_to_print)
+  )</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   avg_days_to_submit avg_days_to_print avg_time_to_complete_funnel
+##                &lt;dbl&gt;             &lt;dbl&gt;                       &lt;dbl&gt;
+## 1               2.37              3.58                        5.96</code></pre>
+<p>This looks better better for our customer.
+However they are still taking almost 6 days on average to complete the funnel. That’s right on the edge of being useless.</p>
+</div>
+<div id="gaps" class="section level3">
+<h3>Gaps</h3>
+<p>One of our assumptions is that reports need to be printed in the
+same week when the data was uploaded to be useful<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>.
+Let’s add this assumption to our funnel, using the <code>max_gap</code> parameter.</p>
+<pre class="r"><code>weekly_customer_funnel &lt;- logs %&gt;%
+  customer_funnel(
+    &quot;any-firstafter&quot;, 
+    max_gap = as.difftime(5, units = &quot;days&quot;)
+  )
+
+weekly_customer_funnel %&gt;%
+  summarise(
+    avg_days_to_submit = mean(days_to_submit, na.rm = TRUE), 
+    avg_days_to_print = mean(days_to_print, na.rm = TRUE),
+    avg_time_to_complete_funnel = mean(
+      days_to_submit + days_to_print,
+      na.rm = TRUE
+    )
+  )</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   avg_days_to_submit avg_days_to_print avg_time_to_complete_funnel
+##                &lt;dbl&gt;             &lt;dbl&gt;                       &lt;dbl&gt;
+## 1               1.81              2.06                        3.82</code></pre>
+<p>So for customers who print reports at most 5 days after uploading,
+on average
+they print reports about 4 days after uploading.
+This turnaround time is quick enough to be useful.</p>
+<p>But this is only looking at users who print off reports. How many customers
+never print reports, even though they upload data?</p>
+</div>
+<div id="conversions" class="section level3">
+<h3>Conversions</h3>
+<p>Let’s look at how many uploads lead to a print.</p>
+<pre class="r"><code>weekly_customer_funnel %&gt;%
+  summarize_funnel()</code></pre>
+<pre><code>## # A tibble: 3 x 4
+##   moment_type nb_step pct_cumulative pct_step
+##   &lt;fct&gt;         &lt;int&gt;          &lt;dbl&gt;    &lt;dbl&gt;
+## 1 upload           89          1       NA    
+## 2 submit           85          0.955    0.955
+## 3 print            65          0.730    0.765</code></pre>
+<p>Around 25% of data uploaded isn’t printed off as a report.
+What’s going on?
+Let’s look at the trend over time.</p>
+<p>This is a little messy,
+but the goal is to calculate the conversation rate by week of upload.</p>
+<pre class="r"><code>weekly_customer_funnel %&gt;%
+  mutate(upload_week = floor_date(date_upload, &quot;week&quot;)) %&gt;%
+  nest(funnel = -upload_week) %&gt;%
+  mutate(funnel = map(funnel, summarize_conversions, date_print)) %&gt;%
+  unnest(funnel) %&gt;%
+  arrange(upload_week)</code></pre>
+<pre><code>## # A tibble: 4 x 4
+##   upload_week nb_users nb_conversions pct_converted
+##   &lt;date&gt;         &lt;int&gt;          &lt;int&gt;         &lt;dbl&gt;
+## 1 2020-01-05        30              9         0.3  
+## 2 2020-01-12        27             26         0.963
+## 3 2020-01-19        22             20         0.909
+## 4 2020-01-26        10             10         1</code></pre>
+<p>Early in the month,
+our users print reports much less often.
+But by the end of the month,
+reports always follow within 5 days of an upload.</p>
+<p>Maybe there isn’t a problem with the platform,
+but there is additional seasonality we need to understand.</p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>I absolutely love this package.
+In my experience, business partners love funnel plots and dashboards.
+The fact that this package provides a systematic interface
+to cleaning and analyzing this type of data will save me time and brainpower.</p>
+<p>Definitely check it out the next time you need to create a funnel!</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>
+If you want to see how I simulated this data,
+checkout out the source for this blog post here:
+<a href="https://github.com/tmastny/website2/blob/master/content/blog/2019-11-08-funneljoin.Rmd" class="uri">https://github.com/tmastny/website2/blob/master/content/blog/2019-11-08-funneljoin.Rmd</a><a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>
+For example, football coaches need scouting reports to prepare for their
+next opponent. Next week is too late, because they’ve already played them
+and they have to prepare for the next game.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>
+Technically our assumption was slightly different.
+Printing 5 days after the upload may still be too late.
+The real constraint is that the print must occur in the same
+calender week as the upload.
+This adds some complications,
+so in this blog post I’ve
+stuck with gaps. But check out my <a href="/blog/funneljoin-gaps">gap vs. deadline</a>
+blog post for a full analysis.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+</ol>
+</div>

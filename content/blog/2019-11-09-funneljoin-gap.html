@@ -1,0 +1,192 @@
+---
+title: 'Funnel Charts in R with funneljoin - Gaps and Deadlines'
+author: ~
+date: '2019-11-09'
+slug: funneljoin-gaps-deadlines
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#funneljoin">funneljoin</a></li>
+<li><a href="#gaps-vs.deadlines">Gaps vs. deadlines</a></li>
+<li><a href="#how-to-model-deadlines">How to model deadlines</a></li>
+<li><a href="#what-id-like-to-see">What I’d like to see</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+
+<div id="funneljoin" class="section level2">
+<h2>funneljoin</h2>
+<p>In my previous <a href="/blog/funnel-join">blog post</a>,
+I explored the awesome <a href="https://github.com/robinsones/funneljoin">funneljoin</a>
+package.
+Check that post out for an overview of the package
+and some examples.</p>
+<p>In this post,
+I’m going to investigate business problems that can’t be modeled with
+gaps,
+and how we can work around that.</p>
+</div>
+<div id="gaps-vs.deadlines" class="section level2">
+<h2>Gaps vs. deadlines</h2>
+<p>First, I’m going to try to come up with definitions for gap and deadline.</p>
+<p>Gap</p>
+<ul>
+<li>A gap is a period of time that the next event in the funnel is relevant.</li>
+</ul>
+<p>For example,
+if a customer clicks on an ad,
+and then purchases the product 30 days later
+the company may not want to attribute that purchase to the ad.</p>
+<p>Deadline</p>
+<ul>
+<li>A deadline is a date that the next event in the funnel
+must happen before to be relevant.</li>
+</ul>
+<p>For example,
+Turbo Tax wants to know the conversion rate between uploading your
+W-2s and filing your taxes.
+But they only care if you file your taxes before April 15.</p>
+<p>Another example in my line of work:
+football coaches need to print off opponent reports before their upcoming game.</p>
+</div>
+<div id="how-to-model-deadlines" class="section level2">
+<h2>How to model deadlines</h2>
+<p>Gaps and deadlines model different business funnels,
+but out of the box <code>funneljoin</code> only supports gaps.</p>
+<p>Let’s figure out how we can model deadlines using funneljoin.</p>
+<p>I’m going to start with the upload/submit/report logs again:</p>
+<pre class="r"><code>library(dplyr)
+library(tidyr)
+library(purrr)
+library(funneljoin)
+library(lubridate)
+
+logs &lt;- readRDS(&quot;funneljoin-logs.RDS&quot;)
+logs</code></pre>
+<pre><code>## # A tibble: 187 x 3
+##    date        user event 
+##    &lt;date&gt;     &lt;int&gt; &lt;chr&gt; 
+##  1 2020-01-06     1 upload
+##  2 2020-01-06     2 upload
+##  3 2020-01-06     3 upload
+##  4 2020-01-06     4 upload
+##  5 2020-01-06     5 upload
+##  6 2020-01-06     6 upload
+##  7 2020-01-06     7 upload
+##  8 2020-01-06     8 upload
+##  9 2020-01-06     9 upload
+## 10 2020-01-06     1 upload
+## # … with 177 more rows</code></pre>
+<p>We want to separate the logs based on their deadline,
+which is the week of the upload.</p>
+<pre class="r"><code>nested_events &lt;- logs %&gt;%
+  mutate(deadline = floor_date(date, &quot;week&quot;)) %&gt;%
+  nest(events = -deadline)
+
+nested_events</code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   deadline   events                                                        
+##   &lt;date&gt;     &lt;S3: vctrs_list_of&gt;                                           
+## 1 2020-01-05 18267 , 18267 , 18267 , 18267 , 18267 , 18267 , 18267 , 18267…
+## 2 2020-01-12 18274 , 18274 , 18274 , 18274 , 18274 , 18274 , 18274 , 18274…
+## 3 2020-01-19 18281 , 18281 , 18281 , 18281 , 18281 , 18281 , 18281 , 18281…
+## 4 2020-01-26 18288 , 18288 , 18288 , 18288 , 18288 , 18288 , 18288 , 18288…</code></pre>
+<p>This gives us a set of events for each deadline period.</p>
+<p>Now, we want to apply the funnel and summary for the events
+in each deadline period.</p>
+<pre class="r"><code>customer_funnel &lt;- function(.data) {
+  .data %&gt;% 
+    funnel_start(
+      moment_type = &quot;upload&quot;,
+      moment = &quot;event&quot;,
+      tstamp = &quot;date&quot;,
+      user = &quot;user&quot;
+    ) %&gt;%
+    funnel_steps(
+      moment_types = c(&quot;submit&quot;, &quot;print&quot;),
+      type = &quot;any-firstafter&quot;,
+    )
+}</code></pre>
+<pre class="r"><code>nested_events %&gt;%
+  mutate(conversions = map(
+    events, 
+    ~customer_funnel(.) %&gt;%
+      summarize_conversions(date_print)
+  )) %&gt;%
+  unnest(conversions) %&gt;%
+  select(-events)</code></pre>
+<pre><code>## # A tibble: 4 x 4
+##   deadline   nb_users nb_conversions pct_converted
+##   &lt;date&gt;        &lt;int&gt;          &lt;int&gt;         &lt;dbl&gt;
+## 1 2020-01-05       30              9         0.3  
+## 2 2020-01-12       27             26         0.963
+## 3 2020-01-19       22             20         0.909
+## 4 2020-01-26       10             10         1</code></pre>
+<p>In this case,
+conversion percentage is the same whether we use gaps or deadline.</p>
+<p>However, this isn’t real data.
+The simulated data I created doesn’t cover every scenario.
+With real data, we need to carefully think if we want gaps
+or deadlines.</p>
+</div>
+<div id="what-id-like-to-see" class="section level2">
+<h2>What I’d like to see</h2>
+<p>As much as I love <code>funneljoin</code>, I think the</p>
+<blockquote>
+<p><code>nest -&gt; funnel -&gt; summarise -&gt; unnest</code></p>
+</blockquote>
+<p>workflow is a little clunky.</p>
+<p>I think it would be cool if <code>funnel_start</code> respected a grouped data frame,
+when looking for the next step in the funnel.</p>
+<p>For example, we can pass a grouped data frame to <code>funnel_start</code>:</p>
+<pre class="r"><code>logs %&gt;%
+  mutate(week = week(date)) %&gt;%
+  group_by(week) %&gt;%
+  funnel_start(
+    moment_type = &quot;upload&quot;,
+    moment = &quot;event&quot;,
+    tstamp = &quot;date&quot;,
+    user = &quot;user&quot;
+  ) %&gt;%
+  funnel_steps(
+    moment_types = c(&quot;submit&quot;, &quot;print&quot;),
+    type = &quot;any-firstafter&quot;
+  ) %&gt;%
+  select(date_upload, date_print)</code></pre>
+<pre><code>## # A tibble: 1,749 x 3
+## # Groups:   week_upload.x.x [4]
+##    week_upload.x.x date_upload date_print
+##              &lt;dbl&gt; &lt;date&gt;      &lt;date&gt;    
+##  1               1 2020-01-06  2020-01-17
+##  2               1 2020-01-06  2020-01-24
+##  3               1 2020-01-06  2020-01-17
+##  4               1 2020-01-06  2020-01-24
+##  5               1 2020-01-06  2020-01-17
+##  6               1 2020-01-06  2020-01-24
+##  7               1 2020-01-06  2020-01-17
+##  8               1 2020-01-06  2020-01-24
+##  9               1 2020-01-06  2020-01-17
+## 10               1 2020-01-06  2020-01-24
+## # … with 1,739 more rows</code></pre>
+<p>But the <code>funneljoin</code> finds the <code>firstafter</code> print data outside of the week
+of the upload (the group parameter for the data-frame).</p>
+<p>I want to find the <code>firstafter</code> inside the week of the upload
+(the group parameter).</p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Gaps or deadlines depend on the business we are trying to model.
+While gaps are very easy to use with <code>funneljoin</code>,
+we can still analyze conversions
+in a deadline-based funnel
+with a little extra work.</p>
+</div>

@@ -1,5 +1,5 @@
 ---
-title: 'Search Files in RStudio'
+title: 'Funnel Charts in R with funneljoin'
 author: ~
 date: '2019-11-08'
 slug: funneljoin
@@ -20,20 +20,46 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 ## funneljoin
 
 [Emily Robinson](https://hookedondata.org) has an awesome new package
-[funneljoin](https://github.com/robinsones/funneljoin). I'm excited to see 
-her [slides](https://twitter.com/drob/status/1192834052203667456?s=20), but 
-in the meantime I dove into her
-[vignette](https://robinsones.github.io/funneljoin/articles/funneljoin.html).
+[funneljoin](https://github.com/robinsones/funneljoin).
+`funneljoin` has an intuitive interface to create and analyze funnels.
+Be sure to check out her
+[vignette](https://robinsones.github.io/funneljoin/articles/funneljoin.html)
+and her slides:
 
-Her examples are around ads, but customer usage funnels are also important 
-for product design. We want to understand the paths customers take to get
-end results, and we want to know if bad design is causing customers
-to fall off. 
+```{r echo=FALSE}
+blogdown::shortcode('tweet', '1193202114446516225')
+```
 
-I'm so excited about Emily's package, because this is the first 
-systematic approach to funnel analysis I've seen. 
+I'm so excited about Emily's package, 
+because data analysts get requests for funnel charts all the time.
+With `funneljoin`, you don't have to start from scratch: 
+you can use your time and energy to understand the data, 
+rather than creating the funnel.
 
-## Business Example
+## Customer usage funnels
+
+In the funneljoin vignette, Emily uses ads as an example: 
+she wants to find the proportion of users who buy something 
+after they click an add. 
+I don't work in ads, but customer usage funnels are also important for product design. 
+
+One theory is that customers purchase a product to do a
+[job](https://hbr.org/2016/09/know-your-customers-jobs-to-be-done). 
+Suppose we see some customers who purchase the product, 
+but don't use it.
+
+We need to ask ourselves:
+
+- is the platform making it difficult for them to do their job?
+- do we understand the users' job to be done?
+
+### Usage example
+
+Let's take a look at some simulated^[
+If you want to see how I simulated this data, 
+checkout out the source for this blog post here:
+https://github.com/tmastny/website2/blob/master/content/blog/2019-11-08-funneljoin.Rmd
+] customer usage logs.
 
 ```{r}
 library(dplyr)
@@ -47,6 +73,7 @@ set.seed(24)
 ```
 
 ```{r, include=FALSE}
+# starting to simulate customer log data
 week_to_days <- list(
   "one" = 0,
   "two" = 7,
@@ -104,6 +131,7 @@ event_logs
 ```
 
 ```{r, include=FALSE}
+# end of customer log simulation
 logs <- event_logs %>%
   mutate(skew = rbinom(n(), 1, 0.2)) %>%
   mutate(date = case_when(
@@ -113,46 +141,41 @@ logs <- event_logs %>%
   )) %>%
   arrange(date) %>%
   select(date, user, event)
+
+saveRDS(logs, "funneljoin-logs.RDS")
 ```
-
-Suppose we have a logs dataset, indicating events on a platform. Our website is 
-a platform where customers can upload data, submit it to be analyzed, and print 
-a report. Our customer only gets value out of the platform when they print a 
-report, so we want to know what percentage of customers are printing after
-uploading. 
-
-However, not every customer who uploads will print a report. 
-1. system reliably could be low. They may have uploaded, but submissions are
-closed.
-
-2. turnaround time is too slow. Customers need reports to take action the
-week they upload. Even a few days late would be too slow. So customers may
-submit reports, but don't bother to print them because they came too late to 
-be useful.
-
-3. there may be a seasonal component. To meet quotas, printing reports may
-be more important later in the month.
-
-Therefore, we need to be careful analyzing the data. If customer's first report 
-is in January, but they didn't print out a report until February, our platform
-may be failing them. 
-
-We'll show a few ways that `funneljoin` can help us with this analysis.
-
-### Customer Logs
-
-Here's a dataset that records each upload, submission, and printing for our 
-users.
 
 ```{r}
 logs
 ```
 
-Let's analyze do some funnel analysis. I'll make this a function, since I'll be
-reusing the same funnel through-out the blog post.
+This dataset records each time a user 
+uploads, submits, or prints 
+using the website.
+
+Here's the workflow. Customers
+
+1. upload data
+2. submit data to be analyzed
+3. print off reports based on the analysis
+
+Additionally, here's some assumptions about our customer. 
+
+1. They purchase our product to print reports.
+2. Reports are only useful for data uploaded in the same week^[
+For example, football coaches need scouting reports to prepare for their
+next opponent. Next week is too late, because they've already played them
+and they have to prepare for the next game.
+]. 
+
+Let's use `funneljoin` to analyze our data set and see how many 
+customers are successfully printing reports on data they've uploaded.
+
+I'll make the funnel a function, 
+since I'll be reusing the same funnel through-out the blog post.
 
 ```{r}
-customer_funnel <- function(.data, type, ...) {
+customer_funnel <- function(.data, type, max_gap = NULL) {
   .data %>% 
     funnel_start(
       moment_type = "upload",
@@ -164,7 +187,7 @@ customer_funnel <- function(.data, type, ...) {
       moment_types = c("submit", "print"),
       type = type,
       gap_col = TRUE,
-      ...
+      max_gap = max_gap
     ) %>%
     mutate(days_to_submit = .gap.x / 60 / 60 / 24) %>%
     mutate(days_to_print = .gap.y / 60 / 60 / 24)
@@ -174,49 +197,129 @@ customer_funnel <- function(.data, type, ...) {
 ```{r}
 logs %>%
   customer_funnel("first-firstafter") %>%
-  summarise(mean(days_to_submit), mean(days_to_print))
+  summarize_funnel()
 ```
 
-But this is only looking at the time between the first upload, and the first
-submit/print afterwards.
+At some point, 
+all our our customers are submitting and printing uploaded data.
+But are they printing reports in time to be useful 
+(before the end of the week)?
 
-If we look at all uploads, they have a much shorter conversion gap. 
+```{r}
+logs %>%
+  customer_funnel("first-firstafter") %>%
+  summarise(
+    avg_days_to_submit = mean(days_to_submit), 
+    avg_days_to_print = mean(days_to_print),
+    avg_time_to_complete_funnel = mean(days_to_submit + days_to_print)
+  )
+```
+
+Something is definitely wrong. On average, customers are waiting printing 9 days
+after uploading. This gap is too big: the data is out-of-date after 5-6 days and
+is no longer useful. What's going on?
+
+Are we using the right [funnel type](
+https://robinsones.github.io/funneljoin/reference/after_join.html#details
+)?
+
+### Funnel types
+
+![](/blog/funnel-types.png)
+
+`first-firstafter` finds the first upload, and then the first submit
+(then print) afterwords.
+
+But this isn't a safe assumption. Our customers are uploading
+throughout the month.
+
+```{r, fig.height=2}
+logs %>%
+  filter(event == "upload") %>%
+  mutate(week = floor_date(date, "week")) %>%
+  group_by(week) %>%
+  summarise(n = n()) %>%
+  ggplot(aes(week, n)) +
+  geom_line()
+```
+
+We care about more than the first upload.
+We want to know if they are printing reports after any upload. 
+
+Enter `any-firstafter`. This will find the first 
+submit/print event after any user upload.
 
 ```{r}
 logs %>%
   customer_funnel("any-firstafter") %>%
-  summarise(mean(days_to_submit), mean(days_to_print))
+  summarise(
+    avg_days_to_submit = mean(days_to_submit), 
+    avg_days_to_print = mean(days_to_print),
+    avg_time_to_complete_funnel = mean(days_to_submit + days_to_print)
+  )
 ```
 
-What about the time to print within a 7 day window? Our customers need to
-print out that report this week. 
+This looks better better for our customer. 
+However they are still taking almost 6 days on average to complete the funnel. That's right on the edge of being useless.
+
+### Gaps
+
+One of our assumptions is that reports need to be printed in the
+same week when the data was uploaded to be useful^[
+Technically our assumption was slightly different. 
+Printing 5 days after the upload may still be too late. 
+The real constraint is that the print must occur in the same
+calender week as the upload. 
+This adds some complications, 
+so in this blog post I've 
+stuck with gaps. But check out my [gap vs. deadline](
+/blog/funneljoin-gaps
+)
+blog post for a full analysis.
+]. 
+Let's add this assumption to our funnel, using the `max_gap` parameter.
 
 ```{r}
 weekly_customer_funnel <- logs %>%
   customer_funnel(
-    "any-firstafter", max_gap = as.difftime(7, units = "days")
+    "any-firstafter", 
+    max_gap = as.difftime(5, units = "days")
   )
 
 weekly_customer_funnel %>%
-  summarise(mean(days_to_submit, na.rm = TRUE), mean(days_to_print, na.rm = TRUE))
+  summarise(
+    avg_days_to_submit = mean(days_to_submit, na.rm = TRUE), 
+    avg_days_to_print = mean(days_to_print, na.rm = TRUE),
+    avg_time_to_complete_funnel = mean(
+      days_to_submit + days_to_print,
+      na.rm = TRUE
+    )
+  )
 ```
+
+So for customers who print reports at most 5 days after uploading,
+on average
+they print reports about 4 days after uploading.
+This turnaround time is quick enough to be useful.
+
+But this is only looking at users who print off reports. How many customers
+never print reports, even though they upload data?
+
+### Conversions
+
+Let's look at how many uploads lead to a print.
 
 ```{r}
 weekly_customer_funnel %>%
   summarize_funnel()
 ```
 
-But how do those conversions trend by week? One of our customer behaviors is that
-the end of the month is much more important to them. 
+Around 25% of data uploaded isn't printed off as a report.
+What's going on? 
+Let's look at the trend over time.
 
-```{r}
-weekly_customer_funnel %>%
-  mutate(upload_week = floor_date(date_upload, "week")) %>%
-  group_split(upload_week) %>%
-  map_dfr(summarize_conversions, date_print)
-```
-
-This confirms our suspicions that conversions is highly correlated with week.
+This is a little messy, 
+but the goal is to calculate the conversation rate by week of upload.
 
 ```{r}
 weekly_customer_funnel %>%
@@ -227,45 +330,19 @@ weekly_customer_funnel %>%
   arrange(upload_week)
 ```
 
-Instead of using `max_gap`, you could also nest by upload week first, build
-and find the conversion for each nested data-frame. 
+Early in the month, 
+our users print reports much less often. 
+But by the end of the month, 
+reports always follow within 5 days of an upload.
 
-## What I'd like to see
-
-As much as I love `funneljoin`, I think the 
-> `funnel -> nest -> map(summarize_conversion) -> unnest`
-
-workflow is a little clunky. 
-
-I think it would be cool if `funnel_start` respected a grouped data frame,
-when looking for the next step in the funnel.
-
-For example, we can pass a grouped data frame to `funnel_start`:
-
-```{r}
-logs %>%
-  mutate(week = week(date)) %>%
-  group_by(week) %>%
-  funnel_start(
-    moment_type = "upload",
-    moment = "event",
-    tstamp = "date",
-    user = "user"
-  ) %>%
-  funnel_steps(
-    moment_types = c("submit", "print"),
-    type = "any-firstafter"
-  ) %>%
-  select(date_upload, date_print)
-```
-
-But the output for `date_print` looks for the `firstafter` outside of the week
-of the upload (the group parameter for the data-frame).
+Maybe there isn't a problem with the platform, 
+but there is additional seasonality we need to understand. 
 
 ## Conclusion
 
-I absolutely love this package. Funnel plots and dashboards are frequently
-requested by data analysts, and this package provides a systematic interface
-to cleaning and analyzing this type of data.
+I absolutely love this package. 
+In my experience, business partners love funnel plots and dashboards. 
+The fact that this package provides a systematic interface 
+to cleaning and analyzing this type of data will save me time and brainpower.
 
 Definitely check it out the next time you need to create a funnel!
