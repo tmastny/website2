@@ -2,6 +2,10 @@
 title: "About"
 ---
 
-My name is Tim Mastny. I'm a graduate student at the University of Nebraska Omaha interested in Bayesian statistics and data science. 
+My name is Tim Mastny. 
+I'm a predictive analyst at [Hudl](https://www.hudl.com/).
+Previously I did requirements management at Boeing and was
+a part-time adjunct professor at Metro Community Collge.
+I've interned at NASA's Jet Propulsion Laboratory and RStudio.
 
-I've interned at NASA's Jet Propulsion Laboratory and worked at Boeing in OKC. Currently I am an adjunct professor at Metro Community College.
+I'm interested in open-source data science software.

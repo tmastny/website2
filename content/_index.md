@@ -11,4 +11,9 @@ title: Home
   - Github: https://github.com/tmastny/leadr
   - Vignettes: https://tmastny.github.io/leadr/
 
+`sass`: CSS preprocessor for dynamic style sheets
+  
+  - Github: https://github.com/rstudio/sass
+  - Introduction: https://rstudio.github.io/sass/articles/sass.html
+
 ### Recent Posts
