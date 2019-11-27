@@ -6,7 +6,6 @@ slug: aws-sagemaker-r
 categories: []
 tags: []
 description: 
-draft: true
 output:
   blogdown::html_page:
     toc: true 
@@ -28,7 +27,7 @@ and I hope my package makes it easier for people to try it out!
 Since the Github page and [website](https://tmastny.github.io/sagemaker/)
 already introduce the sagemaker R package, 
 I want to use this blog post to introduce AWS Sagemaker,
-productionizing machine learning, and how the new sagemaker R package fits in.
+productionizing machine learning, and how the my sagemaker R package fits in.
 
 ## AWS Sagemaker
 
@@ -41,8 +40,32 @@ There are three components of Sagemaker:
 3. endpoint and batch predictions from trained models
 
 Hosted juypter notebooks are a great feature, 
-but this post will focus on Sagemaker's scalable training and predictions and
-how that fits into productionizing machine learning predictions.
+but this post will focus on Sagemaker's scalable training and predictions.
+
+### AWS cost
+ 
+Before you use Sagemaker you need an AWS account. 
+AWS requires your credit card information so they can charge you for use
+of services.
+
+However, by taking advantage of free tier services 
+and closely monitoring usage, it's possible to keep costs low. 
+
+Here is my Spend Summary for the entire time I developed the R package:
+
+* Total Spend: $4.05 
+  - By service: 
+    - Sagemaker: $4.05
+    - Other services: $0.00
+  
+* Free Tier Usage
+  - S3 Put: 28%
+  - S3 Get: 4.2%
+  - Others: <1%
+  
+So if you are interested in learning AWS, 
+but aren't in an enterprise environment,
+it is definitely possible to get started.
 
 ## Productionizing machine learning predictions
 
@@ -78,15 +101,17 @@ pipeline <- function(...) {
 }
 ```
 
-One key feature of the environment is that the feature engineering process 
-(or any transformation of the raw data) must be the same between
-the training workflow and the predictions pipeline.
+One key feature of the environment is that processes are shared
+with the training workflow. 
+
+For example, any data transformation or feature engineering process
+must be shared between the training workflow and the predictions pipeline.
 Otherwise, your predictions will not be reliable, 
 and your model might not even run against the new data if its a different shape.
 
 Likewise, the pipeline needs to use the model we selected during training.
 
-## How Sagemaker fits in
+## Sagemaker Features
 
 ### Training and Evaluation
 
@@ -101,7 +126,7 @@ sagemaker::sagemaker_hyperparameter_tuner
 ```
 
 The training also facilitates hyperparameter tuning for selection. 
-Sagemaker also has some tools to help you evaluate tuning and model fit.
+Sagemaker also has some tools to help you evaluate tuning and model fit:
 
 ```r
 sagemaker::sagemaker_tuning_job_logs
@@ -132,6 +157,7 @@ pipeline <- function(...) {
   model <- sagemaker::sagemaker_attach_tuner(...)
   # sagemaker::sagemaker_deploy_endpoint(model)
   
+  # sends and receives data
   # predict.sagemaker
   predict(model, data)
 }
@@ -170,47 +196,25 @@ The pipeline environment must have permission and access to use Sagemaker.
 
 Unfortunately, Sagemaker does not provide services for the
 entire _predictions pipeline environment_. 
+Most of the complexity comes from the environment itself,
+which is usually a docker image.
 
-You will still be responsible for reusing the transformation and
-feature engineering process from the training pipeline.
+You will also be responsible for reusing the transformation and
+feature engineering process from the training pipeline. 
+Scheduling is managed outside of the environment. 
 
-Scheduling, data-fetching, and post-processing will all need to be managed
-by the environment. Sagemaker will only act as an API service to generate
+Ultimately, Sagemaker will only act as an API service to generate
 predictions for that environment.
-
-## AWS cost
- 
-Before you can even create an account, 
-AWS requires your credit card information so they can charge you for use
-of services.
-
-However, by taking advantage of free tier services 
-and closely monitoring usage, it's possible to keep costs low. 
-
-Here is my Spend Summary for the entire time I developed the R package:
-
-* Total Spend: $4.05 
-  - By service: 
-    - Sagemaker: $4.05
-    - Other services: $0.00
-  
-* Free Tier Usage
-  - S3 Put: 28%
-  - S3 Get: 4.2%
-  - Others: <1%
-  
-So if you are interested in learning AWS, 
-but aren't in an enterprise environment,
-it is definitely possible to get started.
 
 ## sagemaker R package
 
-So how does the new sagemaker R package fit into this? 
+So how does the new sagemaker R package fit into this?^[
+https://aws.amazon.com/blogs/machine-learning/using-r-with-amazon-sagemaker/  http://www.rpubs.com/TimFlocke/SageMaker_R_demo ] 
 First and foremost, the sagemaker R package is an interface
 to the AWS Sagemaker API. This means that it's easier to build
 a _predictions pipeline environment_ using R. 
 
-You do all your data maniuplation and cleaning from R, 
+This means you can do all your data maniuplation and cleaning from R, 
 as well as manage your Sagemaker APIs.
 
 Second, I think this R package vastly simplifies the Sagemaker interface,
@@ -236,19 +240,14 @@ leave an issue here: https://github.com/tmastny/sagemaker/issues
 
 ## What's next
 
-I have plans for additional work. 
 I think there are many small improvements to help with the everyday stuff,
 like adding a `type` parameter on `predict` for probability or class.
 
 I also have bigger projects I want to tackle. 
-The lack of cross-validation on Sagemaker has always disappointed me,
-I think I see a way I can implement it.
+The lack of cross-validation on Sagemaker has always disappointed me, 
+and I think it's possible to implement.
 
 And as always, 
 I'll need to keep developing and maintaining functionality 
 as I develop more models and use more features and models.
 
-## Resources
-
-https://aws.amazon.com/blogs/machine-learning/using-r-with-amazon-sagemaker/
-http://www.rpubs.com/TimFlocke/SageMaker_R_demo
