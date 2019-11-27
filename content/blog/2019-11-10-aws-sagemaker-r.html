@@ -1,0 +1,227 @@
+---
+title: 'AWS Sagemaker and R'
+author: ~
+date: '2019-11-27'
+slug: aws-sagemaker-r
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#aws-sagemaker">AWS Sagemaker</a></li>
+<li><a href="#productionizing-machine-learning-predictions">Productionizing machine learning predictions</a></li>
+<li><a href="#how-sagemaker-fits-in">How Sagemaker fits in</a><ul>
+<li><a href="#training-and-evaluation">Training and Evaluation</a></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul></li>
+<li><a href="#what-sagemaker-isnt">What Sagemaker isn’t</a></li>
+<li><a href="#aws-cost">AWS cost</a></li>
+<li><a href="#sagemaker-r-package">sagemaker R package</a></li>
+<li><a href="#limitations">Limitations</a></li>
+<li><a href="#whats-next">What’s next</a></li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>I’m excited to announce my
+<a href="https://github.com/tmastny/sagemaker">sagemaker R package</a>!</p>
+<p>AWS Sagemaker is a powerful tool,
+and I hope my package makes it easier for people to try it out!</p>
+<p>Since the Github page and <a href="https://tmastny.github.io/sagemaker/">website</a>
+already introduce the sagemaker R package,
+I want to use this blog post to introduce AWS Sagemaker,
+productionizing machine learning, and how the new sagemaker R package fits in.</p>
+</div>
+<div id="aws-sagemaker" class="section level2">
+<h2>AWS Sagemaker</h2>
+<p>AWS Sagemaker is a platform for training machine learning models.</p>
+<p>There are three components of Sagemaker:</p>
+<ol style="list-style-type: decimal">
+<li>hosted development environment with juypter notebooks</li>
+<li>scalable training of machine learning models</li>
+<li>endpoint and batch predictions from trained models</li>
+</ol>
+<p>Hosted juypter notebooks are a great feature,
+but this post will focus on Sagemaker’s scalable training and predictions and
+how that fits into productionizing machine learning predictions.</p>
+</div>
+<div id="productionizing-machine-learning-predictions" class="section level2">
+<h2>Productionizing machine learning predictions</h2>
+<p>Before we dive into AWS Sagemaker,
+let me introduce my mental model for generating machine learning
+predictions:</p>
+<p><img src="/blog/predictions-pipeline.svg" /></p>
+<p>The workflow on the bottom is similar to the data exploration workflow shown in
+<a href="https://r4ds.had.co.nz/explore-intro.html">R for Data Science</a>.
+We process data, evaluate, and select a model to deploy.</p>
+<p>On the top, the key to repeatable, scheduled predictions is the
+<em>predictions pipeline environment</em>.
+A mature environment might be a docker image ran by AWS Batch,
+scheduled by a CRON trigger on Jenkins.
+A simple one would be an Rscript ran once a day on your desktop.</p>
+<p>Think of the pipeline like a function, deployed on a certain trigger:</p>
+<pre><code>## 🕓 
+## &lt;clock for 16:05 (~four o’clock) &gt;</code></pre>
+<pre class="r"><code>pipeline &lt;- function(...) {
+  data &lt;- fetch_data(...) %&gt;%
+    transform(...)
+  
+  model &lt;- sagemaker::sagemaker_attach_tuner(...)
+  predict(model, data)
+}</code></pre>
+<p>One key feature of the environment is that the feature engineering process
+(or any transformation of the raw data) must be the same between
+the training workflow and the predictions pipeline.
+Otherwise, your predictions will not be reliable,
+and your model might not even run against the new data if its a different shape.</p>
+<p>Likewise, the pipeline needs to use the model we selected during training.</p>
+</div>
+<div id="how-sagemaker-fits-in" class="section level2">
+<h2>How Sagemaker fits in</h2>
+<div id="training-and-evaluation" class="section level3">
+<h3>Training and Evaluation</h3>
+<p>Sagemaker has tools for scalable training of machine learning models.
+You can choose the compute power and parallel model building
+suitable for the scale of your training task.</p>
+<p>In the R package, this is done by</p>
+<pre class="r"><code>sagemaker::sagemaker_estimator
+sagemaker::sagemaker_hyperparameter_tuner</code></pre>
+<p>The training also facilitates hyperparameter tuning for selection.
+Sagemaker also has some tools to help you evaluate tuning and model fit.</p>
+<pre class="r"><code>sagemaker::sagemaker_tuning_job_logs
+sagemaker::sagemaker_training_job_logs</code></pre>
+</div>
+<div id="deployment" class="section level3">
+<h3>Deployment</h3>
+<p>In the <em>predictions pipeline environment</em>,
+Sagemaker can also provide a scalable model to service predictions.</p>
+<p>Sagemaker offers real-time predictions, scalable both in terms of
+compute speed and parallel servicing.</p>
+<p>In our pipeline example, this means that our pipeline function
+sends data to the Sagemaker endpoint, and receives predictions back.</p>
+<pre><code>## 🕓 
+## &lt;clock for 16:05 (~four o’clock) &gt;</code></pre>
+<pre class="r"><code>pipeline &lt;- function(...) {
+  data &lt;- fetch_data(...) %&gt;%
+    transform(...)
+  
+  model &lt;- sagemaker::sagemaker_attach_tuner(...)
+  # sagemaker::sagemaker_deploy_endpoint(model)
+  
+  # predict.sagemaker
+  predict(model, data)
+}</code></pre>
+<p>It can also run batch processing,
+making one-off predictions on datasets in S3.</p>
+<p>If used in the pipeline, this means that
+our pipeline must have permission to spin up Sagemaker resources.</p>
+<pre><code>## 🕓 
+## &lt;clock for 16:05 (~four o’clock) &gt;</code></pre>
+<pre class="r"><code>pipeline &lt;- function(...) {
+  data &lt;- fetch_data(...) %&gt;%
+    transform(...)
+  
+  model &lt;- sagemaker::sagemaker_attach_tuner(...)
+  
+  # creates Sagemaker resources
+  sagemaker::batch_predict(model, data, ...)
+}</code></pre>
+<p>So with the Sagemaker endpoint, Sagemaker resources have already been created
+and are persistent. The pipeline environment sends and receives data
+to the endpoint.</p>
+<p>For batch predictions, resources need to be temporarily created and destroyed.
+The pipeline environment must have permission and access to use Sagemaker.</p>
+</div>
+</div>
+<div id="what-sagemaker-isnt" class="section level2">
+<h2>What Sagemaker isn’t</h2>
+<p>Unfortunately, Sagemaker does not provide services for the
+entire <em>predictions pipeline environment</em>.</p>
+<p>You will still be responsible for reusing the transformation and
+feature engineering process from the training pipeline.</p>
+<p>Scheduling, data-fetching, and post-processing will all need to be managed
+by the environment. Sagemaker will only act as an API service to generate
+predictions for that environment.</p>
+</div>
+<div id="aws-cost" class="section level2">
+<h2>AWS cost</h2>
+<p>Before you can even create an account,
+AWS requires your credit card information so they can charge you for use
+of services.</p>
+<p>However, by taking advantage of free tier services
+and closely monitoring usage, it’s possible to keep costs low.</p>
+<p>Here is my Spend Summary for the entire time I developed the R package:</p>
+<ul>
+<li>Total Spend: $4.05
+<ul>
+<li>By service:
+<ul>
+<li>Sagemaker: $4.05</li>
+<li>Other services: $0.00</li>
+</ul></li>
+</ul></li>
+<li>Free Tier Usage
+<ul>
+<li>S3 Put: 28%</li>
+<li>S3 Get: 4.2%</li>
+<li>Others: &lt;1%</li>
+</ul></li>
+</ul>
+<p>So if you are interested in learning AWS,
+but aren’t in an enterprise environment,
+it is definitely possible to get started.</p>
+</div>
+<div id="sagemaker-r-package" class="section level2">
+<h2>sagemaker R package</h2>
+<p>So how does the new sagemaker R package fit into this?
+First and foremost, the sagemaker R package is an interface
+to the AWS Sagemaker API. This means that it’s easier to build
+a <em>predictions pipeline environment</em> using R.</p>
+<p>You do all your data maniuplation and cleaning from R,
+as well as manage your Sagemaker APIs.</p>
+<p>Second, I think this R package vastly simplifies the Sagemaker interface,
+especially during model training and evaluation.
+It’s easier to compare hyperparameters across tuning jobs,
+and make predictions on new data.</p>
+<p>Most importantly, I’ve tried to hide a lot of the details that
+get in the way when you are trying to quickly spin up a Sagemaker
+model. Less boilerplate, more machine learning.</p>
+</div>
+<div id="limitations" class="section level2">
+<h2>Limitations</h2>
+<p>This package has been built for and tested on the xgboost Sagemaker models.
+I spent most of my time working with xgboost, so I’ve even included
+shortcuts for xgboost like
+<code>sagemaker_xgb_container</code> and <code>sagemaker_xgb_estimator</code>.</p>
+<p>However, this means there are a lot of models and features of Sagemaker
+I might not have come across.
+If for whatever reason, something in <code>sagemaker</code> doesn’t work
+leave an issue here: <a href="https://github.com/tmastny/sagemaker/issues" class="uri">https://github.com/tmastny/sagemaker/issues</a></p>
+</div>
+<div id="whats-next" class="section level2">
+<h2>What’s next</h2>
+<p>I have plans for additional work.
+I think there are many small improvements to help with the everyday stuff,
+like adding a <code>type</code> parameter on <code>predict</code> for probability or class.</p>
+<p>I also have bigger projects I want to tackle.
+The lack of cross-validation on Sagemaker has always disappointed me,
+I think I see a way I can implement it.</p>
+<p>And as always,
+I’ll need to keep developing and maintaining functionality
+as I develop more models and use more features and models.</p>
+</div>
+<div id="resources" class="section level2">
+<h2>Resources</h2>
+<p><a href="https://aws.amazon.com/blogs/machine-learning/using-r-with-amazon-sagemaker/" class="uri">https://aws.amazon.com/blogs/machine-learning/using-r-with-amazon-sagemaker/</a>
+<a href="http://www.rpubs.com/TimFlocke/SageMaker_R_demo" class="uri">http://www.rpubs.com/TimFlocke/SageMaker_R_demo</a></p>
+</div>
