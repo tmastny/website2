@@ -1,0 +1,201 @@
+---
+title: 'dplyr 1.0.0'
+author: ~
+date: '2020-04-07'
+slug: dplyr-1-rowwise-across
+categories: []
+tags: []
+description: 
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#stop-repeating-names">Stop Repeating Names</a></li>
+<li><a href="#summary-rows">Summary Rows</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>dplyr 1.0.0 is <a href="https://www.tidyverse.org/blog/2020/03/dplyr-1-0-0-is-coming-soon/">coming soon!</a>
+I’m really excited about this release.
+I think <code>rowwise</code> and <code>across</code> are excellent new functions that make
+common operations feel more intutive.
+You can try them out for yourself by installing the development version
+from <a href="https://github.com/tidyverse/dplyr/">Github</a> until there is a CRAN release.</p>
+<p>This post is just me playing around with some of the new features.</p>
+</div>
+<div id="stop-repeating-names" class="section level2">
+<h2>Stop Repeating Names</h2>
+<p>I’ve probably typed something like this a thousand times:</p>
+<pre class="r"><code>library(ggplot2)
+library(tidyr)
+library(dplyr, warn.conflicts = FALSE)
+
+mtcars &lt;- as_tibble(mtcars)
+
+mtcars %&gt;%
+  mutate(vs = as.factor(vs)) %&gt;%
+  mutate(am = as.factor(am))</code></pre>
+<pre><code>## # A tibble: 32 x 11
+##      mpg   cyl  disp    hp  drat    wt  qsec vs    am     gear  carb
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;fct&gt; &lt;fct&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1  21       6  160    110  3.9   2.62  16.5 0     1         4     4
+##  2  21       6  160    110  3.9   2.88  17.0 0     1         4     4
+##  3  22.8     4  108     93  3.85  2.32  18.6 1     1         4     1
+##  4  21.4     6  258    110  3.08  3.22  19.4 1     0         3     1
+##  5  18.7     8  360    175  3.15  3.44  17.0 0     0         3     2
+##  6  18.1     6  225    105  2.76  3.46  20.2 1     0         3     1
+##  7  14.3     8  360    245  3.21  3.57  15.8 0     0         3     4
+##  8  24.4     4  147.    62  3.69  3.19  20   1     0         4     2
+##  9  22.8     4  141.    95  3.92  3.15  22.9 1     0         4     2
+## 10  19.2     6  168.   123  3.92  3.44  18.3 1     0         4     4
+## # … with 22 more rows</code></pre>
+<p>Here’s the general pattern: I’m applying a function to a column,
+but I want the column name to <strong>stay the same</strong>.</p>
+<p>It also happens in summaries, where you want to find
+column means, but you just want the columns to be named the same:</p>
+<pre class="r"><code>mtcars %&gt;%
+  summarise(disp = mean(disp), hp = mean(hp))</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##    disp    hp
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  231.  147.</code></pre>
+<p>You are always repeating</p>
+<blockquote>
+<p><code>column_name = func(column_name)</code></p>
+</blockquote>
+<p><code>dplyr::across</code> is a way to get around that. In mutates and summarises,
+by default <code>across</code> keeps the same column name after you apply a function:</p>
+<pre class="r"><code>mtcars %&gt;%
+  mutate(across(vs, as.factor))</code></pre>
+<pre><code>## # A tibble: 32 x 11
+##      mpg   cyl  disp    hp  drat    wt  qsec vs       am  gear  carb
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;fct&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1  21       6  160    110  3.9   2.62  16.5 0         1     4     4
+##  2  21       6  160    110  3.9   2.88  17.0 0         1     4     4
+##  3  22.8     4  108     93  3.85  2.32  18.6 1         1     4     1
+##  4  21.4     6  258    110  3.08  3.22  19.4 1         0     3     1
+##  5  18.7     8  360    175  3.15  3.44  17.0 0         0     3     2
+##  6  18.1     6  225    105  2.76  3.46  20.2 1         0     3     1
+##  7  14.3     8  360    245  3.21  3.57  15.8 0         0     3     4
+##  8  24.4     4  147.    62  3.69  3.19  20   1         0     4     2
+##  9  22.8     4  141.    95  3.92  3.15  22.9 1         0     4     2
+## 10  19.2     6  168.   123  3.92  3.44  18.3 1         0     4     4
+## # … with 22 more rows</code></pre>
+<p>This is a nice, but small benefit. The cool thing is that you can
+easily apply this to any number of columns you want using <a href="https://r4ds.had.co.nz/transform.html#select"><code>tidyselect</code></a>
+and <a href="https://dplyr.tidyverse.org/dev/articles/colwise.html#basic-usage">functions</a>.</p>
+<pre class="r"><code>mtcars %&gt;%
+  summarise(across(c(disp, hp), mean))</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##    disp    hp
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  231.  147.</code></pre>
+<pre class="r"><code>mtcars %&gt;%
+  summarise(across(is.numeric &amp; -disp &amp; -hp, mean))</code></pre>
+<pre><code>## # A tibble: 1 x 9
+##     mpg   cyl  drat    wt  qsec    vs    am  gear  carb
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1  20.1  6.19  3.60  3.22  17.8 0.438 0.406  3.69  2.81</code></pre>
+</div>
+<div id="summary-rows" class="section level2">
+<h2>Summary Rows</h2>
+<p>One nice thing about Excel is summary rows.</p>
+<p>For example, say I have the following summarised table:</p>
+<pre class="r"><code>diamonds_sum &lt;- diamonds %&gt;%
+  mutate(across(cut, as.character)) %&gt;%
+  group_by(cut) %&gt;%
+  summarise(across(price, sum), across(carat, n_distinct), n = n())
+
+diamonds_sum</code></pre>
+<pre><code>## # A tibble: 5 x 4
+##   cut          price carat     n
+## * &lt;chr&gt;        &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1 Fair       7017600   185  1610
+## 2 Good      19275009   199  4906
+## 3 Ideal     74513487   232 21551
+## 4 Premium   63221498   251 13791
+## 5 Very Good 48107623   231 12082</code></pre>
+<p>In Excel, I could easily add a <strong>total row</strong> for each column.
+You can do it with dplyr, but it doesn’t feel great.</p>
+<pre class="r"><code>sum_of_sum &lt;- diamonds_sum %&gt;%
+  summarise(across(-cut, sum))
+
+sum_of_sum</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##       price carat     n
+##       &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1 212135217  1098 53940</code></pre>
+<pre class="r"><code>diamonds_sum %&gt;%
+  bind_rows(
+    sum_of_sum %&gt;%
+      mutate(cut = &quot;total&quot;)
+  )</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   cut           price carat     n
+## * &lt;chr&gt;         &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1 Fair        7017600   185  1610
+## 2 Good       19275009   199  4906
+## 3 Ideal      74513487   232 21551
+## 4 Premium    63221498   251 13791
+## 5 Very Good  48107623   231 12082
+## 6 total     212135217  1098 53940</code></pre>
+<p>It’s a somewhat common problem. Here’s a
+<a href="https://stackoverflow.com/questions/39507019/add-margin-row-totals-in-dplyr-chain">StackOverflow post</a>
+that documents various solutions.</p>
+<p>Funny enough, you can actually do this in the new dplyr using <code>rowwise</code>.
+The intution here is to tranpose the dataframe and think of <code>price</code>, <code>carat</code> and <code>n</code>
+as rows.
+Then we can add a <code>rowwise</code> summary, tranpose back and get our total row!</p>
+<p>So we start by transposing the dataframe:</p>
+<pre class="r"><code>transpose_df &lt;- function(x, col, name) {
+  x %&gt;%
+    pivot_longer(-{{ col }}, names_to = name) %&gt;%
+    pivot_wider(names_from = {{ col }})
+}
+
+diamonds_sum %&gt;%
+  transpose_df(cut, &quot;feature&quot;)</code></pre>
+<pre><code>## # A tibble: 3 x 6
+##   feature    Fair     Good    Ideal  Premium `Very Good`
+##   &lt;chr&gt;     &lt;int&gt;    &lt;int&gt;    &lt;int&gt;    &lt;int&gt;       &lt;int&gt;
+## 1 price   7017600 19275009 74513487 63221498    48107623
+## 2 carat       185      199      232      251         231
+## 3 n          1610     4906    21551    13791       12082</code></pre>
+<p>Then use <code>rowwise</code> to add a summary column for each feature:</p>
+<pre class="r"><code>diamonds_sum %&gt;%
+  transpose_df(cut, &quot;feature&quot;) %&gt;%
+  rowwise(feature) %&gt;%
+  mutate(total = sum(c_across()))</code></pre>
+<pre><code>## # A tibble: 3 x 7
+## # Rowwise:  feature
+##   feature    Fair     Good    Ideal  Premium `Very Good`     total
+##   &lt;chr&gt;     &lt;int&gt;    &lt;int&gt;    &lt;int&gt;    &lt;int&gt;       &lt;int&gt;     &lt;int&gt;
+## 1 price   7017600 19275009 74513487 63221498    48107623 212135217
+## 2 carat       185      199      232      251         231      1098
+## 3 n          1610     4906    21551    13791       12082     53940</code></pre>
+<p>Then we can transpose again to get back to our original shape:</p>
+<pre class="r"><code>diamonds_sum %&gt;%
+  transpose_df(cut, &quot;feature&quot;) %&gt;%
+  rowwise(feature) %&gt;%
+  mutate(total = sum(c_across())) %&gt;%
+  transpose_df(feature, &quot;cut&quot;)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   cut           price carat     n
+##   &lt;chr&gt;         &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1 Fair        7017600   185  1610
+## 2 Good       19275009   199  4906
+## 3 Ideal      74513487   232 21551
+## 4 Premium    63221498   251 13791
+## 5 Very Good  48107623   231 12082
+## 6 total     212135217  1098 53940</code></pre>
+<p>This is also instructive to see how we can tranpose data using
+the <code>pivot_*</code> family of functions, and why it’s not so straight-forward to
+arbitrarily tranpose data. It’s easy to lose information!</p>
+</div>

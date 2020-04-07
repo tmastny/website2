@@ -1,0 +1,162 @@
+---
+title: 'dplyr 1.0.0'
+author: ~
+date: '2020-04-07'
+slug: dplyr-1-rowwise-across
+categories: []
+tags: []
+description: 
+output:
+  blogdown::html_page:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## Introduction
+
+dplyr 1.0.0 is [coming soon!](https://www.tidyverse.org/blog/2020/03/dplyr-1-0-0-is-coming-soon/)
+I'm really excited about this release. 
+I think `rowwise` and `across` are excellent new functions that make 
+common operations feel more intutive. 
+You can try them out for yourself by installing the development version
+from [Github](https://github.com/tidyverse/dplyr/) until there is a CRAN release.
+
+This post is just me playing around with some of the new features.
+
+## Stop Repeating Names
+
+I've probably typed something like this a thousand times:
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(dplyr, warn.conflicts = FALSE)
+
+mtcars <- as_tibble(mtcars)
+
+mtcars %>%
+  mutate(vs = as.factor(vs)) %>%
+  mutate(am = as.factor(am))
+```
+
+Here's the general pattern: I'm applying a function to a column,
+but I want the column name to **stay the same**.
+
+It also happens in summaries, where you want to find
+column means, but you just want the columns to be named the same:
+
+```{r}
+mtcars %>%
+  summarise(disp = mean(disp), hp = mean(hp))
+```
+
+You are always repeating
+
+> `column_name = func(column_name)`
+
+`dplyr::across` is a way to get around that. In mutates and summarises,
+by default `across` keeps the same column name after you apply a function:
+
+```{r}
+mtcars %>%
+  mutate(across(vs, as.factor))
+```
+
+This is a nice, but small benefit. The cool thing is that you can
+easily apply this to any number of columns you want using [`tidyselect`](https://r4ds.had.co.nz/transform.html#select) 
+and [functions](https://dplyr.tidyverse.org/dev/articles/colwise.html#basic-usage).
+
+```{r}
+mtcars %>%
+  summarise(across(c(disp, hp), mean))
+```
+
+```{r}
+mtcars %>%
+  summarise(across(is.numeric & -disp & -hp, mean))
+```
+
+
+## Summary Rows
+
+One nice thing about Excel is summary rows. 
+
+For example, say I have the following summarised table:
+
+```{r}
+diamonds_sum <- diamonds %>%
+  mutate(across(cut, as.character)) %>%
+  group_by(cut) %>%
+  summarise(across(price, sum), across(carat, n_distinct), n = n())
+
+diamonds_sum
+```
+
+
+In Excel, I could easily add a **total row** for each column. 
+You can do it with dplyr, but it doesn't feel great.
+
+```{r}
+sum_of_sum <- diamonds_sum %>%
+  summarise(across(-cut, sum))
+
+sum_of_sum
+```
+
+```{r}
+diamonds_sum %>%
+  bind_rows(
+    sum_of_sum %>%
+      mutate(cut = "total")
+  )
+```
+
+It's a somewhat common problem. Here's a 
+[StackOverflow post](https://stackoverflow.com/questions/39507019/add-margin-row-totals-in-dplyr-chain)
+that documents various solutions. 
+
+Funny enough, you can actually do this in the new dplyr using `rowwise`.
+The intution here is to tranpose the dataframe and think of `price`, `carat` and `n` 
+as rows. 
+Then we can add a `rowwise` summary, tranpose back and get our total row!
+
+So we start by transposing the dataframe: 
+
+```{r}
+transpose_df <- function(x, col, name) {
+  x %>%
+    pivot_longer(-{{ col }}, names_to = name) %>%
+    pivot_wider(names_from = {{ col }})
+}
+
+diamonds_sum %>%
+  transpose_df(cut, "feature")
+```
+
+Then use `rowwise` to add a summary column for each feature:
+
+```{r}
+diamonds_sum %>%
+  transpose_df(cut, "feature") %>%
+  rowwise(feature) %>%
+  mutate(total = sum(c_across()))
+```
+
+Then we can transpose again to get back to our original shape:
+
+```{r}
+diamonds_sum %>%
+  transpose_df(cut, "feature") %>%
+  rowwise(feature) %>%
+  mutate(total = sum(c_across())) %>%
+  transpose_df(feature, "cut")
+```
+
+This is also instructive to see how we can tranpose data using 
+the `pivot_*` family of functions, and why it's not so straight-forward to
+arbitrarily tranpose data. It's easy to lose information!
+
