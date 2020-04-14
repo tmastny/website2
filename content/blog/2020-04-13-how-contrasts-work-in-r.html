@@ -21,6 +21,7 @@ output:
 </ul></li>
 <li><a href="#mean-differences">Mean differences</a><ul>
 <li><a href="#emmeans-mean-differences">emmeans mean differences</a></li>
+<li><a href="#emmeans-contrasts">emmeans contrasts</a></li>
 </ul></li>
 <li><a href="#ordered-and-time-factors">Ordered and time factors</a></li>
 </ul>
@@ -29,9 +30,9 @@ output:
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>Forget everything you know about contrasts in R.
-Which, if you are like me, that’s pretty easy. In my case,
-contrasts were briefly mentioned in a stats class, and then I promptly
-ignored them for years.</p>
+Which, if you’re like me, that’s pretty easy. In my case,
+contrasts were briefly mentioned in a stats class,
+and after which I ignored them for years.</p>
 <p>And I don’t really suggest you learn about contrasts.
 There are many tutorials<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> explaining what contrasts are mathematically,
 and how to set them in R.</p>
@@ -42,7 +43,10 @@ And even when I did, using them in R was so cumbersome I basically gave up.</p>
 <code>emmeans</code> is an R package that super-powers <code>lm</code>, <code>glm</code>,
 and the Bayesian friends in
 <a href="https://github.com/paul-buerkner/brms"><code>brms</code></a> and
-<a href="https://mc-stan.org/users/interfaces/rstanarm"><code>rstanarm</code></a>.</p>
+<a href="https://mc-stan.org/users/interfaces/rstanarm"><code>rstanarm</code></a>.
+It empowers your factor and categorical analysis,
+by allowing you to run pairwise, sequence, and group tested
+across your cateogries all with <code>lm</code>.</p>
 <p>And you don’t have to learn (much) about contrasts to take advantage of it.</p>
 </div>
 <div id="what-are-contrasts-when-to-use-emmeans" class="section level2">
@@ -78,9 +82,10 @@ flights &lt;- flights %&gt;%
 </div>
 <div id="mean-differences" class="section level2">
 <h2>Mean differences</h2>
-<p>Business example one: we are about air time and we want to understand
+<p>Business example one: we care about air time and we want to understand
 the differences in air time between carriers.</p>
-<p>My first instinct is a summary:</p>
+<p>Let’s get a sense of the differences between airlines with some exploratory
+analysis.</p>
 <pre class="r"><code>flights %&gt;%
   group_by(name) %&gt;%
   summarise(across(air_time, mean, na.rm = TRUE), n = n())</code></pre>
@@ -92,7 +97,7 @@ the differences in air time between carriers.</p>
 ## 3 ExpressJet Airlines Inc.     98.4   100
 ## 4 JetBlue Airways             167.    100
 ## 5 United Air Lines Inc.       206.    100</code></pre>
-<p>And I also love box plots:</p>
+<p>Boxplots can be really useful for visualizing continuous variables between groups.</p>
 <pre class="r"><code>flights %&gt;%
   ggplot(aes(fct_rev(name), air_time, group = name)) +
   geom_boxplot() +
@@ -104,11 +109,11 @@ the differences in air time between carriers.</p>
 real differences between air time in the top airlines.
 But how can we be confident these are true differences,
 and not due to chance? We need to do a statistical test.</p>
-<p><strong>Put away your t tests</strong>.</p>
+<p><strong>Put away your t-tests</strong>.</p>
 <blockquote>
 <p><a href="https://lindeloev.github.io/tests-as-linear/">statistical tests are linear models</a></p>
 </blockquote>
-<p>So we’ll fit a linear model using the airlines as predictors.</p>
+<p>We’ll fit a linear model using the airlines as predictors.</p>
 <pre class="r"><code>lm_airlines &lt;- lm(air_time ~ name, data = flights)
 summary(lm_airlines)</code></pre>
 <pre><code>## 
@@ -140,7 +145,7 @@ R calls this contrast <code>treatment</code> but the more common name is dummy e
 <p>All the other <code>name[Airline]</code> rows in the table show the estimated change
 in air time from <em>American Airlines Inc.</em>, and how confident the model is
 on that change based on the p-value.</p>
-<p>So this tells us some nice stuff.
+<p>This tells us some nice stuff.
 <em>ExpressJet Airlines Inc.</em> has much lower air time than American,
 while United has a little more. But that’s it.</p>
 <p>There are so many questions left unanswered:</p>
@@ -191,6 +196,9 @@ Are some airlines much better or much worse?</p></li>
 ##  0.0067 
 ## 
 ## P value adjustment: tukey method for comparing a family of 5 estimates</code></pre>
+<p>The difference between Delta and JetBlue is not significant.
+American has about 23 minutes less air time than United, but it’s not significant.
+And not surprisingly, any difference over 35 minutes seems significant.</p>
 <p>Who is above and below the overall average?</p>
 <pre class="r"><code>lm_airlines %&gt;%
   emmeans(eff ~ name)</code></pre>
@@ -213,6 +221,13 @@ Are some airlines much better or much worse?</p></li>
 ##  United Air Lines Inc. effect       41.61 7.39 487  5.632  &lt;.0001 
 ## 
 ## P value adjustment: fdr method for 5 tests</code></pre>
+<p>This paints a different picture.
+If we were using average air time across airlines as a benchmark
+for comparison, Delta and JetBlue fall right in the middle.
+United and Delta lead, with ExpressJet trailing far behind.</p>
+</div>
+<div id="emmeans-contrasts" class="section level3">
+<h3>emmeans contrasts</h3>
 <p>You can find more (or even create your own) by checking out</p>
 <pre class="r"><code>help(&quot;contrast-methods&quot;)</code></pre>
 </div>
@@ -225,7 +240,10 @@ is when you have ordered factors, based on time or sequence.</p>
 <pre class="r"><code>planes &lt;- nycflights13::planes %&gt;%
   filter(year &gt; 2003) %&gt;%
   mutate(across(year, as.factor))</code></pre>
-<p>We can explore the differences using methods from the last section:</p>
+<p>This time we’ll look at average number of airline seats per year.
+It is very common to track metrics year-by-year,
+but this isn’t a great example. However, we can use it to
+illistrate the technique.</p>
 <pre class="r"><code>planes %&gt;%
   group_by(year) %&gt;%
   summarise(across(seats, mean, na.rm = TRUE), n = n()) %&gt;%
@@ -244,31 +262,23 @@ is when you have ordered factors, based on time or sequence.</p>
 ##  9 2005   113.   162
 ## 10 2004   116.   192</code></pre>
 <p>We can analyze <code>year</code> as a numeric, to see if there is an overall linear trend:</p>
-<pre class="r"><code>lm(seats ~ as.numeric(year), data = planes) %&gt;%
-  summary()</code></pre>
+<pre class="r"><code>lm(seats ~ as.numeric(year), data = planes)</code></pre>
 <pre><code>## 
 ## Call:
 ## lm(formula = seats ~ as.numeric(year), data = planes)
 ## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -184.364  -49.364   -0.719   32.870  272.926 
-## 
 ## Coefficients:
-##                  Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)       95.6628     4.1200   23.22   &lt;2e-16 ***
-## as.numeric(year)  10.4112     0.7515   13.85   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 74.01 on 1133 degrees of freedom
-## Multiple R-squared:  0.1449, Adjusted R-squared:  0.1441 
-## F-statistic: 191.9 on 1 and 1133 DF,  p-value: &lt; 2.2e-16</code></pre>
-<p>But often the business cares about differences between years.
-If there was a major change in one year,
-do we see that effect manifest as a statistically significant difference in later years?</p>
-<p>Another example is onboarding: how do usability ratings by user
-change after the user has been on the platform 1 year, compared to 2 or 3?</p>
+##      (Intercept)  as.numeric(year)  
+##            95.66             10.41</code></pre>
+<p>But often the business cares about differences between years,
+rather than a long-term over 10 years. For example,
+if the business made a major change in one year,
+they want to be able to determine if it made a statistically significant
+difference in later years.</p>
+<p>Another example is usability and experience: how do usability ratings by user
+change after the user has been on the platform 1 year, compared to 2 or 3?
+A big difference in usability in year 3 compared to year 1 and 2 might
+indicate users take a long time to understand the platform.</p>
 <pre class="r"><code>lm_seats &lt;- lm(seats ~ year, data = planes)</code></pre>
 <p>First, let’s look at the differences between consecutive years:</p>
 <pre class="r"><code>lm_seats %&gt;%
@@ -336,7 +346,8 @@ before and after each date:</p>
 ## P value adjustment: mvt method for 9 tests</code></pre>
 <p>So each row is saying, for example, the difference in mean
 from 2004 - 2009 and 2010 - 2013 is 52.5 seats.</p>
-<p>d</p>
+<p>In this case the model is very confident in before and after differences
+because the number of seats is consistently increasing year-over-year.</p>
 </div>
 <div class="footnotes">
 <hr />

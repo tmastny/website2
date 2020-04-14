@@ -20,9 +20,9 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 ## Introduction
 
 Forget everything you know about contrasts in R.
-Which, if you are like me, that's pretty easy. In my case,
-contrasts were briefly mentioned in a stats class, and then I promptly
-ignored them for years.
+Which, if you're like me, that's pretty easy. In my case,
+contrasts were briefly mentioned in a stats class, 
+and after which I ignored them for years.
 
 And I don't really suggest you learn about contrasts. 
 There are many tutorials^[
@@ -41,6 +41,9 @@ Enter [`emmeans`](https://cran.r-project.org/web/packages/emmeans/index.html).
 and the Bayesian friends in 
 [`brms`](https://github.com/paul-buerkner/brms) and 
 [`rstanarm`](https://mc-stan.org/users/interfaces/rstanarm). 
+It empowers your factor and categorical analysis,
+by allowing you to run pairwise, sequence, and group tested 
+across your cateogries all with `lm`.
 
 And you don't have to learn (much) about contrasts to take advantage of it.
 
@@ -81,10 +84,11 @@ flights <- flights %>%
 
 ## Mean differences
 
-Business example one: we are about air time and we want to understand
+Business example one: we care about air time and we want to understand
 the differences in air time between carriers. 
 
-My first instinct is a summary:
+Let's get a sense of the differences between airlines with some exploratory 
+analysis.
 
 ```{r}
 flights %>%
@@ -92,7 +96,7 @@ flights %>%
   summarise(across(air_time, mean, na.rm = TRUE), n = n())
 ```
 
-And I also love box plots:
+Boxplots can be really useful for visualizing continuous variables between groups.
 
 ```{r}
 flights %>%
@@ -108,11 +112,11 @@ real differences between air time in the top airlines.
 But how can we be confident these are true differences, 
 and not due to chance? We need to do a statistical test.
 
-**Put away your t tests**. 
+**Put away your t-tests**. 
 
 > [statistical tests are linear models](https://lindeloev.github.io/tests-as-linear/)
 
-So we'll fit a linear model using the airlines as predictors.
+We'll fit a linear model using the airlines as predictors.
 
 ```{r}
 lm_airlines <- lm(air_time ~ name, data = flights)
@@ -128,7 +132,7 @@ All the other `name[Airline]` rows in the table show the estimated change
 in air time from *American Airlines Inc.*, and how confident the model is 
 on that change based on the p-value.
 
-So this tells us some nice stuff. 
+This tells us some nice stuff. 
 *ExpressJet Airlines Inc.* has much lower air time than American,
 while United has a little more. But that's it. 
 
@@ -153,12 +157,23 @@ lm_airlines %>%
   emmeans(pairwise ~ name)
 ```
 
+The difference between Delta and JetBlue is not significant. 
+American has about 23 minutes less air time than United, but it's not significant.
+And not surprisingly, any difference over 35 minutes seems significant.
+
 Who is above and below the overall average? 
 
 ```{r}
 lm_airlines %>%
   emmeans(eff ~ name)
 ```
+
+This paints a different picture. 
+If we were using average air time across airlines as a benchmark 
+for comparison, Delta and JetBlue fall right in the middle. 
+United and Delta lead, with ExpressJet trailing far behind.
+
+### emmeans contrasts
 
 You can find more (or even create your own) by checking out
 
@@ -179,7 +194,10 @@ planes <- nycflights13::planes %>%
   mutate(across(year, as.factor))
 ```
 
-We can explore the differences using methods from the last section:
+This time we'll look at average number of airline seats per year.
+It is very common to track metrics year-by-year, 
+but this isn't a great example. However, we can use it to
+illistrate the technique.
 
 ```{r}
 planes %>%
@@ -191,16 +209,19 @@ planes %>%
 We can analyze `year` as a numeric, to see if there is an overall linear trend:
 
 ```{r}
-lm(seats ~ as.numeric(year), data = planes) %>%
-  summary()
+lm(seats ~ as.numeric(year), data = planes)
 ```
 
-But often the business cares about differences between years.
-If there was a major change in one year, 
-do we see that effect manifest as a statistically significant difference in later years?
+But often the business cares about differences between years,
+rather than a long-term over 10 years. For example, 
+if the business made a major change in one year, 
+they want to be able to determine if it made a statistically significant 
+difference in later years.
 
-Another example is onboarding: how do usability ratings by user
+Another example is usability and experience: how do usability ratings by user
 change after the user has been on the platform 1 year, compared to 2 or 3?
+A big difference in usability in year 3 compared to year 1 and 2 might
+indicate users take a long time to understand the platform. 
 
 ```{r}
 lm_seats <- lm(seats ~ year, data = planes)
@@ -227,4 +248,5 @@ lm_seats %>%
 So each row is saying, for example, the difference in mean 
 from 2004 - 2009 and 2010 - 2013 is 52.5 seats. 
 
-d
+In this case the model is very confident in before and after differences
+because the number of seats is consistently increasing year-over-year.
