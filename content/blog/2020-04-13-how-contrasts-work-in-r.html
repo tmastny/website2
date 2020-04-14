@@ -16,8 +16,7 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#what-are-contrasts-when-to-use-emmeans"><del>What are contrasts?</del> When to use emmeans</a></li>
-<li><a href="#mean-differences">Mean differences</a><ul>
+<li><a href="#what-are-contrasts-when-to-use-emmeans"><del>What are contrasts?</del> When to use emmeans</a><ul>
 <li><a href="#cheatsheet">Cheatsheet</a></li>
 </ul></li>
 <li><a href="#pairwise-differences">Pairwise differences</a></li>
@@ -52,9 +51,6 @@ across your cateogries all with <code>lm</code>.</p>
 </div>
 <div id="what-are-contrasts-when-to-use-emmeans" class="section level2">
 <h2><del>What are contrasts?</del> When to use emmeans</h2>
-</div>
-<div id="mean-differences" class="section level2">
-<h2>Mean differences</h2>
 <p>Inspired by Jonas K. Lindeløv’s excellent website on</p>
 <blockquote>
 <p><a href="https://lindeloev.github.io/tests-as-linear/">common statistical tests are linear models</a></p>
@@ -167,15 +163,7 @@ want to test if these differences in the mean are due to chance.</p>
 ## 3 ExpressJet Airlines     98.4   100
 ## 4 JetBlue Airways        167.    100
 ## 5 United Air Lines       206.    100</code></pre>
-<p>Boxplots can be really useful for visualizing continuous variables between groups.</p>
-<pre class="r"><code>flights %&gt;%
-  ggplot(aes(fct_rev(name), air_time, group = name)) +
-  geom_boxplot() +
-  xlab(NULL) +
-  geom_hline(yintercept = mean(flights$air_time, na.rm = TRUE), color = &quot;blue&quot;) +
-  coord_flip()</code></pre>
-<p><img src="/blog/2020-04-13-how-contrasts-work-in-r_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<p>We’ll fit a linear model using the airlines as predictors.</p>
+<p>To figure this out, we’ll fit a linear model using the airlines as predictors.</p>
 <pre class="r"><code>lm_airlines &lt;- lm(air_time ~ name, data = flights)
 summary(lm_airlines)</code></pre>
 <pre><code>## 
@@ -216,7 +204,7 @@ while United has a little more. But that’s it.</p>
 <li>How do our two top airlines compare?</li>
 <li>What about the bottom two?</li>
 </ul>
-<p>For that, we need <code>emmeans::emmeans</code>:</p>
+<p>To find all these pairwise differences, we need <code>emmeans::emmeans</code>:</p>
 <pre class="r"><code>lm_airlines %&gt;%
   emmeans(pairwise ~ name)</code></pre>
 <pre><code>## $emmeans
@@ -243,8 +231,9 @@ while United has a little more. But that’s it.</p>
 ##  JetBlue Airways - United Air Lines        -39.63 11.7 487 -3.391  0.0067 
 ## 
 ## P value adjustment: tukey method for comparing a family of 5 estimates</code></pre>
-<p>The difference between Delta and JetBlue is not significant.
-American has about 23 minutes less air time than United, but it’s not significant.
+<p>We notice that the difference between the middle two airlines
+Delta and JetBlue is not significant.
+American has about 23 minutes less air time than United, but it’s not significant either.
 And not surprisingly, any difference over 35 minutes seems significant.</p>
 </div>
 <div id="comparison-to-overall-mean" class="section level2">
@@ -263,8 +252,7 @@ on which ones are above and below the overall average.</p>
 ##  United Air Lines effect       41.61 7.39 487  5.632  &lt;.0001 
 ## 
 ## P value adjustment: fdr method for 5 tests</code></pre>
-<p>This paints a different picture.
-Using average air time across airlines as a benchmark
+<p>Using average air time across airlines as a benchmark
 for comparison, Delta and JetBlue fall right in the middle.
 United and Delta lead, with ExpressJet trailing far behind.</p>
 <p>We can also see how one company compares against all the others by using
@@ -294,8 +282,10 @@ departure delays in the AM vs the PM.</p>
 ##   &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;
 ## 1 (Intercept)       1.16      2.59     0.449 0.654       
 ## 2 time_of_daypm    17.8       3.27     5.43  0.0000000871</code></pre>
+<p>On average, flights in the PM are delayed by over 17 minutes longer
+than flights leaving in the AM. This difference is very significant.</p>
 <p>But is this effect consistent across airlines?
-Are some performing better than others, or is there one bad apple driving
+Are airlines performing better than others, or is there one bad apple driving
 most of this delay?</p>
 <p>The normal summary on linear regression doesn’t answer these questions:</p>
 <pre class="r"><code>lm_delay &lt;- lm(dep_delay ~ name * time_of_day, data = flights)
@@ -315,11 +305,12 @@ tidy(lm_delay)</code></pre>
 ## 10 nameUnited Air Lines:time_of_daypm       3.59      10.8     0.332    0.740</code></pre>
 <p>If we just looked at the p-values uncritically,
 we might conclude that there are no significant differences
-between am and pm delays across the airlines.</p>
+between am and pm delays across the airlines,
+since the smallest p-value is around <code>0.1</code>.</p>
 <p>But remember that by default <code>lm</code> is only computing the the time difference
 (the interactions) <em>relative</em> to <code>American Airlines</code>.</p>
 <p>We don’t care if the airlines differ from American:
-we care how they compare to themselves in the morning and the evening.</p>
+we care how they compare to <em>themselves</em> in the morning and the evening.</p>
 <p>We need to do a pairwise comparison of am and pm <em>within</em> each group:</p>
 <pre class="r"><code>lm_delay %&gt;%
   emmeans(pairwise ~ time_of_day | name) %&gt;%
@@ -346,10 +337,10 @@ we care how they compare to themselves in the morning and the evening.</p>
 <p>emmeans tell a completely different story.
 Now we see that for every airline except American, there are significant
 differences in delays between AM and PM.</p>
-<p>And it might also be clear why the default contrast in <code>lm</code> gave such a
+<p>And now it’s clear why the default contrast in <code>lm</code> gave such a
 different outlook. The magnitude of the differences between airlines
-don’t different all that much, ranging from -12 to -25.</p>
-<p>Those differences aren’t significant,
+don’t different all that much, ranging from -12 to -25.
+Those differences aren’t significant when compared to American,
 but the differences from morning to night certainly are.</p>
 </div>
 <div id="consecutive-comparisons" class="section level2">
@@ -358,7 +349,7 @@ but the differences from morning to night certainly are.</p>
 It’s natural to ask how does 2020 compare to 2019?
 And how did 2019 compare to 2018?
 Changes from year-to-year might be an effect of natural variation,
-or they company might want to measure the impact of a new release or strategy.</p>
+or the company might want to measure the impact of a new release or strategy.</p>
 <p>In my line of work, this is particularly important for usability testing.
 For example, do users who started in 2018 find it easier to navigate a website,
 compared to newer users who started in 2019?</p>
@@ -415,7 +406,7 @@ comparisons.</p>
 ##  2013 - 2012    -6.69 10.72 1125 -0.624  0.9966 
 ## 
 ## P value adjustment: mvt method for 9 tests</code></pre>
-<p>Consecutive comparisons highlight the years there were significant peaks
+<p>Consecutive comparisons highlight the years where there were significant peaks
 in the average number of airplanes seats: 2009 and 2011.</p>
 </div>
 <div id="before-and-after" class="section level2">
@@ -424,9 +415,13 @@ in the average number of airplanes seats: 2009 and 2011.</p>
 comparisons.
 It’s similar to consecutive comparisons, because it often only makes sense
 for sequential factors like time.</p>
-<p>This one’s also the most unique, because the unit of comparison is not an
+<p>This one’s also unique, because the unit of comparison is not an
 individual member of a category, but rather groups compared to other groups.</p>
-<p>This type of analysis is useful not non-linear trends, where you want
+<blockquote>
+<p>Using the previous example, an example of before and after comparison
+would be comparing the mean of 2003 - 2008 to the mean of 2009 - 2013.</p>
+</blockquote>
+<p>This type of analysis is useful for non-linear trends, where you want
 to identity the change point (hence the name <em>before and after</em>).</p>
 <p>Returning to delays, how much variation is there month-to-month?</p>
 <p>As always, we’ll run the tests using linear regression:</p>

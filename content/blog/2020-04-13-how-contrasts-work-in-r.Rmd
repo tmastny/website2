@@ -49,8 +49,6 @@ And you don't have to learn (much) about contrasts to take advantage of it.
 
 ## ~~What are contrasts?~~ When to use emmeans
 
-## Mean differences
-
 Inspired by Jonas K. Lindeløv's excellent website on 
 
 > [common statistical tests are linear models](https://lindeloev.github.io/tests-as-linear/)
@@ -147,31 +145,7 @@ flights %>%
   summarise(across(air_time, mean, na.rm = TRUE), n = n())
 ```
 
-Boxplots can be really useful for visualizing continuous variables between groups.
-
-```{r echo = FALSE}
-boxer <- function(x, col, outcome) {
-  x %>%
-    ggplot(aes(fct_rev({{ col }}), {{ outcome }}, group = {{ col }})) +
-    geom_boxplot() +
-    xlab(NULL) +
-    geom_hline(yintercept = mean(pull(x, {{ outcome }}), na.rm = TRUE), color = "blue") +
-    coord_flip()
-}
-```
-
-
-```{r}
-flights %>%
-  ggplot(aes(fct_rev(name), air_time, group = name)) +
-  geom_boxplot() +
-  xlab(NULL) +
-  geom_hline(yintercept = mean(flights$air_time, na.rm = TRUE), color = "blue") +
-  coord_flip()
-```
-
-
-We'll fit a linear model using the airlines as predictors.
+To figure this out, we'll fit a linear model using the airlines as predictors.
 
 ```{r}
 lm_airlines <- lm(air_time ~ name, data = flights)
@@ -197,15 +171,16 @@ We can't answer our questions about pairwise differences:
   * How do our two top airlines compare?
   * What about the bottom two?
 
-For that, we need `emmeans::emmeans`:
+To find all these pairwise differences, we need `emmeans::emmeans`:
 
 ```{r}
 lm_airlines %>%
   emmeans(pairwise ~ name)
 ```
 
-The difference between Delta and JetBlue is not significant.
-American has about 23 minutes less air time than United, but it's not significant.
+We notice that the difference between the middle two airlines
+Delta and JetBlue is not significant.
+American has about 23 minutes less air time than United, but it's not significant either.
 And not surprisingly, any difference over 35 minutes seems significant.
 
 ## Comparison to overall mean
@@ -220,7 +195,6 @@ lm_airlines %>%
   pluck("contrasts")
 ```
 
-This paints a different picture.
 Using average air time across airlines as a benchmark
 for comparison, Delta and JetBlue fall right in the middle.
 United and Delta lead, with ExpressJet trailing far behind.
@@ -247,8 +221,11 @@ lm(dep_delay ~ time_of_day, data = flights) %>%
   tidy()
 ```
 
+On average, flights in the PM are delayed by over 17 minutes longer
+than flights leaving in the AM. This difference is very significant.
+
 But is this effect consistent across airlines?
-Are some performing better than others, or is there one bad apple driving
+Are airlines performing better than others, or is there one bad apple driving
 most of this delay?
 
 The normal summary on linear regression doesn't answer these questions:
@@ -260,13 +237,14 @@ tidy(lm_delay)
 
 If we just looked at the p-values uncritically,
 we might conclude that there are no significant differences
-between am and pm delays across the airlines.
+between am and pm delays across the airlines, 
+since the smallest p-value is around `0.1`.
 
 But remember that by default `lm` is only computing the the time difference
 (the interactions) *relative* to `American Airlines`.
 
 We don't care if the airlines differ from American:
-we care how they compare to themselves in the morning and the evening.
+we care how they compare to *themselves* in the morning and the evening.
 
 We need to do a pairwise comparison of am and pm *within* each group:
 
@@ -280,11 +258,10 @@ emmeans tell a completely different story.
 Now we see that for every airline except American, there are significant
 differences in delays between AM and PM.
 
-And it might also be clear why the default contrast in `lm` gave such a
+And now it's clear why the default contrast in `lm` gave such a
 different outlook. The magnitude of the differences between airlines
-don't different all that much, ranging from -12 to -25.
-
-Those differences aren't significant,
+don't different all that much, ranging from -12 to -25. 
+Those differences aren't significant when compared to American, 
 but the differences from morning to night certainly are.
 
 
@@ -294,7 +271,7 @@ Consecutive comparisons naturally occur with yearly aggregations.
 It's natural to ask how does 2020 compare to 2019?
 And how did 2019 compare to 2018?
 Changes from year-to-year might be an effect of natural variation,
-or they company might want to measure the impact of a new release or strategy.
+or the company might want to measure the impact of a new release or strategy.
 
 In my line of work, this is particularly important for usability testing.
 For example, do users who started in 2018 find it easier to navigate a website,
@@ -344,7 +321,7 @@ lm_seats %>%
   pluck("contrasts")
 ```
 
-Consecutive comparisons highlight the years there were significant peaks
+Consecutive comparisons highlight the years where there were significant peaks
 in the average number of airplanes seats: 2009 and 2011.
 
 ## Before and after
@@ -354,10 +331,13 @@ comparisons.
 It's similar to consecutive comparisons, because it often only makes sense
 for sequential factors like time.
 
-This one's also the most unique, because the unit of comparison is not an
+This one's also unique, because the unit of comparison is not an
 individual member of a category, but rather groups compared to other groups.
 
-This type of analysis is useful not non-linear trends, where you want
+> Using the previous example, an example of before and after comparison
+  would be comparing the mean of 2003 - 2008 to the mean of 2009 - 2013.
+
+This type of analysis is useful for non-linear trends, where you want
 to identity the change point (hence the name *before and after*).
 
 Returning to delays, how much variation is there month-to-month?
