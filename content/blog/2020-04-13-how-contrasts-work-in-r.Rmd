@@ -1,12 +1,11 @@
 ---
-title: 'emmeans for Better Contrasts in R'
+title: 'Tests for Pairwise Mean Differences in R'
 author: ~
-date: '2020-04-13'
-slug: emmeans-how-contrasts-work-in-r
+date: '2020-04-14'
+slug: tests-pairwise-categorical-mean-emmeans-contrast
 categories: []
 tags: []
-description: Using emmeans to find significant differences, without contrasts.
-draft: true
+description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
 output:
   blogdown::html_page:
     toc: true
@@ -19,59 +18,54 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 
 ## Introduction
 
-Forget everything you know about contrasts in R.
-Which, if you're like me, that's pretty easy. In my case,
-contrasts were briefly mentioned in a stats class,
-and after which I ignored them for years.
-
-And I don't really suggest you learn about contrasts.
-There are many tutorials^[Here are some references you might find useful:<br>
-  1. <http://www.clayford.net/statistics/tag/sum-contrasts/><br>
-  2. <https://www.r-bloggers.com/using-and-interpreting-different-contrasts-in-linear-models-in-r/><br>
-  3. <https://blogs.uoregon.edu/rclub/2015/11/03/anova-contrasts-in-r/><br>
-] explaining what contrasts are mathematically,
-and how to set them in R.
-
-But none of that is really useful to me.
-For a long time, I didn't get the point of contrasts.
-And even when I did, using them in R was so cumbersome I basically gave up.
-
-Enter [`emmeans`](https://cran.r-project.org/web/packages/emmeans/index.html).
-`emmeans` is an R package that super-powers `lm`, `glm`,
-and the Bayesian friends in
-[`brms`](https://github.com/paul-buerkner/brms) and
-[`rstanarm`](https://mc-stan.org/users/interfaces/rstanarm).
-It empowers your factor and categorical analysis,
-by allowing you to run pairwise, sequence, and group tested
-across your cateogries all with `lm`.
-
-And you don't have to learn (much) about contrasts to take advantage of it.
-
-## ~~What are contrasts?~~ When to use emmeans
-
-Inspired by Jonas K. Lindeløv's excellent website on 
+Inspired by Jonas K. Lindeløv's excellent website 
 
 > [common statistical tests are linear models](https://lindeloev.github.io/tests-as-linear/)
 
-I've decided to extend that notion, and walk through how we can
-use linear regression to answer many other difference questions.
+this post will walk through common statistical tests used when analyzing
+categorical variables in R.
 
-How we can use linear regression to empower use to answer questions 
-about categorical variables.
+I'll cover 5 situations:
 
-In this point, I want to cover 5 situations:
-
-1. pairwise differences
-2. comparsion to the overall mean
+1. pairwise differences between members of a category
+2. comparison to the overall category mean
 3. pairwise differences *within* a category
 4. consecutive comparisons of time-based or sequential factors
 5. before-and-after comparisons
 
 
+## ~~How to use contrasts in R~~
+
+In short: don't bother.^[If you are really curious, you might find these posts about contrasts in R useful:<br>
+  1. <http://www.clayford.net/statistics/tag/sum-contrasts/><br>
+  2. <https://www.r-bloggers.com/using-and-interpreting-different-contrasts-in-linear-models-in-r/><br>
+  3. <https://blogs.uoregon.edu/rclub/2015/11/03/anova-contrasts-in-r/><br>
+]
+
+Like many before me, one of my stats classes technically "taught" me contrasts.
+But I didn't get the point and using them was cumbersome, 
+so I promptly ignored them for years.
+
+Luckily for me, someone came along and fixed the situation: 
+[`emmeans`](https://cran.r-project.org/web/packages/emmeans/index.html).
+`emmeans` frames contrasts as a question you pose to a model: 
+you can ask for all pairwise comparisons and get back that. 
+`lm` and `summary` treat the same problem as fitting abstract 
+coefficients, and you are left to answer your own question. 
+
+`emmeans` works with `lm`, `glm`,
+and the Bayesian friends in
+[`brms`](https://github.com/paul-buerkner/brms) and
+[`rstanarm`](https://mc-stan.org/users/interfaces/rstanarm),
+so the process is applicable no matter the tool.
+
+And you don't have to learn (much) about contrasts to take advantage of it.
+
 ### Cheatsheet
 
-The article is summarised in this table. For more information on 
-`emmeans` and contrasts, visit `help("contrast-methods")`. 
+This article is summarized in the following table. For more information on 
+`emmeans` and contrasts, be sure to visit the extensive `emmeans`
+[vignettes](https://cran.r-project.org/web/packages/emmeans/index.html). 
 
 Template:
 ```r
@@ -80,7 +74,7 @@ lm(outcome ~ cat, data = df) %>%
 ```
 
 +----------------------+-----------------------------------+------------------------------------+
-|         test         |              emmeans              |              diagram               |
+|         test         |              emmeans formula      |              diagram               |
 +======================+===================================+====================================+
 | pairwise             | `pairwise ~ cat`                  | ![](/blog/cat-pairwise.png)        |
 |                      |                                   |                                    |
@@ -99,13 +93,18 @@ lm(outcome ~ cat, data = df) %>%
 
 ## Pairwise differences
 
+```{r echo = FALSE, out.height="300px"}
+# ![](/blog/cat-pairwise.png)
+knitr::include_graphics("/blog/cat-pairwise.png")
+```
+
 The goal of this section is to look at pairwise differences
 between values of a category.
-For this section, we'll look at pairwise differences in air time
+The primary example will be pairwise differences in air time
 between airlines.
 
-We'll start the analysis using of 100 random rows from the `nycflights13` package,
-with data from the top 5 airlines.
+We'll start the analysis by grabbing 100 random flights from the top 5 airlines,
+using data from the `nycflights13` package.
 
 ```{r}
 library(tidyverse, warn.conflicts = TRUE)
@@ -135,9 +134,8 @@ flights <- flights %>%
   ungroup()
 ```
 
-
 For each airline, we can we find the mean air time. But we also
-want to test if these differences in the mean are due to chance.
+want to test if the airlines differ significantly.
 
 ```{r}
 flights %>%
@@ -178,12 +176,17 @@ lm_airlines %>%
   emmeans(pairwise ~ name)
 ```
 
+`emmeans` explicitly returns the estimated differences and p-values
+for every combination of airlines.
+
 We notice that the difference between the middle two airlines
 Delta and JetBlue is not significant.
 American has about 23 minutes less air time than United, but it's not significant either.
 And not surprisingly, any difference over 35 minutes seems significant.
 
 ## Comparison to overall mean
+
+![](/blog/cat-mean.png)
 
 We might also be interested in comparing each airline not to each other,
 but to the overall mean. This is useful for benchmarking the companies based
@@ -210,22 +213,31 @@ lm_airlines %>%
 
 ## Pairwise comparisons *within* groups
 
-Next, it's is very common to need to check for pairwise comparisons within
-groups.
+```{r echo = FALSE, out.height="300px"}
+# ![](/blog/cat-pairwise-within.png)
+knitr::include_graphics("/blog/cat-pairwise-within.png")
+```
 
-For example, it's pretty clear that there is a difference between
-departure delays in the AM vs the PM.
+It's common to check pairwise comparisons within groups. 
+For example, you might want to see if students who attended 
+an ACT prep class scored higher on the test than those who didn't. 
+If students from multiple schools were eligible to take the prep class, 
+you'd want to test the effect of the class within schools,
+to control for variation.
+
+Going back to air travel, it's pretty clear that flights are delayed longer 
+for departure in the PM than in the AM.
 
 ```{r}
 lm(dep_delay ~ time_of_day, data = flights) %>%
   tidy()
 ```
 
-On average, flights in the PM are delayed by over 17 minutes longer
-than flights leaving in the AM. This difference is very significant.
+On average, flights in the PM are delayed 17 minutes longer
+than flights leaving in the AM. And this difference is very significant.
 
 But is this effect consistent across airlines?
-Are airlines performing better than others, or is there one bad apple driving
+Are some airlines performing better than others, or is there one bad airline causing
 most of this delay?
 
 The normal summary on linear regression doesn't answer these questions:
@@ -237,16 +249,16 @@ tidy(lm_delay)
 
 If we just looked at the p-values uncritically,
 we might conclude that there are no significant differences
-between am and pm delays across the airlines, 
+between AM and PM delays across the airlines, 
 since the smallest p-value is around `0.1`.
 
-But remember that by default `lm` is only computing the the time difference
+But remember that by default `lm` is only computing the time difference
 (the interactions) *relative* to `American Airlines`.
 
 We don't care if the airlines differ from American:
 we care how they compare to *themselves* in the morning and the evening.
 
-We need to do a pairwise comparison of am and pm *within* each group:
+Therefore, we need to do a pairwise comparison of AM and PM *within* each group:
 
 ```{r}
 lm_delay %>%
@@ -254,11 +266,10 @@ lm_delay %>%
   pluck("contrasts")
 ```
 
-emmeans tell a completely different story.
-Now we see that for every airline except American, there are significant
-differences in delays between AM and PM.
+Compared to `lm`, emmeans tell a completely different story.
+We are confident that every airline, save American, has more delays in the PM.
 
-And now it's clear why the default contrast in `lm` gave such a
+It's also more clear why the default contrast in `lm` gave such a
 different outlook. The magnitude of the differences between airlines
 don't different all that much, ranging from -12 to -25. 
 Those differences aren't significant when compared to American, 
@@ -267,10 +278,11 @@ but the differences from morning to night certainly are.
 
 ## Consecutive comparisons
 
-Consecutive comparisons naturally occur with yearly aggregations.
-It's natural to ask how does 2020 compare to 2019?
-And how did 2019 compare to 2018?
-Changes from year-to-year might be an effect of natural variation,
+![](/blog/cat-consec.png)
+
+Consecutive comparisons frequently occur with yearly aggregations.
+It's natural to ask how 2020 compares to 2019, and how 2019 compared to 2018.
+Changes from year-to-year might be an effect of random variation,
 or the company might want to measure the impact of a new release or strategy.
 
 In my line of work, this is particularly important for usability testing.
@@ -305,17 +317,13 @@ lm(seats ~ as.numeric(year), data = planes) %>%
   tidy()
 ```
 
-But 2013, 2012, and 2011 look really similar. We want to do some year-by-year
-comparisons.
+But 2013, 2012, and 2011 look really similar. Let's see how significant those 
+differences are by doing consecutive comparisons:
 
 
 ```{r}
 lm_seats <- lm(seats ~ year, data = planes)
-```
 
-First, let's look at the differences between consecutive years:
-
-```{r}
 lm_seats %>%
   emmeans(consec ~ year) %>%
   pluck("contrasts")
@@ -324,18 +332,24 @@ lm_seats %>%
 Consecutive comparisons highlight the years where there were significant peaks
 in the average number of airplanes seats: 2009 and 2011.
 
+And like we thought, there is little change from 2011 to 2013.
+
 ## Before and after
 
-The last type of contrast we'll talk about today is the before and after mean
+![](/blog/cat-before-after.png)
+
+The last type of contrast we'll talk about today is before and after mean
 comparisons.
 It's similar to consecutive comparisons, because it often only makes sense
 for sequential factors like time.
 
-This one's also unique, because the unit of comparison is not an
+This one's also unique, because the unit of comparison is not necessarily an
 individual member of a category, but rather groups compared to other groups.
 
-> Using the previous example, an example of before and after comparison
-  would be comparing the mean of 2003 - 2008 to the mean of 2009 - 2013.
+> Continuing with seats from the previous section, 
+  an exampe of a before and after comparison
+  would be comparing the mean number of seats from 2003 - 2008 
+  to the mean number of seats from 2009 - 2013.
 
 This type of analysis is useful for non-linear trends, where you want
 to identity the change point (hence the name *before and after*).
@@ -348,8 +362,7 @@ As always, we'll run the tests using linear regression:
 lm_month <- lm(dep_delay ~ month, data = flights)
 tidy(lm_month)
 ```
-
-This just tells us that month 7, July has significantly longer delays than January.
+The default contrast tells us that month 7, July, has significantly longer delays than January.
 But how does this average change over the course of the year?
 
 ```{r}
@@ -358,7 +371,7 @@ lm_month %>%
 ```
 
 As I mentioned before, this one is a little more complicated to understand.
-Each row measures the difference
+Each row measures the difference using
 
 > after_average - before_average
 
@@ -366,5 +379,5 @@ So row `7 | 8`, the first significant row, says that
 the average delay from August to December is 11 minutes *lower* than
 the average delay from January to August.
 
-This indicates the turning point in the year (the before and after moment),
+This indicates that August turning point in the year (the before and after moment),
 when delays start to shrink.

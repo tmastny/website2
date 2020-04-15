@@ -1,22 +1,24 @@
 ---
-title: 'emmeans for Better Contrasts in R'
+title: 'Tests for Pairwise Mean Differences in R'
 author: ~
-date: '2020-04-13'
-slug: emmeans-how-contrasts-work-in-r
+date: '2020-04-14'
+slug: tests-pairwise-categorical-mean-emmeans-contrast
 categories: []
 tags: []
-description: Using emmeans to find significant differences, without contrasts.
-draft: true
+description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
 output:
   blogdown::html_page:
     toc: true
 ---
 
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<script src="/rmarkdown-libs/elevate-section-attrs/elevate-section-attrs.js"></script>
 
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#what-are-contrasts-when-to-use-emmeans"><del>What are contrasts?</del> When to use emmeans</a><ul>
+<li><a href="#how-to-use-contrasts-in-r"><del>How to use contrasts in R</del></a>
+<ul>
 <li><a href="#cheatsheet">Cheatsheet</a></li>
 </ul></li>
 <li><a href="#pairwise-differences">Pairwise differences</a></li>
@@ -29,48 +31,44 @@ output:
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Forget everything you know about contrasts in R.
-Which, if you’re like me, that’s pretty easy. In my case,
-contrasts were briefly mentioned in a stats class,
-and after which I ignored them for years.</p>
-<p>And I don’t really suggest you learn about contrasts.
-There are many tutorials<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> explaining what contrasts are mathematically,
-and how to set them in R.</p>
-<p>But none of that is really useful to me.
-For a long time, I didn’t get the point of contrasts.
-And even when I did, using them in R was so cumbersome I basically gave up.</p>
-<p>Enter <a href="https://cran.r-project.org/web/packages/emmeans/index.html"><code>emmeans</code></a>.
-<code>emmeans</code> is an R package that super-powers <code>lm</code>, <code>glm</code>,
-and the Bayesian friends in
-<a href="https://github.com/paul-buerkner/brms"><code>brms</code></a> and
-<a href="https://mc-stan.org/users/interfaces/rstanarm"><code>rstanarm</code></a>.
-It empowers your factor and categorical analysis,
-by allowing you to run pairwise, sequence, and group tested
-across your cateogries all with <code>lm</code>.</p>
-<p>And you don’t have to learn (much) about contrasts to take advantage of it.</p>
-</div>
-<div id="what-are-contrasts-when-to-use-emmeans" class="section level2">
-<h2><del>What are contrasts?</del> When to use emmeans</h2>
-<p>Inspired by Jonas K. Lindeløv’s excellent website on</p>
+<p>Inspired by Jonas K. Lindeløv’s excellent website</p>
 <blockquote>
 <p><a href="https://lindeloev.github.io/tests-as-linear/">common statistical tests are linear models</a></p>
 </blockquote>
-<p>I’ve decided to extend that notion, and walk through how we can
-use linear regression to answer many other difference questions.</p>
-<p>How we can use linear regression to empower use to answer questions
-about categorical variables.</p>
-<p>In this point, I want to cover 5 situations:</p>
+<p>this post will walk through common statistical tests used when analyzing
+categorical variables in R.</p>
+<p>I’ll cover 5 situations:</p>
 <ol style="list-style-type: decimal">
-<li>pairwise differences</li>
-<li>comparsion to the overall mean</li>
+<li>pairwise differences between members of a category</li>
+<li>comparison to the overall category mean</li>
 <li>pairwise differences <em>within</em> a category</li>
 <li>consecutive comparisons of time-based or sequential factors</li>
 <li>before-and-after comparisons</li>
 </ol>
+</div>
+<div id="how-to-use-contrasts-in-r" class="section level2">
+<h2><del>How to use contrasts in R</del></h2>
+<p>In short: don’t bother.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>Like many before me, one of my stats classes technically “taught” me contrasts.
+But I didn’t get the point and using them was cumbersome,
+so I promptly ignored them for years.</p>
+<p>Luckily for me, someone came along and fixed the situation:
+<a href="https://cran.r-project.org/web/packages/emmeans/index.html"><code>emmeans</code></a>.
+<code>emmeans</code> frames contrasts as a question you pose to a model:
+you can ask for all pairwise comparisons and get back that.
+<code>lm</code> and <code>summary</code> treat the same problem as fitting abstract
+coefficients, and you are left to answer your own question.</p>
+<p><code>emmeans</code> works with <code>lm</code>, <code>glm</code>,
+and the Bayesian friends in
+<a href="https://github.com/paul-buerkner/brms"><code>brms</code></a> and
+<a href="https://mc-stan.org/users/interfaces/rstanarm"><code>rstanarm</code></a>,
+so the process is applicable no matter the tool.</p>
+<p>And you don’t have to learn (much) about contrasts to take advantage of it.</p>
 <div id="cheatsheet" class="section level3">
 <h3>Cheatsheet</h3>
-<p>The article is summarised in this table. For more information on
-<code>emmeans</code> and contrasts, visit <code>help(&quot;contrast-methods&quot;)</code>.</p>
+<p>This article is summarized in the following table. For more information on
+<code>emmeans</code> and contrasts, be sure to visit the extensive <code>emmeans</code>
+<a href="https://cran.r-project.org/web/packages/emmeans/index.html">vignettes</a>.</p>
 <p>Template:</p>
 <pre class="r"><code>lm(outcome ~ cat, data = df) %&gt;%
   emmeans(pairwise ~ cat)</code></pre>
@@ -83,7 +81,7 @@ about categorical variables.</p>
 <thead>
 <tr class="header">
 <th>test</th>
-<th>emmeans</th>
+<th>emmeans formula</th>
 <th>diagram</th>
 </tr>
 </thead>
@@ -119,12 +117,13 @@ about categorical variables.</p>
 </div>
 <div id="pairwise-differences" class="section level2">
 <h2>Pairwise differences</h2>
+<p><img src="/blog/cat-pairwise.png" height="300px" /></p>
 <p>The goal of this section is to look at pairwise differences
 between values of a category.
-For this section, we’ll look at pairwise differences in air time
+The primary example will be pairwise differences in air time
 between airlines.</p>
-<p>We’ll start the analysis using of 100 random rows from the <code>nycflights13</code> package,
-with data from the top 5 airlines.</p>
+<p>We’ll start the analysis by grabbing 100 random flights from the top 5 airlines,
+using data from the <code>nycflights13</code> package.</p>
 <pre class="r"><code>library(tidyverse, warn.conflicts = TRUE)
 library(emmeans)
 library(broom)
@@ -151,7 +150,7 @@ flights &lt;- flights %&gt;%
   slice_sample(n = 100) %&gt;%
   ungroup()</code></pre>
 <p>For each airline, we can we find the mean air time. But we also
-want to test if these differences in the mean are due to chance.</p>
+want to test if the airlines differ significantly.</p>
 <pre class="r"><code>flights %&gt;%
   group_by(name) %&gt;%
   summarise(across(air_time, mean, na.rm = TRUE), n = n())</code></pre>
@@ -231,6 +230,8 @@ while United has a little more. But that’s it.</p>
 ##  JetBlue Airways - United Air Lines        -39.63 11.7 487 -3.391  0.0067 
 ## 
 ## P value adjustment: tukey method for comparing a family of 5 estimates</code></pre>
+<p><code>emmeans</code> explicitly returns the estimated differences and p-values
+for every combination of airlines.</p>
 <p>We notice that the difference between the middle two airlines
 Delta and JetBlue is not significant.
 American has about 23 minutes less air time than United, but it’s not significant either.
@@ -238,6 +239,7 @@ And not surprisingly, any difference over 35 minutes seems significant.</p>
 </div>
 <div id="comparison-to-overall-mean" class="section level2">
 <h2>Comparison to overall mean</h2>
+<p><img src="/blog/cat-mean.png" /></p>
 <p>We might also be interested in comparing each airline not to each other,
 but to the overall mean. This is useful for benchmarking the companies based
 on which ones are above and below the overall average.</p>
@@ -271,10 +273,15 @@ the <code>del.eff</code> contrast:</p>
 </div>
 <div id="pairwise-comparisons-within-groups" class="section level2">
 <h2>Pairwise comparisons <em>within</em> groups</h2>
-<p>Next, it’s is very common to need to check for pairwise comparisons within
-groups.</p>
-<p>For example, it’s pretty clear that there is a difference between
-departure delays in the AM vs the PM.</p>
+<p><img src="/blog/cat-pairwise-within.png" height="300px" /></p>
+<p>It’s common to check pairwise comparisons within groups.
+For example, you might want to see if students who attended
+an ACT prep class scored higher on the test than those who didn’t.
+If students from multiple schools were eligible to take the prep class,
+you’d want to test the effect of the class within schools,
+to control for variation.</p>
+<p>Going back to air travel, it’s pretty clear that flights are delayed longer
+for departure in the PM than in the AM.</p>
 <pre class="r"><code>lm(dep_delay ~ time_of_day, data = flights) %&gt;%
   tidy()</code></pre>
 <pre><code>## # A tibble: 2 x 5
@@ -282,10 +289,10 @@ departure delays in the AM vs the PM.</p>
 ##   &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;
 ## 1 (Intercept)       1.16      2.59     0.449 0.654       
 ## 2 time_of_daypm    17.8       3.27     5.43  0.0000000871</code></pre>
-<p>On average, flights in the PM are delayed by over 17 minutes longer
-than flights leaving in the AM. This difference is very significant.</p>
+<p>On average, flights in the PM are delayed 17 minutes longer
+than flights leaving in the AM. And this difference is very significant.</p>
 <p>But is this effect consistent across airlines?
-Are airlines performing better than others, or is there one bad apple driving
+Are some airlines performing better than others, or is there one bad airline causing
 most of this delay?</p>
 <p>The normal summary on linear regression doesn’t answer these questions:</p>
 <pre class="r"><code>lm_delay &lt;- lm(dep_delay ~ name * time_of_day, data = flights)
@@ -305,13 +312,13 @@ tidy(lm_delay)</code></pre>
 ## 10 nameUnited Air Lines:time_of_daypm       3.59      10.8     0.332    0.740</code></pre>
 <p>If we just looked at the p-values uncritically,
 we might conclude that there are no significant differences
-between am and pm delays across the airlines,
+between AM and PM delays across the airlines,
 since the smallest p-value is around <code>0.1</code>.</p>
-<p>But remember that by default <code>lm</code> is only computing the the time difference
+<p>But remember that by default <code>lm</code> is only computing the time difference
 (the interactions) <em>relative</em> to <code>American Airlines</code>.</p>
 <p>We don’t care if the airlines differ from American:
 we care how they compare to <em>themselves</em> in the morning and the evening.</p>
-<p>We need to do a pairwise comparison of am and pm <em>within</em> each group:</p>
+<p>Therefore, we need to do a pairwise comparison of AM and PM <em>within</em> each group:</p>
 <pre class="r"><code>lm_delay %&gt;%
   emmeans(pairwise ~ time_of_day | name) %&gt;%
   pluck(&quot;contrasts&quot;)</code></pre>
@@ -334,10 +341,9 @@ we care how they compare to <em>themselves</em> in the morning and the evening.<
 ## name = United Air Lines:
 ##  contrast estimate   SE  df t.ratio p.value
 ##  am - pm     -15.9 7.52 483 -2.116  0.0348</code></pre>
-<p>emmeans tell a completely different story.
-Now we see that for every airline except American, there are significant
-differences in delays between AM and PM.</p>
-<p>And now it’s clear why the default contrast in <code>lm</code> gave such a
+<p>Compared to <code>lm</code>, emmeans tell a completely different story.
+We are confident that every airline, save American, has more delays in the PM.</p>
+<p>It’s also more clear why the default contrast in <code>lm</code> gave such a
 different outlook. The magnitude of the differences between airlines
 don’t different all that much, ranging from -12 to -25.
 Those differences aren’t significant when compared to American,
@@ -345,10 +351,10 @@ but the differences from morning to night certainly are.</p>
 </div>
 <div id="consecutive-comparisons" class="section level2">
 <h2>Consecutive comparisons</h2>
-<p>Consecutive comparisons naturally occur with yearly aggregations.
-It’s natural to ask how does 2020 compare to 2019?
-And how did 2019 compare to 2018?
-Changes from year-to-year might be an effect of natural variation,
+<p><img src="/blog/cat-consec.png" /></p>
+<p>Consecutive comparisons frequently occur with yearly aggregations.
+It’s natural to ask how 2020 compares to 2019, and how 2019 compared to 2018.
+Changes from year-to-year might be an effect of random variation,
 or the company might want to measure the impact of a new release or strategy.</p>
 <p>In my line of work, this is particularly important for usability testing.
 For example, do users who started in 2018 find it easier to navigate a website,
@@ -387,11 +393,11 @@ as a linear regression confirms:</p>
 ##   &lt;chr&gt;               &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
 ## 1 (Intercept)          95.7     4.12       23.2 7.24e-98
 ## 2 as.numeric(year)     10.4     0.752      13.9 1.96e-40</code></pre>
-<p>But 2013, 2012, and 2011 look really similar. We want to do some year-by-year
-comparisons.</p>
-<pre class="r"><code>lm_seats &lt;- lm(seats ~ year, data = planes)</code></pre>
-<p>First, let’s look at the differences between consecutive years:</p>
-<pre class="r"><code>lm_seats %&gt;%
+<p>But 2013, 2012, and 2011 look really similar. Let’s see how significant those
+differences are by doing consecutive comparisons:</p>
+<pre class="r"><code>lm_seats &lt;- lm(seats ~ year, data = planes)
+
+lm_seats %&gt;%
   emmeans(consec ~ year) %&gt;%
   pluck(&quot;contrasts&quot;)</code></pre>
 <pre><code>##  contrast    estimate    SE   df t.ratio p.value
@@ -408,18 +414,22 @@ comparisons.</p>
 ## P value adjustment: mvt method for 9 tests</code></pre>
 <p>Consecutive comparisons highlight the years where there were significant peaks
 in the average number of airplanes seats: 2009 and 2011.</p>
+<p>And like we thought, there is little change from 2011 to 2013.</p>
 </div>
 <div id="before-and-after" class="section level2">
 <h2>Before and after</h2>
-<p>The last type of contrast we’ll talk about today is the before and after mean
+<p><img src="/blog/cat-before-after.png" /></p>
+<p>The last type of contrast we’ll talk about today is before and after mean
 comparisons.
 It’s similar to consecutive comparisons, because it often only makes sense
 for sequential factors like time.</p>
-<p>This one’s also unique, because the unit of comparison is not an
+<p>This one’s also unique, because the unit of comparison is not necessarily an
 individual member of a category, but rather groups compared to other groups.</p>
 <blockquote>
-<p>Using the previous example, an example of before and after comparison
-would be comparing the mean of 2003 - 2008 to the mean of 2009 - 2013.</p>
+<p>Continuing with seats from the previous section,
+an exampe of a before and after comparison
+would be comparing the mean number of seats from 2003 - 2008
+to the mean number of seats from 2009 - 2013.</p>
 </blockquote>
 <p>This type of analysis is useful for non-linear trends, where you want
 to identity the change point (hence the name <em>before and after</em>).</p>
@@ -442,7 +452,7 @@ tidy(lm_month)</code></pre>
 ## 10 month10        -3.08      7.79    -0.396 0.692  
 ## 11 month11        -2.90      7.90    -0.368 0.713  
 ## 12 month12        -8.35      8.21    -1.02  0.309</code></pre>
-<p>This just tells us that month 7, July has significantly longer delays than January.
+<p>The default contrast tells us that month 7, July, has significantly longer delays than January.
 But how does this average change over the course of the year?</p>
 <pre class="r"><code>lm_month %&gt;%
   emmeans(mean_chg ~ month)</code></pre>
@@ -479,22 +489,22 @@ But how does this average change over the course of the year?</p>
 ## 
 ## P value adjustment: mvt method for 11 tests</code></pre>
 <p>As I mentioned before, this one is a little more complicated to understand.
-Each row measures the difference</p>
+Each row measures the difference using</p>
 <blockquote>
 <p>after_average - before_average</p>
 </blockquote>
 <p>So row <code>7 | 8</code>, the first significant row, says that
 the average delay from August to December is 11 minutes <em>lower</em> than
 the average delay from January to August.</p>
-<p>This indicates the turning point in the year (the before and after moment),
+<p>This indicates that August turning point in the year (the before and after moment),
 when delays start to shrink.</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>Here are some references you might find useful:<br>
+<li id="fn1"><p>If you are really curious, you might find these posts about contrasts in R useful:<br>
 1. <a href="http://www.clayford.net/statistics/tag/sum-contrasts/" class="uri">http://www.clayford.net/statistics/tag/sum-contrasts/</a><br>
 2. <a href="https://www.r-bloggers.com/using-and-interpreting-different-contrasts-in-linear-models-in-r/" class="uri">https://www.r-bloggers.com/using-and-interpreting-different-contrasts-in-linear-models-in-r/</a><br>
-3. <a href="https://blogs.uoregon.edu/rclub/2015/11/03/anova-contrasts-in-r/" class="uri">https://blogs.uoregon.edu/rclub/2015/11/03/anova-contrasts-in-r/</a><br><a href="#fnref1" class="footnote-back">↩</a></p></li>
+3. <a href="https://blogs.uoregon.edu/rclub/2015/11/03/anova-contrasts-in-r/" class="uri">https://blogs.uoregon.edu/rclub/2015/11/03/anova-contrasts-in-r/</a><br><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
