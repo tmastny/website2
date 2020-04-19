@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 dplyr 1.0.0 is [coming soon!](https://www.tidyverse.org/blog/2020/03/dplyr-1-0-0-is-coming-soon/)
 I'm really excited about this release. 
 I think `rowwise` and `across` are excellent new functions that make 
-common operations feel more intutive. 
+common operations feel more intuitive. 
 You can try them out for yourself by installing the development version
 from [Github](https://github.com/tidyverse/dplyr/) until there is a CRAN release.
 
