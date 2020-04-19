@@ -48,6 +48,18 @@ df %>%
   reduce(bind_rows)
 ```
 
+## Colored Printing
+
+Print out data frames using tibble coloring rules:
+
+```r
+# crayon needs to be explicitly activated in Rmd
+options(crayon.enabled = TRUE)
+# Hooks needs to be set to deal with outputs
+# thanks to fansi logic
+old_hooks <- fansi::set_knit_hooks(knitr::knit_hooks, 
+                                   which = c("output", "message", "error"))
+```
 
 
 
