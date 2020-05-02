@@ -5,15 +5,15 @@ date: '2017-01-01'
 slug: blog-ideas
 categories: []
 tags: []
-description: 
+description:
 draft: true
 output:
   blogdown::html_page:
-    toc: true 
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
                       results='show', cache=FALSE, autodep=FALSE)
 library(reticulate)
 knitr::knit_engines$set(python = reticulate::eng_python)
@@ -57,10 +57,65 @@ Print out data frames using tibble coloring rules:
 options(crayon.enabled = TRUE)
 # Hooks needs to be set to deal with outputs
 # thanks to fansi logic
-old_hooks <- fansi::set_knit_hooks(knitr::knit_hooks, 
+old_hooks <- fansi::set_knit_hooks(knitr::knit_hooks,
                                    which = c("output", "message", "error"))
 ```
 
 
+## Design Thinking
 
+
+```{r}
+library(tidyverse)
+
+diamonds %>%
+  nest_by(cut)
+
+rowwise
+
+a <- list(a = 1, b = 2)
+
+
+```
+
+## fabricatr
+
+```{r}
+library(fabricatr)
+library(tidyverse)
+library(magrittr)
+```
+
+```{r}
+voters <- fabricate(
+  N = 1000,
+  group_id = rep(1:10, 100),
+  ideology = draw_normal_icc(mean = 0, N = N, clusters = group_id, ICC = 0.7)
+) %>%
+  as_tibble()
+
+voters
+```
+
+```{r}
+voters %<>%
+  mutate(ideological_label = draw_ordered(
+    x = ideology,
+    break_labels = c(
+      "Very Conservative", "Conservative",
+      "Liberal", "Very Liberal"
+    )
+  ))
+
+voters
+```
+
+```{r}
+voters %>%
+  mutate(
+    q1_immigration = draw_ordered(x = ideology - 0.5, breaks = 1:10),
+    q2_defense = draw_likert(x = ideology + 0.5, type = 7)
+  ) %>%
+  count(q1_immigration)
+```
 

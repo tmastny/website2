@@ -1,23 +1,11 @@
----
-title: Blog ideas
-author: ~
-date: '2017-01-01'
-slug: blog-ideas
-categories: []
-tags: []
-description: 
-draft: true
-output:
-  blogdown::html_page:
-    toc: true 
----
-
 
 <div id="TOC">
 <ul>
 <li><a href="#using-non-standard-analysis-on-variable-columns">Using non-standard analysis on variable columns</a></li>
 <li><a href="#blog-ideas">Blog Ideas</a></li>
 <li><a href="#purrrr">Purrrr</a></li>
+<li><a href="#colored-printing">Colored Printing</a></li>
+<li><a href="#design-thinking">Design Thinking</a></li>
 </ul>
 </div>
 
@@ -38,4 +26,30 @@ output:
 df %&gt;%
   map(fun) %&gt;%
   reduce(bind_rows)</code></pre>
+</div>
+<div id="colored-printing" class="section level2">
+<h2>Colored Printing</h2>
+<p>Print out data frames using tibble coloring rules:</p>
+<pre class="r"><code># crayon needs to be explicitly activated in Rmd
+options(crayon.enabled = TRUE)
+# Hooks needs to be set to deal with outputs
+# thanks to fansi logic
+old_hooks &lt;- fansi::set_knit_hooks(knitr::knit_hooks,
+                                   which = c(&quot;output&quot;, &quot;message&quot;, &quot;error&quot;))</code></pre>
+</div>
+<div id="design-thinking" class="section level2">
+<h2>Design Thinking</h2>
+<pre class="r"><code>library(tidyverse)
+
+diamonds %&gt;%
+  nest_by(cut)</code></pre>
+<pre><code>## # A tibble: 5 x 2
+## # Rowwise:  cut
+##   cut                 data
+##   &lt;ord&gt;     &lt;list&lt;df[,9]&gt;&gt;
+## 1 Fair         [1,610 × 9]
+## 2 Good         [4,906 × 9]
+## 3 Very Good   [12,082 × 9]
+## 4 Premium     [13,791 × 9]
+## 5 Ideal       [21,551 × 9]</code></pre>
 </div>
