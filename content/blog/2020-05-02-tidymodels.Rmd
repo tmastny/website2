@@ -1,0 +1,318 @@
+---
+title: 'tidymodels'
+author: ~
+date: '2020-05-02'
+slug: tests-pairwise-categorical-mean-emmeans-contrast
+categories: []
+tags: []
+description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                      results='show', cache=FALSE, autodep=FALSE, error = TRUE)
+```
+
+## Introduction
+https://www.tidymodels.org/start/case-study/
+
+```{r}
+library(tidymodels)
+library(readr)
+library(emmeans)
+```
+
+
+```{r}
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
+
+urchins
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+```
+
+
+```{r}
+urchins %>%
+  ggplot(aes(initial_volume, width, color = food_regime)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE)
+```
+
+```{r}
+lm_fit <- linear_reg() %>%
+  set_engine("lm") %>%
+  fit(width ~ initial_volume * food_regime, data = urchins)
+
+lm_fit %>%
+  tidy()
+```
+
+Error: TODO?: fit an emmeans to parnsip lm object?
+
+```{r}
+linear_reg() %>%
+  set_engine("lm") %>%
+  fit(width ~ food_regime, data = urchins) %>%
+  pluck("fit") %>%
+  emmeans(pairwise ~ food_regime, data = urchins)
+```
+
+```{r}
+lm_fit %>%
+  pluck("fit") %>%
+  emtrends(pairwise ~ food_regime, var = "initial_volume", data = urchins)
+```
+
+```{r}
+set.seed(123)
+
+bayes_fit <- linear_reg() %>%
+  set_engine(
+    "stan",
+    prior_intercept = rstanarm::student_t(),
+    prior = rstanarm::student_t()
+  ) %>%
+  fit(width ~ initial_volume * food_regime, data = urchins)
+```
+
+```{r}
+bayes_fit %>%
+  print(digits = 5)
+
+bayes_fit %>%
+  tidy()
+```
+
+```{r}
+bayes_fit %>%
+  pluck("fit") %>%
+  emtrends(pairwise ~ food_regime, var = "initial_volume", data = urchins) %>%
+  pluck("emtrends") %>%
+  tidy()
+```
+
+## Recipes
+
+```{r}
+library(nycflights13)
+library(skimr)
+```
+
+```{r}
+flight_data <-
+  flights %>%
+  mutate(
+    arr_delay = ifelse(arr_delay >= 30, "late", "on_time"),
+    arr_delay = factor(arr_delay),
+    date = as.Date(time_hour)
+  ) %>%
+  inner_join(weather, by = c("origin", "time_hour")) %>%
+  select(dep_time, flight, origin, dest, air_time, distance,
+         carrier, date, arr_delay, time_hour) %>%
+  na.omit() %>%
+  mutate(across(is.character, as.factor))
+
+flight_data %>%
+  count(arr_delay)
+
+flight_data %>%
+  count(dest, sort = TRUE) %>%
+  mutate(n / sum(n))
+
+flight_data %>%
+  count(carrier, sort = TRUE) %>%
+  mutate(n / sum(n))
+```
+
+```{r}
+data_split <- initial_split(flight_data, prop = 3/4)
+
+train_data <- training(data_split)
+test_data <- testing(data_split)
+```
+
+```{r}
+flights_rec <- train_data %>%
+  recipe(arr_delay ~ .) %>%
+  update_role(flight, time_hour, new_role = "ID") %>%
+  step_date(date, features = c("dow", "month")) %>%
+  step_holiday(date, holidays = timeDate::listHolidays("US")) %>%
+  step_rm(date) %>%
+  step_zv(all_predictors())
+
+flights_rec %>% tidy()
+```
+
+```{r}
+glm_mod <- logistic_reg() %>%
+  set_engine("glm")
+```
+
+```{r}
+flights_wflow <- workflow() %>%
+  add_model(glm_mod) %>%
+  add_recipe(flights_rec)
+
+flights_wflow
+
+
+flights_fit <- flights_wflow %>%
+  fit(data = train_data)
+
+flights_fit %>%
+  pull_workflow_fit() %>%
+  tidy() %>%
+  filter(
+    !stringr::str_detect(term, "origin"),
+    !stringr::str_detect(term, "dest"),
+    !stringr::str_detect(term, "carrier")
+  )
+```
+
+### Eval
+
+```{r}
+flights_pred <- predict(flights_fit, test_data, type = "prob") %>%
+  bind_cols(test_data %>% select(arr_delay, time_hour, flight))
+
+flights_pred
+```
+
+```{r}
+library(yardstick)
+
+flights_pred %>%
+  roc_auc(truth = arr_delay, .pred_late)
+```
+
+
+## Resampels
+
+```{r}
+library(modeldata)
+data(cells, package = "modeldata")
+
+cell_split <- initial_split(cells %>% select(-case),
+                            strata = class)
+
+
+cell_train <- training(cell_split)
+cell_test  <- testing(cell_split)
+
+
+set.seed(234)
+rf_fit <- rand_forest(trees = 1000) %>%
+  set_engine("ranger") %>%
+  set_mode("classification") %>%
+  fit(class ~ ., data = cell_train)
+
+rf_fit
+```
+
+```{r}
+rf_testing_pred <- predict(rf_fit, cell_test) %>%
+  bind_cols(predict(rf_fit, cell_test, type = "prob")) %>%
+  bind_cols(cell_test %>% select(class))
+
+rf_testing_pred %>%
+  roc_auc(truth = class, .pred_PS)
+
+rf_testing_pred %>%
+  accuracy(truth = class, .pred_class)
+```
+
+### cv
+
+```{r}
+set.seed(345)
+folds <- vfold_cv(cell_train, v = 10)
+folds
+```
+
+```{r}
+rf_wf <- workflow() %>%
+  add_model(
+    rand_forest(trees = 1000) %>%
+      set_engine("ranger") %>%
+      set_mode("classification")
+    ) %>%
+    add_formula(class ~ .)
+
+rf_wf
+```
+
+```{r}
+set.seed(456)
+
+rf_fit_rs <- rf_wf %>%
+  fit_resamples(folds)
+
+rf_fit_rs
+```
+
+```{r}
+collect_metrics(rf_fit_rs)
+```
+
+```{r}
+rf_fit_rs %>%
+  select(id, .metrics) %>%
+  unnest(.metrics) %>%
+  group_by(.metric) %>%
+  summarise(across(.estimate, list(mean, sd)))
+```
+
+
+## Tuning
+
+```{r}
+library(vip)
+```
+
+
+```{r}
+tune_spec <-
+  decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune()
+  ) %>%
+  set_engine("rpart") %>%
+  set_mode("classification")
+
+tune_spec
+
+tree_grid <- grid_regular(cost_complexity(), tree_depth(), levels = 5)
+tree_grid
+```
+
+
+```{r}
+cell_folds <- vfold_cv(cell_train)
+cell_folds
+```
+
+```{r}
+set.seed(345)
+tree_wf <- workflow() %>%
+  add_model(tune_spec) %>%
+  add_formula(class ~ .)
+
+tree_wf
+
+tree_res <- tree_wf %>%
+  tune_grid(resamples = cell_folds, grid = tree_grid)
+
+tree_res
+```
+
