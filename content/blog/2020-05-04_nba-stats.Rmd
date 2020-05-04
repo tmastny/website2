@@ -1,0 +1,37 @@
+---
+title: 'nba stats'
+author: ~
+date: '2020-05-02'
+slug: nba-stats
+categories: []
+tags: []
+description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                      results='show', cache=FALSE, autodep=FALSE, error = TRUE)
+```
+
+## Introduction
+
+References
+1. Expected Points Gained
+- https://threesandlayups.com/2018/12/09/expected-points-gained-a-framework-for-evaluating-actions-on-a-basketball-court/
+- breakdown of expected points based on action of a player
+- preminarily table of values
+
+|    action   |  epg  |
+|-------------|-------|
+| 2p fg       |   0.9 |
+| 3p fg       |   1.9 |
+| missed fg   | -0.85 |
+| off rebound |  0.85 |
+| def rebound |  0.25 |
+| turnover    |  -1.1 |
+| steal       |   1.1 |
+
