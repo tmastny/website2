@@ -119,3 +119,13 @@ voters %>%
   count(q1_immigration)
 ```
 
+## Difference of means
+
+1. Bayesian
+2. types of emmeans
+3. infer package:
+  - [calculate diff in means](https://infer.netlify.app/reference/calculate.html)
+4. tidymodels interface
+5. https://indrajeetpatil.github.io/pairwiseComparisons/
+
+Also difference of proportion with `glm` and binomial.
