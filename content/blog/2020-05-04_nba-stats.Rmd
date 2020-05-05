@@ -145,3 +145,15 @@ player_stats_ex %>%
   pluck(1) %>%
   glimpse()
 ```
+
+9. Player expected points
+- https://hwchase17.github.io/sportvu/
+- finds the expected points
+  - players above average
+  - time in quarter
+  - score differential at time of shot (needs to relative to shooter)
+  - prior action a turnover
+  -
+
+What is an assist in basketball?
+- make a shot after a pass without dribbling
