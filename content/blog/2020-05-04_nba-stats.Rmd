@@ -23,8 +23,16 @@ References
 1. Expected Points Gained
 - https://threesandlayups.com/2018/12/09/expected-points-gained-a-framework-for-evaluating-actions-on-a-basketball-court/
 - breakdown of expected points based on action of a player
+- depends on location and other context
 - preminarily table of values
 
+```{r}
+library(read.so)
+library(tidyverse)
+library(glue)
+library(janitor)
+
+epg <- glue("
 |    action   |  epg  |
 |-------------|-------|
 | 2p fg       |   0.9 |
@@ -34,4 +42,106 @@ References
 | def rebound |  0.25 |
 | turnover    |  -1.1 |
 | steal       |   1.1 |
+") %>%
+  read_md()
+```
 
+2. Mapping shots
+- https://fivethirtyeight.com/features/how-mapping-shots-in-the-nba-changed-it-forever/
+- shot charts to map out expected probabilities based on location
+
+3. Expected Possession Value
+- https://nbastatsgeeks.wordpress.com/newinnovative-apbrmetrics/expected-possession-value-epv/
+- based on spatial configuration of players
+- advanced data collection required
+
+4. Expected Points Gained
+- https://tipstersclub.com/23/10/2018/houdini/points-gained-is-this-advanced-stat-really-good-for-nba-predictions/
+- "how more points a certain player gain than the average player in the NBA"
+- "predict a team performance is to add all their player’s points gained"
+
+5. NBA_PySpark
+- https://github.com/spoonertaylor/NBA_PySpark
+- good data source:
+  128,069 shots from 281 different players in the 2014-2015 NBA season
+- probability of shot completion based on factors in data.
+- Looks like the data has shot distance, but not location
+
+```{r}
+temp <- tempdir()
+system(glue("kaggle datasets download -q -p {temp} dansbecker/nba-shot-logs"))
+shot_logs <- read_csv(
+  pipe(paste0("unzip -p ", file.path(temp, "nba-shot-logs.zip")))
+)
+
+shot_logs <- shot_logs %>%
+  clean_names() %>%
+  glimpse()
+
+game_logs <- shot_logs %>%
+  mutate(shot_type = case_when(
+    pts_type == 3 ~ "three",
+    pts_type == 2 & shot_dist <= 8 ~ "paint",
+    TRUE ~ "mid"
+  )) %>%
+  arrange(game_id, period, game_clock) %>%
+  select(
+    game_id, period, game_clock, location, pts_type, pts,
+    shot_result, shot_type, player_name
+  ) %>%
+  group_by(game_id) %>%
+  mutate(
+    home = cumsum(ifelse(location == "H", pts, 0)),
+    away = cumsum(ifelse(location == "A", pts, 0))
+  ) %>%
+  ungroup() %>%
+  relocate(home, away, .after = game_clock)
+
+game_logs
+```
+
+6. Creating Shot charts
+- https://thedatagame.com.au/2015/09/27/how-to-create-nba-shot-charts-in-r/
+  - from 2015
+- Shot Charts App
+  - https://github.com/toddwschneider/ballr
+  - need to look through Github and make them templates
+
+7. Shots Data
+- https://github.com/toddwschneider/nba-shots-db
+- 1.5 gb
+
+8. Player Shots Data
+- https://cran.r-project.org/web/packages/ballr/ballr.pdf
+- NBAPlayerPerGameStats
+	- aggregated season shot percentages
+
+```{r}
+library(ballr)
+example_player <- NBAPlayerPerGameStats("/players/d/davisan02.html") %>%
+  as_tibble()
+example_player
+```
+
+8. nbastatR
+- http://asbcllc.com/nbastatR/index.html
+- scrapped nba data
+- http://asbcllc.com/nbastatR/reference/teams_players_stats.html
+
+```{r}
+library(nbastatR)
+
+player_stats_ex <- teams_players_stats(seasons = 2018, types = "player",
+  modes = c("PerGame", "Totals"),
+  tables = c("shots", "shot locations")
+)
+
+player_stats_ex %>% glimpse()
+```
+
+```{r}
+player_stats_ex %>%
+  pull(dataTable) %>%
+  pluck(1) %>%
+  glimpse()
+```
