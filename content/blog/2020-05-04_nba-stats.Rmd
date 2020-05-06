@@ -30,7 +30,9 @@ References
 library(read.so)
 library(tidyverse)
 library(glue)
+library(lubridate)
 library(janitor)
+library(broom)
 
 epg <- glue("
 |    action   |  epg  |
@@ -84,10 +86,11 @@ game_logs <- shot_logs %>%
     pts_type == 2 & shot_dist <= 8 ~ "paint",
     TRUE ~ "mid"
   )) %>%
+  mutate(across(shot_result, fct_rev)) %>%
   arrange(game_id, period, game_clock) %>%
   select(
-    game_id, period, game_clock, location, pts_type, pts,
-    shot_result, shot_type, player_name
+    game_id, period, game_clock, location, shot_result, pts_type, pts,
+    shot_type, player_name
   ) %>%
   group_by(game_id) %>%
   mutate(
@@ -95,10 +98,28 @@ game_logs <- shot_logs %>%
     away = cumsum(ifelse(location == "A", pts, 0))
   ) %>%
   ungroup() %>%
-  relocate(home, away, .after = game_clock)
+  mutate(
+    margin = ifelse(location == "A", -1, 1) * (home - away),
+    across(game_clock, as.numeric)
+  ) %>%
+  relocate(home, away, margin, .after = game_clock) %>%
+  filter(period <= 4)
 
 game_logs
 ```
+
+```{r}
+shot_model <- game_logs %>%
+  mutate(across(game_clock, scale)) %>%
+  glm(
+    shot_result ~ period + game_clock + margin + shot_type,
+    data = ., family = binomial
+  )
+
+tidy(shot_model)
+```
+
+
 
 6. Creating Shot charts
 - https://thedatagame.com.au/2015/09/27/how-to-create-nba-shot-charts-in-r/
