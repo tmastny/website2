@@ -109,8 +109,10 @@ game_logs
 ```
 
 ```{r}
+scale2 <- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+
 shot_model <- game_logs %>%
-  mutate(across(game_clock, scale)) %>%
+  mutate(across(game_clock, scale2)) %>%
   glm(
     shot_result ~ period + game_clock + margin + shot_type,
     data = ., family = binomial
@@ -119,6 +121,67 @@ shot_model <- game_logs %>%
 tidy(shot_model)
 ```
 
+```{r}
+pred <- game_logs %>%
+  mutate(across(game_clock, scale2)) %>%
+  mutate(prob = predict(shot_model, ., type = "response")) %>%
+  relocate(prob)
+
+pred %>% pull(prob) %>% quantile
+
+# each shot type decreases by period
+pred %>%
+  group_by(period, shot_type) %>%
+  summarise(across(prob, mean)) %>%
+  pivot_wider(names_from = shot_type, values_from = prob)
+```
+
+```{r}
+pred %>%
+  filter(abs(margin) <= 12) %>%
+  ggplot(aes(prob, margin, group = margin)) +
+  geom_boxplot()
+```
+
+```{r}
+pred %>%
+  mutate(margin = cut(margin, 10)) %>%
+  ggplot(aes(prob, margin)) +
+  geom_boxplot()
+```
+
+Interaction model
+- what happens when time and margin interact?
+- close game with little time left?
+
+Model has lower ACI/BIC. Need to test with corss-validation.
+- full interaction model has barely better AIC
+
+```{r}
+shot_model_int <- game_logs %>%
+  mutate(across(game_clock, scale2)) %>%
+  glm(
+    shot_result ~ margin * (period + game_clock + shot_type),
+    data = ., family = binomial
+  )
+
+summary(shot_model_int)
+tidy(shot_model_int)
+```
+
+Seems like the best AIC/significance
+
+```{r}
+shot_model_int <- game_logs %>%
+  mutate(across(game_clock, scale2)) %>%
+  glm(
+    shot_result ~ margin * (game_clock + period * shot_type),
+    data = ., family = binomial
+  )
+
+summary(shot_model_int)
+tidy(shot_model_int)
+```
 
 
 6. Creating Shot charts

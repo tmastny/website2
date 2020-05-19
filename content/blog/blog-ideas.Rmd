@@ -129,3 +129,5 @@ voters %>%
 5. https://indrajeetpatil.github.io/pairwiseComparisons/
 
 Also difference of proportion with `glm` and binomial.
+
+## The Case Against Sub-Vocalization
