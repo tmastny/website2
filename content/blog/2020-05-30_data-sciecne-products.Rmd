@@ -1,0 +1,173 @@
+---
+title: Data Science DevOps
+author: ~
+date: '2020-05-30'
+slug: product-in-data-science-org
+categories: []
+tags: []
+description:
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+## DevOps
+
+DevOps is the set of practices and tools that make an organization's
+ability to deliver products better and more efficient.
+
+
+## Data Science Products
+
+Data models
+- clean, consistent, performant representations of business data
+
+Business Analytics
+- automatically computed metrics needed by organization
+  - ARR
+  - forecasts
+
+Self-service Business Intelligence
+- tools so everyone in the company can work gather their own data
+- location for company wide dashboards
+
+Data Analysis
+- analyzing data to inform decision making
+
+## Data Analysis Products
+
+For data modeling, business analytics, and BI tools, Data Science DevOps
+is similar to Software Engineering DevOps.
+
+However, I argue that DevOps for Data Analysis is fundamentally different,
+because the product is different. Instead of delivering a database table,
+calculation, or service you are delivering *analysis*.
+
+The type of *analysis* can vary. On one end it could simply be transferring
+information or data. Like emailing a collegue a spreadsheet, or a screenshot
+of a plot.
+
+At this transactional level, if the process needs to be repeated, it can evolve
+into a business analytics or BI product. Or if it's only necessary one time,
+you can move on to the next thing.
+
+At the other end of analysis is insight. The stakeholder might not know what
+they need, but they need data to inform a decision. The insight they are looking
+for may require you to analyze historical trends to search for a pattern,
+or combine data in unique ways.
+
+And a spreadsheet or plot is rarely sufficient to communicate your findings.
+You might produce a write-up, and after feedback that could evolve into a
+presentation.
+
+So the product of a data analysis is more ambigious. It's likely an on-going,
+evolving process fueled by feedback and direction from stakeholders.
+
+I contend that even if the product is ambigious, the DevOps doesn't have to be.
+
+
+## Data Analysis DevOps
+
+To understand Data Analysis DevOps, we need to understand the high-level
+requirements of analysis, and an understanding of the tools that can meet those
+requirements in a better and more efficient way.
+
+### Process Requirements
+
+I think these 5 areas broadly cover the requirements of data analysis.
+
+1. Access to data
+2. Tooling and Configuration
+4. Analysis
+3. Reproducibility and Review
+5. Communication and Sharing
+
+Access to data is the first step. In some large organizations with heavy
+regulatory requirements, this can actually be a very difficult and
+time-consuming step. In other places, data is much more freely shared.
+
+Here, I mean tooling and configuration to be the technology you need to analysis
+the data. This could be Excel, R, or Python, with the necessary libraries
+for the task at hand like visualizations, machine learning, or additional
+data manipulation.
+
+Analysis is the process and result of investigating the data. This includes
+the code to manipulate and transform the data, and the software to generate
+visualizations. But it also includes the narrative of your analysis, or
+diagrams to explain a complicated relationship.
+
+And reproducibility and review is the quality control on the analysis. That
+the process is sound and the result is not spurious.
+
+Finally, our stakeholders need to see it. And they also need to be able to give
+feedback.
+
+### Technologies and Efficiencies
+
+The role of Data Analysis DevOps is twofold. First create, implement, and
+improve the technology that facilitate the requirement.
+Second, reduce the friction between technologies by making them more
+robust and efficient.
+
+Inefficients are driven by the type of analysis. For the right questions,
+BI tools may be perfect: data access is granted, anyone can review the results,
+and dashboards can be embedded in documentation.
+
+
+On the other hand, using the wrong tool can cause major inefficiencies
+for both the creator and the reviewer.
+
+For example:
+
+![]()
+
+Here's the BI serves provides *access to data*, but it's the wrong *tool*.
+It doesn't have the visualization functionality we need. So data must be
+transfered between programs, and plots saved and loaded in a write-up.
+
+To address these inefficiencies, we could design a process like this:
+
+![]()
+
+Inefficiencies
+- am I manually downloading csvs?
+- am I copy-pasting or screenshoting code?
+- do reviewers have access to all my raw analysis?
+
+Improvements
+- do I have the right tool for the job?
+- how easy is it to setup the right tools and configuration?
+
+
+
+
+
+
+
+Data Science DevOps is about unification.
+* unifying implementation of the product standardizes workflow for scientists.
+  This makes it easier to get started, and for others to review the work.
+
+* unifying delivery is helpful for both the internal team and the stakeholders.
+  The initial delivery vehicle is clear for both the analysis and the
+  stakeholder. Communication is centralized and documented.
+
+
+
+
+Once we start to define this processes, we can build systems and tools
+that make these more efficient.
+
+
+## Caveats
+
+It's not a one-size-fits-all approach. Sometimes all that is needed is a
+spreadsheet and we can move on with our lives. But additional structure
+and tooling can improve these complicated issues.
+
