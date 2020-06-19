@@ -2,7 +2,7 @@
 title: 'tidymodels'
 author: ~
 date: '2020-05-02'
-slug: tests-pairwise-categorical-mean-emmeans-contrast
+slug: tidymodels-test
 categories: []
 tags: []
 description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
@@ -13,7 +13,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
                       results='show', cache=FALSE, autodep=FALSE, error = TRUE)
 ```
 

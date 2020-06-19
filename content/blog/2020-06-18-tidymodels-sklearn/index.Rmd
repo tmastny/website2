@@ -1,0 +1,143 @@
+---
+title: 'Tuning and Cross-validation with tidymodels and scikit learn'
+author: ~
+date: '2020-06-18'
+slug: tidymodels-scki-learn-tuning
+categories: []
+tags: []
+description: 
+draft: true
+output:
+  html_document:
+    toc: true 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, 
+                      results='show', cache=FALSE, autodep=FALSE)
+```
+
+```{css, echo=FALSE}
+body {
+  max-width: 1000px;
+  margin: auto;
+  padding: 1em;
+  line-height: 1.5em;
+}
+
+/* header and footer areas */
+.menu { padding: 0; }
+.menu li { display: inline-block; }
+.article-meta, .menu a {
+  text-decoration: none;
+  background: #eee;
+  padding: 5px;
+  border-radius: 5px;
+}
+.menu, .article-meta, footer { text-align: center; }
+.title { 
+  font-size: 1.1em; 
+  line-height: 1.1em;
+}
+footer a { text-decoration: none; }
+hr {quietexttext
+  border-style: dashed;
+  color: #ddd;
+}
+
+/* code */
+pre {
+  border: 1px solid #ddd;
+  box-shadow: 5px 5px 5px #eee;
+  background: #f8f8f8;
+  padding: 1em;
+  overflow-x: auto;
+}
+code { background: #f9f9f9; }
+pre code { background: none; }
+
+/* misc elements */
+img, iframe, video { max-width: 100%; }
+main { hyphens: auto; }
+blockquote {
+  background: #f9f9f9;
+  border-left: 5px solid #ccc;
+  padding: 3px 1em 3px;
+}
+
+table {
+  margin: auto;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+}
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee }
+
+
+
+body {
+  font-family: Optima, Candara, Calibri, Arial, sans-serif;
+}
+code {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 85%;
+}
+```
+
+
+## Introduction
+
+[tidymodels](https://www.tidymodels.org/) is the new framework from
+Max Kuhn, David Vaughan, and Julia Silge at RStudio. It's the successor to 
+the [caret](https://topepo.github.io/caret/) package, which was heavily 
+featured in Max Kuhn's book 
+[Applied Predictive Modeling](http://appliedpredictivemodeling.com/).
+
+tidymodels promises a modular, extensible design for machine learning in R.
+It also has a wonderful [website](https://www.tidymodels.org/) design
+to help you get started as soon as possible, with a focus on examples and
+case studies walking you through the components of the platform. 
+
+In this article, I want to translate concepts between tidymodels and 
+scikit-learn, Python's standard machine learning ecosystem. I hope this will
+be useful for Python Data Scientists interested in R, and R users who want to
+learn a little more about Python. 
+
+I'll cover the key machine learning workflows with scikit-learn and tidymodels
+side-by-side, starting with preprocessing and feature engineering, 
+model tranining and cross-validation, as well as evaluation and comparison. 
+
+I think you'll find that while both frameworks have their own unique advantages,
+there are many conceptual similarities that have helped me understand both 
+frameworks better.
+
+## Testing columns
+
+```{css, echo=FALSE}
+pre, code {white-space:pre !important; overflow-x:auto}
+```
+
+
+Lorem ipsum.
+
+<div class="row">
+<div class="col-md-6"><h2>R sagemaker</h2>
+```{r}
+#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12
+library(tidyverse)
+
+ggplot2::diamonds
+```
+</div>
+<div class="col-md-6"><h2>AWS Sagemaker</h2>
+```{python}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>

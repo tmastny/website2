@@ -1,0 +1,147 @@
+---
+title: Data Science DevOps
+author: ~
+date: '2020-05-30'
+slug: product-in-data-science-org
+categories: []
+tags: []
+description:
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#devops">DevOps</a></li>
+<li><a href="#data-science-products">Data Science Products</a></li>
+<li><a href="#data-analysis-products">Data Analysis Products</a></li>
+<li><a href="#data-analysis-devops">Data Analysis DevOps</a>
+<ul>
+<li><a href="#process-requirements">Process Requirements</a></li>
+<li><a href="#technologies-and-efficiencies">Technologies and Efficiencies</a></li>
+</ul></li>
+<li><a href="#caveats">Caveats</a></li>
+</ul>
+</div>
+
+<div id="devops" class="section level2">
+<h2>DevOps</h2>
+<p>DevOps is the set of practices and tools that make an organization’s
+ability to deliver products better and more efficient.</p>
+</div>
+<div id="data-science-products" class="section level2">
+<h2>Data Science Products</h2>
+<p>Data models
+- clean, consistent, performant representations of business data</p>
+<p>Business Analytics
+- automatically computed metrics needed by organization
+- ARR
+- forecasts</p>
+<p>Self-service Business Intelligence
+- tools so everyone in the company can work gather their own data
+- location for company wide dashboards</p>
+<p>Data Analysis
+- analyzing data to inform decision making</p>
+</div>
+<div id="data-analysis-products" class="section level2">
+<h2>Data Analysis Products</h2>
+<p>For data modeling, business analytics, and BI tools, Data Science DevOps
+is similar to Software Engineering DevOps.</p>
+<p>However, I argue that DevOps for Data Analysis is fundamentally different,
+because the product is different. Instead of delivering a database table,
+calculation, or service you are delivering <em>analysis</em>.</p>
+<p>The type of <em>analysis</em> can vary. On one end it could simply be transferring
+information or data. Like emailing a collegue a spreadsheet, or a screenshot
+of a plot.</p>
+<p>At this transactional level, if the process needs to be repeated, it can evolve
+into a business analytics or BI product. Or if it’s only necessary one time,
+you can move on to the next thing.</p>
+<p>At the other end of analysis is insight. The stakeholder might not know what
+they need, but they need data to inform a decision. The insight they are looking
+for may require you to analyze historical trends to search for a pattern,
+or combine data in unique ways.</p>
+<p>And a spreadsheet or plot is rarely sufficient to communicate your findings.
+You might produce a write-up, and after feedback that could evolve into a
+presentation.</p>
+<p>So the product of a data analysis is more ambigious. It’s likely an on-going,
+evolving process fueled by feedback and direction from stakeholders.</p>
+<p>I contend that even if the product is ambigious, the DevOps doesn’t have to be.</p>
+</div>
+<div id="data-analysis-devops" class="section level2">
+<h2>Data Analysis DevOps</h2>
+<p>To understand Data Analysis DevOps, we need to understand the high-level
+requirements of analysis, and an understanding of the tools that can meet those
+requirements in a better and more efficient way.</p>
+<div id="process-requirements" class="section level3">
+<h3>Process Requirements</h3>
+<p>I think these 5 areas broadly cover the requirements of data analysis.</p>
+<ol style="list-style-type: decimal">
+<li>Access to data</li>
+<li>Tooling and Configuration</li>
+<li>Analysis</li>
+<li>Reproducibility and Review</li>
+<li>Communication and Sharing</li>
+</ol>
+<p>Access to data is the first step. In some large organizations with heavy
+regulatory requirements, this can actually be a very difficult and
+time-consuming step. In other places, data is much more freely shared.</p>
+<p>Here, I mean tooling and configuration to be the technology you need to analysis
+the data. This could be Excel, R, or Python, with the necessary libraries
+for the task at hand like visualizations, machine learning, or additional
+data manipulation.</p>
+<p>Analysis is the process and result of investigating the data. This includes
+the code to manipulate and transform the data, and the software to generate
+visualizations. But it also includes the narrative of your analysis, or
+diagrams to explain a complicated relationship.</p>
+<p>And reproducibility and review is the quality control on the analysis. That
+the process is sound and the result is not spurious.</p>
+<p>Finally, our stakeholders need to see it. And they also need to be able to give
+feedback.</p>
+</div>
+<div id="technologies-and-efficiencies" class="section level3">
+<h3>Technologies and Efficiencies</h3>
+<p>The role of Data Analysis DevOps is twofold. First create, implement, and
+improve the technology that facilitate the requirement.
+Second, reduce the friction between technologies by making them more
+robust and efficient.</p>
+<p>Inefficients are driven by the type of analysis. For the right questions,
+BI tools may be perfect: data access is granted, anyone can review the results,
+and dashboards can be embedded in documentation.</p>
+<p>On the other hand, using the wrong tool can cause major inefficiencies
+for both the creator and the reviewer.</p>
+<p>For example:</p>
+<p><img src="" /></p>
+<p>Here’s the BI serves provides <em>access to data</em>, but it’s the wrong <em>tool</em>.
+It doesn’t have the visualization functionality we need. So data must be
+transfered between programs, and plots saved and loaded in a write-up.</p>
+<p>To address these inefficiencies, we could design a process like this:</p>
+<p><img src="" /></p>
+<p>Inefficiencies
+- am I manually downloading csvs?
+- am I copy-pasting or screenshoting code?
+- do reviewers have access to all my raw analysis?</p>
+<p>Improvements
+- do I have the right tool for the job?
+- how easy is it to setup the right tools and configuration?</p>
+<p>Data Science DevOps is about unification.
+* unifying implementation of the product standardizes workflow for scientists.
+This makes it easier to get started, and for others to review the work.</p>
+<ul>
+<li>unifying delivery is helpful for both the internal team and the stakeholders.
+The initial delivery vehicle is clear for both the analysis and the
+stakeholder. Communication is centralized and documented.</li>
+</ul>
+<p>Once we start to define this processes, we can build systems and tools
+that make these more efficient.</p>
+</div>
+</div>
+<div id="caveats" class="section level2">
+<h2>Caveats</h2>
+<p>It’s not a one-size-fits-all approach. Sometimes all that is needed is a
+spreadsheet and we can move on with our lives. But additional structure
+and tooling can improve these complicated issues.</p>
+</div>

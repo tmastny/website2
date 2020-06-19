@@ -1,0 +1,456 @@
+---
+title: 'nba stats'
+author: ~
+date: '2020-05-02'
+slug: nba-stats
+categories: []
+tags: []
+description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>References
+1. Expected Points Gained
+- <a href="https://threesandlayups.com/2018/12/09/expected-points-gained-a-framework-for-evaluating-actions-on-a-basketball-court/" class="uri">https://threesandlayups.com/2018/12/09/expected-points-gained-a-framework-for-evaluating-actions-on-a-basketball-court/</a>
+- breakdown of expected points based on action of a player
+- depends on location and other context
+- preminarily table of values</p>
+<pre class="r"><code>library(read.so)
+library(tidyverse)
+library(glue)
+library(lubridate)
+library(janitor)
+library(broom)
+
+epg &lt;- glue(&quot;
+|    action   |  epg  |
+|-------------|-------|
+| 2p fg       |   0.9 |
+| 3p fg       |   1.9 |
+| missed fg   | -0.85 |
+| off rebound |  0.85 |
+| def rebound |  0.25 |
+| turnover    |  -1.1 |
+| steal       |   1.1 |
+&quot;) %&gt;%
+  read_md()</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Mapping shots</li>
+</ol>
+<ul>
+<li><a href="https://fivethirtyeight.com/features/how-mapping-shots-in-the-nba-changed-it-forever/" class="uri">https://fivethirtyeight.com/features/how-mapping-shots-in-the-nba-changed-it-forever/</a></li>
+<li>shot charts to map out expected probabilities based on location</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>Expected Possession Value</li>
+</ol>
+<ul>
+<li><a href="https://nbastatsgeeks.wordpress.com/newinnovative-apbrmetrics/expected-possession-value-epv/" class="uri">https://nbastatsgeeks.wordpress.com/newinnovative-apbrmetrics/expected-possession-value-epv/</a></li>
+<li>based on spatial configuration of players</li>
+<li>advanced data collection required</li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>Expected Points Gained</li>
+</ol>
+<ul>
+<li><a href="https://tipstersclub.com/23/10/2018/houdini/points-gained-is-this-advanced-stat-really-good-for-nba-predictions/" class="uri">https://tipstersclub.com/23/10/2018/houdini/points-gained-is-this-advanced-stat-really-good-for-nba-predictions/</a></li>
+<li>“how more points a certain player gain than the average player in the NBA”</li>
+<li>“predict a team performance is to add all their player’s points gained”</li>
+</ul>
+<ol start="5" style="list-style-type: decimal">
+<li>NBA_PySpark</li>
+</ol>
+<ul>
+<li><a href="https://github.com/spoonertaylor/NBA_PySpark" class="uri">https://github.com/spoonertaylor/NBA_PySpark</a></li>
+<li>good data source:
+128,069 shots from 281 different players in the 2014-2015 NBA season</li>
+<li>probability of shot completion based on factors in data.</li>
+<li>Looks like the data has shot distance, but not location</li>
+</ul>
+<pre class="r"><code>temp &lt;- tempdir()
+system(glue(&quot;kaggle datasets download -q -p {temp} dansbecker/nba-shot-logs&quot;))
+shot_logs &lt;- read_csv(
+  pipe(paste0(&quot;unzip -p &quot;, file.path(temp, &quot;nba-shot-logs.zip&quot;)))
+)
+
+shot_logs &lt;- shot_logs %&gt;%
+  clean_names() %&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 128,069
+## Columns: 21
+## $ game_id                    &lt;dbl&gt; 21400899, 21400899, 21400899, 21400899, 21…
+## $ matchup                    &lt;chr&gt; &quot;MAR 04, 2015 - CHA @ BKN&quot;, &quot;MAR 04, 2015 …
+## $ location                   &lt;chr&gt; &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A…
+## $ w                          &lt;chr&gt; &quot;W&quot;, &quot;W&quot;, &quot;W&quot;, &quot;W&quot;, &quot;W&quot;, &quot;W&quot;, &quot;W&quot;, &quot;W&quot;, &quot;W…
+## $ final_margin               &lt;dbl&gt; 24, 24, 24, 24, 24, 24, 24, 24, 24, 1, 1, …
+## $ shot_number                &lt;dbl&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 1, …
+## $ period                     &lt;dbl&gt; 1, 1, 1, 2, 2, 2, 4, 4, 4, 2, 2, 4, 4, 4, …
+## $ game_clock                 &lt;time&gt; 01:09:00, 00:14:00, 00:00:00, 11:47:00, 1…
+## $ shot_clock                 &lt;dbl&gt; 10.8, 3.4, NA, 10.3, 10.9, 9.1, 14.5, 3.4,…
+## $ dribbles                   &lt;dbl&gt; 2, 0, 3, 2, 2, 2, 11, 3, 0, 0, 8, 14, 2, 0…
+## $ touch_time                 &lt;dbl&gt; 1.9, 0.8, 2.7, 1.9, 2.7, 4.4, 9.0, 2.5, 0.…
+## $ shot_dist                  &lt;dbl&gt; 7.7, 28.2, 10.1, 17.2, 3.7, 18.4, 20.7, 3.…
+## $ pts_type                   &lt;dbl&gt; 2, 3, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 3, …
+## $ shot_result                &lt;chr&gt; &quot;made&quot;, &quot;missed&quot;, &quot;missed&quot;, &quot;missed&quot;, &quot;mis…
+## $ closest_defender           &lt;chr&gt; &quot;Anderson, Alan&quot;, &quot;Bogdanovic, Bojan&quot;, &quot;Bo…
+## $ closest_defender_player_id &lt;dbl&gt; 101187, 202711, 202711, 203900, 201152, 10…
+## $ close_def_dist             &lt;dbl&gt; 1.3, 6.1, 0.9, 3.4, 1.1, 2.6, 6.1, 2.1, 7.…
+## $ fgm                        &lt;dbl&gt; 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, …
+## $ pts                        &lt;dbl&gt; 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 2, 0, …
+## $ player_name                &lt;chr&gt; &quot;brian roberts&quot;, &quot;brian roberts&quot;, &quot;brian r…
+## $ player_id                  &lt;dbl&gt; 203148, 203148, 203148, 203148, 203148, 20…</code></pre>
+<pre class="r"><code>game_logs &lt;- shot_logs %&gt;%
+  mutate(shot_type = case_when(
+    pts_type == 3 ~ &quot;three&quot;,
+    pts_type == 2 &amp; shot_dist &lt;= 8 ~ &quot;paint&quot;,
+    TRUE ~ &quot;mid&quot;
+  )) %&gt;%
+  mutate(across(shot_result, fct_rev)) %&gt;%
+  arrange(game_id, period, game_clock) %&gt;%
+  select(
+    game_id, period, game_clock, location, shot_result, pts_type, pts,
+    shot_type, player_name
+  ) %&gt;%
+  group_by(game_id) %&gt;%
+  mutate(
+    home = cumsum(ifelse(location == &quot;H&quot;, pts, 0)),
+    away = cumsum(ifelse(location == &quot;A&quot;, pts, 0))
+  ) %&gt;%
+  ungroup() %&gt;%
+  mutate(
+    margin = ifelse(location == &quot;A&quot;, -1, 1) * (home - away),
+    across(game_clock, as.numeric)
+  ) %&gt;%
+  relocate(home, away, margin, .after = game_clock) %&gt;%
+  filter(period &lt;= 4)
+
+game_logs</code></pre>
+<pre><code>## # A tibble: 126,946 x 12
+##    game_id period game_clock  home  away margin location shot_result pts_type
+##      &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;    &lt;fct&gt;          &lt;dbl&gt;
+##  1  2.14e7      1       1740     0     0      0 A        missed             3
+##  2  2.14e7      1       4500     2     0      2 H        made               2
+##  3  2.14e7      1       4680     2     0      2 H        missed             2
+##  4  2.14e7      1       5040     2     0      2 H        missed             2
+##  5  2.14e7      1       6720     4     0      4 H        made               2
+##  6  2.14e7      1       7320     4     0     -4 A        missed             2
+##  7  2.14e7      1       7860     4     0      4 H        missed             2
+##  8  2.14e7      1       9240     4     0      4 H        missed             3
+##  9  2.14e7      1      11340     4     0     -4 A        missed             2
+## 10  2.14e7      1      11460     4     0     -4 A        missed             2
+## # … with 126,936 more rows, and 3 more variables: pts &lt;dbl&gt;, shot_type &lt;chr&gt;,
+## #   player_name &lt;chr&gt;</code></pre>
+<pre class="r"><code>scale2 &lt;- function(x, na.rm = FALSE) (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+
+shot_model &lt;- game_logs %&gt;%
+  mutate(across(game_clock, scale2)) %&gt;%
+  glm(
+    shot_result ~ period + game_clock + margin + shot_type,
+    data = ., family = binomial
+  )
+
+tidy(shot_model)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   term           estimate std.error statistic   p.value
+##   &lt;chr&gt;             &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+## 1 (Intercept)     -0.375   0.0158      -23.8  6.30e-125
+## 2 period          -0.0185  0.00518      -3.57 3.61e-  4
+## 3 game_clock       0.0175  0.00577       3.03 2.43e-  3
+## 4 margin           0.0137  0.000459     29.8  1.05e-194
+## 5 shot_typepaint   0.671   0.0134       50.2  0.       
+## 6 shot_typethree  -0.211   0.0151      -14.0  2.20e- 44</code></pre>
+<pre class="r"><code>pred &lt;- game_logs %&gt;%
+  mutate(across(game_clock, scale2)) %&gt;%
+  mutate(prob = predict(shot_model, ., type = &quot;response&quot;)) %&gt;%
+  relocate(prob)
+
+pred %&gt;% pull(prob) %&gt;% quantile</code></pre>
+<pre><code>##        0%       25%       50%       75%      100% 
+## 0.1909480 0.3695843 0.4209803 0.5557726 0.7551722</code></pre>
+<pre class="r"><code># each shot type decreases by period
+pred %&gt;%
+  group_by(period, shot_type) %&gt;%
+  summarise(across(prob, mean)) %&gt;%
+  pivot_wider(names_from = shot_type, values_from = prob)</code></pre>
+<pre><code>## # A tibble: 4 x 4
+## # Groups:   period [4]
+##   period   mid paint three
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1      1 0.406 0.572 0.357
+## 2      2 0.402 0.567 0.354
+## 3      3 0.400 0.563 0.351
+## 4      4 0.398 0.559 0.347</code></pre>
+<pre class="r"><code>pred %&gt;%
+  filter(abs(margin) &lt;= 12) %&gt;%
+  ggplot(aes(prob, margin, group = margin)) +
+  geom_boxplot()</code></pre>
+<p><img src="/blog/2020-05-04_nba-stats_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>pred %&gt;%
+  mutate(margin = cut(margin, 10)) %&gt;%
+  ggplot(aes(prob, margin)) +
+  geom_boxplot()</code></pre>
+<p><img src="/blog/2020-05-04_nba-stats_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Interaction model
+- what happens when time and margin interact?
+- close game with little time left?</p>
+<p>Model has lower ACI/BIC. Need to test with corss-validation.
+- full interaction model has barely better AIC</p>
+<pre class="r"><code>shot_model_int &lt;- game_logs %&gt;%
+  mutate(across(game_clock, scale2)) %&gt;%
+  glm(
+    shot_result ~ margin * (period + game_clock + shot_type),
+    data = ., family = binomial
+  )
+
+summary(shot_model_int)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = shot_result ~ margin * (period + game_clock + shot_type), 
+##     family = binomial, data = .)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.7230  -1.0342  -0.8539   1.1528   1.8669  
+## 
+## Coefficients:
+##                         Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)           -0.4185337  0.0159924 -26.171  &lt; 2e-16 ***
+## margin                 0.0520701  0.0017789  29.271  &lt; 2e-16 ***
+## period                -0.0025968  0.0052254  -0.497 0.619226    
+## game_clock             0.0215915  0.0058284   3.705 0.000212 ***
+## shot_typepaint         0.6708642  0.0134667  49.817  &lt; 2e-16 ***
+## shot_typethree        -0.2302246  0.0153758 -14.973  &lt; 2e-16 ***
+## margin:period         -0.0125094  0.0005100 -24.526  &lt; 2e-16 ***
+## margin:game_clock     -0.0026809  0.0004685  -5.723 1.05e-08 ***
+## margin:shot_typepaint -0.0011250  0.0010724  -1.049 0.294139    
+## margin:shot_typethree  0.0060361  0.0011958   5.048 4.47e-07 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 174844  on 126945  degrees of freedom
+## Residual deviance: 168868  on 126936  degrees of freedom
+## AIC: 168888
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>tidy(shot_model_int)</code></pre>
+<pre><code>## # A tibble: 10 x 5
+##    term                  estimate std.error statistic   p.value
+##    &lt;chr&gt;                    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+##  1 (Intercept)           -0.419    0.0160     -26.2   5.72e-151
+##  2 margin                 0.0521   0.00178     29.3   2.43e-188
+##  3 period                -0.00260  0.00523     -0.497 6.19e-  1
+##  4 game_clock             0.0216   0.00583      3.70  2.12e-  4
+##  5 shot_typepaint         0.671    0.0135      49.8   0.       
+##  6 shot_typethree        -0.230    0.0154     -15.0   1.10e- 50
+##  7 margin:period         -0.0125   0.000510   -24.5   7.76e-133
+##  8 margin:game_clock     -0.00268  0.000468    -5.72  1.05e-  8
+##  9 margin:shot_typepaint -0.00113  0.00107     -1.05  2.94e-  1
+## 10 margin:shot_typethree  0.00604  0.00120      5.05  4.47e-  7</code></pre>
+<p>Seems like the best AIC/significance</p>
+<pre class="r"><code>shot_model_int &lt;- game_logs %&gt;%
+  mutate(across(game_clock, scale2)) %&gt;%
+  glm(
+    shot_result ~ margin * (game_clock + period * shot_type),
+    data = ., family = binomial
+  )
+
+summary(shot_model_int)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = shot_result ~ margin * (game_clock + period * shot_type), 
+##     family = binomial, data = .)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.6626  -1.0369  -0.8533   1.1472   1.9306  
+## 
+## Coefficients:
+##                                Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)                  -0.4000090  0.0234967 -17.024  &lt; 2e-16 ***
+## margin                        0.0518930  0.0027979  18.547  &lt; 2e-16 ***
+## game_clock                    0.0212985  0.0058300   3.653 0.000259 ***
+## period                       -0.0103070  0.0088742  -1.161 0.245455    
+## shot_typepaint                0.6061115  0.0321828  18.833  &lt; 2e-16 ***
+## shot_typethree               -0.2115525  0.0374763  -5.645 1.65e-08 ***
+## period:shot_typepaint         0.0272228  0.0121062   2.249 0.024534 *  
+## period:shot_typethree        -0.0091110  0.0137241  -0.664 0.506774    
+## margin:game_clock            -0.0026884  0.0004692  -5.730 1.00e-08 ***
+## margin:period                -0.0124435  0.0008636 -14.409  &lt; 2e-16 ***
+## margin:shot_typepaint        -0.0090873  0.0038068  -2.387 0.016980 *  
+## margin:shot_typethree         0.0193258  0.0043948   4.397 1.10e-05 ***
+## margin:period:shot_typepaint  0.0025358  0.0011758   2.157 0.031029 *  
+## margin:period:shot_typethree -0.0041526  0.0013386  -3.102 0.001920 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 174844  on 126945  degrees of freedom
+## Residual deviance: 168828  on 126932  degrees of freedom
+## AIC: 168856
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>tidy(shot_model_int)</code></pre>
+<pre><code>## # A tibble: 14 x 5
+##    term                         estimate std.error statistic  p.value
+##    &lt;chr&gt;                           &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+##  1 (Intercept)                  -0.400    0.0235     -17.0   5.45e-65
+##  2 margin                        0.0519   0.00280     18.5   8.65e-77
+##  3 game_clock                    0.0213   0.00583      3.65  2.59e- 4
+##  4 period                       -0.0103   0.00887     -1.16  2.45e- 1
+##  5 shot_typepaint                0.606    0.0322      18.8   4.02e-79
+##  6 shot_typethree               -0.212    0.0375      -5.64  1.65e- 8
+##  7 period:shot_typepaint         0.0272   0.0121       2.25  2.45e- 2
+##  8 period:shot_typethree        -0.00911  0.0137      -0.664 5.07e- 1
+##  9 margin:game_clock            -0.00269  0.000469    -5.73  1.00e- 8
+## 10 margin:period                -0.0124   0.000864   -14.4   4.53e-47
+## 11 margin:shot_typepaint        -0.00909  0.00381     -2.39  1.70e- 2
+## 12 margin:shot_typethree         0.0193   0.00439      4.40  1.10e- 5
+## 13 margin:period:shot_typepaint  0.00254  0.00118      2.16  3.10e- 2
+## 14 margin:period:shot_typethree -0.00415  0.00134     -3.10  1.92e- 3</code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li>Creating Shot charts</li>
+</ol>
+<ul>
+<li><a href="https://thedatagame.com.au/2015/09/27/how-to-create-nba-shot-charts-in-r/" class="uri">https://thedatagame.com.au/2015/09/27/how-to-create-nba-shot-charts-in-r/</a>
+<ul>
+<li>from 2015</li>
+</ul></li>
+<li>Shot Charts App
+<ul>
+<li><a href="https://github.com/toddwschneider/ballr" class="uri">https://github.com/toddwschneider/ballr</a></li>
+<li>need to look through Github and make them templates</li>
+</ul></li>
+</ul>
+<ol start="7" style="list-style-type: decimal">
+<li>Shots Data</li>
+</ol>
+<ul>
+<li><a href="https://github.com/toddwschneider/nba-shots-db" class="uri">https://github.com/toddwschneider/nba-shots-db</a></li>
+<li>1.5 gb</li>
+</ul>
+<ol start="8" style="list-style-type: decimal">
+<li>Player Shots Data</li>
+</ol>
+<ul>
+<li><a href="https://cran.r-project.org/web/packages/ballr/ballr.pdf" class="uri">https://cran.r-project.org/web/packages/ballr/ballr.pdf</a></li>
+<li>NBAPlayerPerGameStats
+<ul>
+<li>aggregated season shot percentages</li>
+</ul></li>
+</ul>
+<pre class="r"><code>library(ballr)
+example_player &lt;- NBAPlayerPerGameStats(&quot;/players/d/davisan02.html&quot;) %&gt;%
+  as_tibble()
+example_player</code></pre>
+<pre><code>## # A tibble: 12 x 30
+##    season   age tm    lg    pos       g    gs    mp    fg   fga fgpercent   x3p
+##    &lt;chr&gt;  &lt;int&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+##  1 &quot;2012…    19 &quot;NOH&quot; &quot;NBA&quot; &quot;PF&quot;     64    60  28.8   5.5  10.6     0.516   0  
+##  2 &quot;2013…    20 &quot;NOP&quot; &quot;NBA&quot; &quot;PF&quot;     67    66  35.2   7.8  15       0.519   0  
+##  3 &quot;2014…    21 &quot;NOP&quot; &quot;NBA&quot; &quot;PF&quot;     68    68  36.1   9.4  17.6     0.535   0  
+##  4 &quot;2015…    22 &quot;NOP&quot; &quot;NBA&quot; &quot;C&quot;      61    61  35.5   9.2  18.6     0.493   0.6
+##  5 &quot;2016…    23 &quot;NOP&quot; &quot;NBA&quot; &quot;C&quot;      75    75  36.1  10.3  20.3     0.505   0.5
+##  6 &quot;2017…    24 &quot;NOP&quot; &quot;NBA&quot; &quot;PF&quot;     75    75  36.4  10.4  19.5     0.534   0.7
+##  7 &quot;2018…    25 &quot;NOP&quot; &quot;NBA&quot; &quot;C&quot;      56    56  33     9.5  18.3     0.517   0.9
+##  8 &quot;2019…    26 &quot;LAL&quot; &quot;NBA&quot; &quot;PF&quot;     55    55  34.3   9.2  18.1     0.511   1.2
+##  9 &quot;Care…    NA &quot;&quot;    &quot;NBA&quot; &quot;&quot;      521   516  34.5   8.9  17.3     0.517   0.5
+## 10 &quot;&quot;        NA &quot;&quot;    &quot;&quot;    &quot;&quot;       NA    NA  NA    NA    NA      NA      NA  
+## 11 &quot;7 se…    NA &quot;NOH… &quot;NBA&quot; &quot;&quot;      466   461  34.6   8.9  17.2     0.517   0.4
+## 12 &quot;1 se…    NA &quot;LAL&quot; &quot;NBA&quot; &quot;&quot;       55    55  34.3   9.2  18.1     0.511   1.2
+## # … with 18 more variables: x3pa &lt;dbl&gt;, x3ppercent &lt;dbl&gt;, x2p &lt;dbl&gt;,
+## #   x2pa &lt;dbl&gt;, x2ppercent &lt;dbl&gt;, efgpercent &lt;dbl&gt;, ft &lt;dbl&gt;, fta &lt;dbl&gt;,
+## #   ftpercent &lt;dbl&gt;, orb &lt;dbl&gt;, drb &lt;dbl&gt;, trb &lt;dbl&gt;, ast &lt;dbl&gt;, stl &lt;dbl&gt;,
+## #   blk &lt;dbl&gt;, tov &lt;dbl&gt;, pf &lt;dbl&gt;, pts &lt;dbl&gt;</code></pre>
+<ol start="8" style="list-style-type: decimal">
+<li>nbastatR</li>
+</ol>
+<ul>
+<li><a href="http://asbcllc.com/nbastatR/index.html" class="uri">http://asbcllc.com/nbastatR/index.html</a></li>
+<li>scrapped nba data</li>
+<li><a href="http://asbcllc.com/nbastatR/reference/teams_players_stats.html" class="uri">http://asbcllc.com/nbastatR/reference/teams_players_stats.html</a></li>
+</ul>
+<pre class="r"><code>library(nbastatR)
+
+player_stats_ex &lt;- teams_players_stats(seasons = 2018, types = &quot;player&quot;,
+  modes = c(&quot;PerGame&quot;, &quot;Totals&quot;),
+  tables = c(&quot;shots&quot;, &quot;shot locations&quot;)
+)</code></pre>
+<pre><code>## Acquiring all player PerGame shots Base split tables for the 2017-18 season
+## Acquiring all player PerGame shot locations Base split tables for the 2017-18 season
+## Acquiring all player Totals shots Base split tables for the 2017-18 season
+## Acquiring all player Totals shot locations Base split tables for the 2017-18 season</code></pre>
+<pre class="r"><code>player_stats_ex %&gt;% glimpse()</code></pre>
+<pre><code>## Rows: 4
+## Columns: 7
+## $ nameTable  &lt;chr&gt; &quot;shots&quot;, &quot;shot locations&quot;, &quot;shots&quot;, &quot;shot locations&quot;
+## $ typeResult &lt;chr&gt; &quot;player&quot;, &quot;player&quot;, &quot;player&quot;, &quot;player&quot;
+## $ modeSearch &lt;chr&gt; &quot;PerGame&quot;, &quot;PerGame&quot;, &quot;Totals&quot;, &quot;Totals&quot;
+## $ slugSeason &lt;chr&gt; &quot;2017-18&quot;, &quot;2017-18&quot;, &quot;2017-18&quot;, &quot;2017-18&quot;
+## $ typeSeason &lt;chr&gt; &quot;Regular Season&quot;, &quot;Regular Season&quot;, &quot;Regular Season&quot;, &quot;Reg…
+## $ yearSeason &lt;dbl&gt; 2018, 2018, 2018, 2018
+## $ dataTable  &lt;list&gt; [&lt;tbl_df[526 x 26]&gt;, &lt;tbl_df[540 x 36]&gt;, &lt;tbl_df[526 x 26…</code></pre>
+<pre class="r"><code>player_stats_ex %&gt;%
+  pull(dataTable) %&gt;%
+  pluck(1) %&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 526
+## Columns: 26
+## $ idPlayoffRound  &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ rangeDribble    &lt;chr&gt; &quot;0 Dribbles&quot;, &quot;0 Dribbles&quot;, &quot;0 Dribbles&quot;, &quot;0 Dribbles…
+## $ rangeGeneral    &lt;chr&gt; &quot;Overall&quot;, &quot;Overall&quot;, &quot;Overall&quot;, &quot;Overall&quot;, &quot;Overall&quot;…
+## $ idMonth         &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ idTeamOpponent  &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ idPeriod        &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ countLastNGames &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ namePlayer      &lt;chr&gt; &quot;Kristaps Porzingis&quot;, &quot;Nikola Vucevic&quot;, &quot;Klay Thompso…
+## $ slugTeam        &lt;chr&gt; &quot;NYK&quot;, &quot;ORL&quot;, &quot;GSW&quot;, &quot;NOP&quot;, &quot;NOP&quot;, &quot;MEM&quot;, &quot;CLE&quot;, &quot;MIN…
+## $ idPlayer        &lt;dbl&gt; 204001, 202696, 202691, 203076, 202326, 201188, 20156…
+## $ idPlayerTeam    &lt;dbl&gt; 1610612752, 1610612753, 1610612744, 1610612740, 16106…
+## $ gp              &lt;dbl&gt; 48, 57, 73, 75, 48, 73, 59, 82, 55, 74, 79, 68, 77, 7…
+## $ fgm             &lt;dbl&gt; 5.42, 4.86, 5.14, 6.09, 3.94, 3.88, 4.00, 4.70, 3.65,…
+## $ fga             &lt;dbl&gt; 11.21, 10.04, 9.93, 9.83, 8.46, 8.42, 8.15, 8.12, 8.0…
+## $ pctFG           &lt;dbl&gt; 0.483, 0.484, 0.517, 0.620, 0.466, 0.460, 0.491, 0.57…
+## $ pctEFG          &lt;dbl&gt; 0.565, 0.540, 0.646, 0.652, 0.580, 0.547, 0.620, 0.66…
+## $ fg2m            &lt;dbl&gt; 3.59, 3.74, 2.58, 5.46, 2.00, 2.41, 1.90, 3.27, 1.61,…
+## $ fg2a            &lt;dbl&gt; 6.77, 6.53, 4.16, 7.91, 2.98, 4.26, 3.12, 4.80, 2.61,…
+## $ pctFG2          &lt;dbl&gt; 0.5302806, 0.5727412, 0.6201923, 0.6902655, 0.6711409…
+## $ fg3m            &lt;dbl&gt; 1.83, 1.12, 2.56, 0.63, 1.94, 1.47, 2.10, 1.43, 2.04,…
+## $ fg3a            &lt;dbl&gt; 4.44, 3.51, 5.77, 1.92, 5.48, 4.16, 5.03, 3.32, 5.44,…
+## $ pctFG3          &lt;dbl&gt; 0.4121622, 0.3190883, 0.4436742, 0.3281250, 0.3540146…
+## $ agePlayer       &lt;dbl&gt; 22, 27, 28, 25, 27, 33, 29, 22, 27, 23, 27, 21, 24, 3…
+## $ frequencyFGA    &lt;dbl&gt; 0.636, 0.712, 0.634, 0.520, 0.505, 0.624, 0.708, 0.60…
+## $ frequencyFG2A   &lt;dbl&gt; 0.384, 0.463, 0.266, 0.419, 0.178, 0.316, 0.271, 0.35…
+## $ frequencyFG3A   &lt;dbl&gt; 0.252, 0.249, 0.368, 0.102, 0.327, 0.309, 0.437, 0.24…</code></pre>
+<ol start="9" style="list-style-type: decimal">
+<li>Player expected points</li>
+</ol>
+<ul>
+<li><a href="https://hwchase17.github.io/sportvu/" class="uri">https://hwchase17.github.io/sportvu/</a></li>
+<li>finds the expected points
+<ul>
+<li>players above average</li>
+<li>time in quarter</li>
+<li>score differential at time of shot (needs to relative to shooter)</li>
+<li>prior action a turnover</li>
+<li></li>
+</ul></li>
+</ul>
+<p>What is an assist in basketball?
+- make a shot after a pass without dribbling</p>
+</div>

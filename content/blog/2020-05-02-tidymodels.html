@@ -1,0 +1,245 @@
+---
+title: 'tidymodels'
+author: ~
+date: '2020-05-02'
+slug: tidymodels-test
+categories: []
+tags: []
+description: Using emmeans to find significant pairwise differences in categorical variables. Also how contrasts work in R.
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#recipes">Recipes</a>
+<ul>
+<li><a href="#eval">Eval</a></li>
+</ul></li>
+<li><a href="#resampels">Resampels</a>
+<ul>
+<li><a href="#cv">cv</a></li>
+</ul></li>
+<li><a href="#tuning">Tuning</a></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><a href="https://www.tidymodels.org/start/case-study/" class="uri">https://www.tidymodels.org/start/case-study/</a></p>
+<pre class="r"><code>library(tidymodels)
+library(readr)
+library(emmeans)</code></pre>
+<pre class="r"><code>urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%
+  setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%
+  mutate(food_regime = factor(food_regime, levels = c(&quot;Initial&quot;, &quot;Low&quot;, &quot;High&quot;)))
+
+urchins
+
+urchins %&gt;%
+  group_by(food_regime) %&gt;%
+  summarise(
+    across(everything(), mean), n = n()
+  )</code></pre>
+<pre class="r"><code>urchins %&gt;%
+  ggplot(aes(initial_volume, width, color = food_regime)) +
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE)</code></pre>
+<pre class="r"><code>lm_fit &lt;- linear_reg() %&gt;%
+  set_engine(&quot;lm&quot;) %&gt;%
+  fit(width ~ initial_volume * food_regime, data = urchins)
+
+lm_fit %&gt;%
+  tidy()</code></pre>
+<p>Error: TODO?: fit an emmeans to parnsip lm object?</p>
+<pre class="r"><code>linear_reg() %&gt;%
+  set_engine(&quot;lm&quot;) %&gt;%
+  fit(width ~ food_regime, data = urchins) %&gt;%
+  pluck(&quot;fit&quot;) %&gt;%
+  emmeans(pairwise ~ food_regime, data = urchins)</code></pre>
+<pre class="r"><code>lm_fit %&gt;%
+  pluck(&quot;fit&quot;) %&gt;%
+  emtrends(pairwise ~ food_regime, var = &quot;initial_volume&quot;, data = urchins)</code></pre>
+<pre class="r"><code>set.seed(123)
+
+bayes_fit &lt;- linear_reg() %&gt;%
+  set_engine(
+    &quot;stan&quot;,
+    prior_intercept = rstanarm::student_t(),
+    prior = rstanarm::student_t()
+  ) %&gt;%
+  fit(width ~ initial_volume * food_regime, data = urchins)</code></pre>
+<pre class="r"><code>bayes_fit %&gt;%
+  print(digits = 5)
+
+bayes_fit %&gt;%
+  tidy()</code></pre>
+<pre class="r"><code>bayes_fit %&gt;%
+  pluck(&quot;fit&quot;) %&gt;%
+  emtrends(pairwise ~ food_regime, var = &quot;initial_volume&quot;, data = urchins) %&gt;%
+  pluck(&quot;emtrends&quot;) %&gt;%
+  tidy()</code></pre>
+</div>
+<div id="recipes" class="section level2">
+<h2>Recipes</h2>
+<pre class="r"><code>library(nycflights13)
+library(skimr)</code></pre>
+<pre class="r"><code>flight_data &lt;-
+  flights %&gt;%
+  mutate(
+    arr_delay = ifelse(arr_delay &gt;= 30, &quot;late&quot;, &quot;on_time&quot;),
+    arr_delay = factor(arr_delay),
+    date = as.Date(time_hour)
+  ) %&gt;%
+  inner_join(weather, by = c(&quot;origin&quot;, &quot;time_hour&quot;)) %&gt;%
+  select(dep_time, flight, origin, dest, air_time, distance,
+         carrier, date, arr_delay, time_hour) %&gt;%
+  na.omit() %&gt;%
+  mutate(across(is.character, as.factor))
+
+flight_data %&gt;%
+  count(arr_delay)
+
+flight_data %&gt;%
+  count(dest, sort = TRUE) %&gt;%
+  mutate(n / sum(n))
+
+flight_data %&gt;%
+  count(carrier, sort = TRUE) %&gt;%
+  mutate(n / sum(n))</code></pre>
+<pre class="r"><code>data_split &lt;- initial_split(flight_data, prop = 3/4)
+
+train_data &lt;- training(data_split)
+test_data &lt;- testing(data_split)</code></pre>
+<pre class="r"><code>flights_rec &lt;- train_data %&gt;%
+  recipe(arr_delay ~ .) %&gt;%
+  update_role(flight, time_hour, new_role = &quot;ID&quot;) %&gt;%
+  step_date(date, features = c(&quot;dow&quot;, &quot;month&quot;)) %&gt;%
+  step_holiday(date, holidays = timeDate::listHolidays(&quot;US&quot;)) %&gt;%
+  step_rm(date) %&gt;%
+  step_zv(all_predictors())
+
+flights_rec %&gt;% tidy()</code></pre>
+<pre class="r"><code>glm_mod &lt;- logistic_reg() %&gt;%
+  set_engine(&quot;glm&quot;)</code></pre>
+<pre class="r"><code>flights_wflow &lt;- workflow() %&gt;%
+  add_model(glm_mod) %&gt;%
+  add_recipe(flights_rec)
+
+flights_wflow
+
+
+flights_fit &lt;- flights_wflow %&gt;%
+  fit(data = train_data)
+
+flights_fit %&gt;%
+  pull_workflow_fit() %&gt;%
+  tidy() %&gt;%
+  filter(
+    !stringr::str_detect(term, &quot;origin&quot;),
+    !stringr::str_detect(term, &quot;dest&quot;),
+    !stringr::str_detect(term, &quot;carrier&quot;)
+  )</code></pre>
+<div id="eval" class="section level3">
+<h3>Eval</h3>
+<pre class="r"><code>flights_pred &lt;- predict(flights_fit, test_data, type = &quot;prob&quot;) %&gt;%
+  bind_cols(test_data %&gt;% select(arr_delay, time_hour, flight))
+
+flights_pred</code></pre>
+<pre class="r"><code>library(yardstick)
+
+flights_pred %&gt;%
+  roc_auc(truth = arr_delay, .pred_late)</code></pre>
+</div>
+</div>
+<div id="resampels" class="section level2">
+<h2>Resampels</h2>
+<pre class="r"><code>library(modeldata)
+data(cells, package = &quot;modeldata&quot;)
+
+cell_split &lt;- initial_split(cells %&gt;% select(-case),
+                            strata = class)
+
+
+cell_train &lt;- training(cell_split)
+cell_test  &lt;- testing(cell_split)
+
+
+set.seed(234)
+rf_fit &lt;- rand_forest(trees = 1000) %&gt;%
+  set_engine(&quot;ranger&quot;) %&gt;%
+  set_mode(&quot;classification&quot;) %&gt;%
+  fit(class ~ ., data = cell_train)
+
+rf_fit</code></pre>
+<pre class="r"><code>rf_testing_pred &lt;- predict(rf_fit, cell_test) %&gt;%
+  bind_cols(predict(rf_fit, cell_test, type = &quot;prob&quot;)) %&gt;%
+  bind_cols(cell_test %&gt;% select(class))
+
+rf_testing_pred %&gt;%
+  roc_auc(truth = class, .pred_PS)
+
+rf_testing_pred %&gt;%
+  accuracy(truth = class, .pred_class)</code></pre>
+<div id="cv" class="section level3">
+<h3>cv</h3>
+<pre class="r"><code>set.seed(345)
+folds &lt;- vfold_cv(cell_train, v = 10)
+folds</code></pre>
+<pre class="r"><code>rf_wf &lt;- workflow() %&gt;%
+  add_model(
+    rand_forest(trees = 1000) %&gt;%
+      set_engine(&quot;ranger&quot;) %&gt;%
+      set_mode(&quot;classification&quot;)
+    ) %&gt;%
+    add_formula(class ~ .)
+
+rf_wf</code></pre>
+<pre class="r"><code>set.seed(456)
+
+rf_fit_rs &lt;- rf_wf %&gt;%
+  fit_resamples(folds)
+
+rf_fit_rs</code></pre>
+<pre class="r"><code>collect_metrics(rf_fit_rs)</code></pre>
+<pre class="r"><code>rf_fit_rs %&gt;%
+  select(id, .metrics) %&gt;%
+  unnest(.metrics) %&gt;%
+  group_by(.metric) %&gt;%
+  summarise(across(.estimate, list(mean, sd)))</code></pre>
+</div>
+</div>
+<div id="tuning" class="section level2">
+<h2>Tuning</h2>
+<pre class="r"><code>library(vip)</code></pre>
+<pre class="r"><code>tune_spec &lt;-
+  decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune()
+  ) %&gt;%
+  set_engine(&quot;rpart&quot;) %&gt;%
+  set_mode(&quot;classification&quot;)
+
+tune_spec
+
+tree_grid &lt;- grid_regular(cost_complexity(), tree_depth(), levels = 5)
+tree_grid</code></pre>
+<pre class="r"><code>cell_folds &lt;- vfold_cv(cell_train)
+cell_folds</code></pre>
+<pre class="r"><code>set.seed(345)
+tree_wf &lt;- workflow() %&gt;%
+  add_model(tune_spec) %&gt;%
+  add_formula(class ~ .)
+
+tree_wf
+
+tree_res &lt;- tree_wf %&gt;%
+  tune_grid(resamples = cell_folds, grid = tree_grid)
+
+tree_res</code></pre>
+</div>

@@ -11,6 +11,7 @@ output:
     toc: true 
 ---
 
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 <div id="TOC">
 <ul>
@@ -25,7 +26,7 @@ output:
 <p>dplyr 1.0.0 is <a href="https://www.tidyverse.org/blog/2020/03/dplyr-1-0-0-is-coming-soon/">coming soon!</a>
 I’m really excited about this release.
 I think <code>rowwise</code> and <code>across</code> are excellent new functions that make
-common operations feel more intutive.
+common operations feel more intuitive.
 You can try them out for yourself by installing the development version
 from <a href="https://github.com/tidyverse/dplyr/">Github</a> until there is a CRAN release.</p>
 <p>This post is just me playing around with some of the new features.</p>
@@ -116,7 +117,7 @@ and <a href="https://dplyr.tidyverse.org/dev/articles/colwise.html#basic-usage">
 diamonds_sum</code></pre>
 <pre><code>## # A tibble: 5 x 4
 ##   cut          price carat     n
-## * &lt;chr&gt;        &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##   &lt;chr&gt;        &lt;int&gt; &lt;int&gt; &lt;int&gt;
 ## 1 Fair       7017600   185  1610
 ## 2 Good      19275009   199  4906
 ## 3 Ideal     74513487   232 21551
@@ -139,7 +140,7 @@ sum_of_sum</code></pre>
   )</code></pre>
 <pre><code>## # A tibble: 6 x 4
 ##   cut           price carat     n
-## * &lt;chr&gt;         &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##   &lt;chr&gt;         &lt;int&gt; &lt;int&gt; &lt;int&gt;
 ## 1 Fair        7017600   185  1610
 ## 2 Good       19275009   199  4906
 ## 3 Ideal      74513487   232 21551

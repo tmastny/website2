@@ -1,3 +1,18 @@
+---
+title: Blog ideas
+author: ~
+date: '2017-01-01'
+slug: blog-ideas
+categories: []
+tags: []
+description:
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 <div id="TOC">
 <ul>
@@ -6,6 +21,9 @@
 <li><a href="#purrrr">Purrrr</a></li>
 <li><a href="#colored-printing">Colored Printing</a></li>
 <li><a href="#design-thinking">Design Thinking</a></li>
+<li><a href="#fabricatr">fabricatr</a></li>
+<li><a href="#difference-of-means">Difference of means</a></li>
+<li><a href="#the-case-against-sub-vocalization">The Case Against Sub-Vocalization</a></li>
 </ul>
 </div>
 
@@ -14,9 +32,13 @@
 </div>
 <div id="blog-ideas" class="section level2">
 <h2>Blog Ideas</h2>
-<p>Best linear ordering of US states: <a href="http://benschmidt.org/2014/06/05/optimally-ordering-geographical-entities-in-linear-space/" class="uri">http://benschmidt.org/2014/06/05/optimally-ordering-geographical-entities-in-linear-space/</a> <a href="http://sappingattention.blogspot.com/2016/12/a-192-year-heatmap-of-presidential.html" class="uri">http://sappingattention.blogspot.com/2016/12/a-192-year-heatmap-of-presidential.html</a></p>
-<p>Gender Binary <a href="http://bookworm.benschmidt.org/posts/2015-10-30-rejecting-the-gender-binary.html" class="uri">http://bookworm.benschmidt.org/posts/2015-10-30-rejecting-the-gender-binary.html</a></p>
-<p>via word embeddings <a href="http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html" class="uri">http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html</a></p>
+<p>Best linear ordering of US states:
+<a href="http://benschmidt.org/2014/06/05/optimally-ordering-geographical-entities-in-linear-space/" class="uri">http://benschmidt.org/2014/06/05/optimally-ordering-geographical-entities-in-linear-space/</a>
+<a href="http://sappingattention.blogspot.com/2016/12/a-192-year-heatmap-of-presidential.html" class="uri">http://sappingattention.blogspot.com/2016/12/a-192-year-heatmap-of-presidential.html</a></p>
+<p>Gender Binary
+<a href="http://bookworm.benschmidt.org/posts/2015-10-30-rejecting-the-gender-binary.html" class="uri">http://bookworm.benschmidt.org/posts/2015-10-30-rejecting-the-gender-binary.html</a></p>
+<p>via word embeddings
+<a href="http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html" class="uri">http://bookworm.benschmidt.org/posts/2015-10-25-Word-Embeddings.html</a></p>
 </div>
 <div id="purrrr" class="section level2">
 <h2>Purrrr</h2>
@@ -45,11 +67,106 @@ diamonds %&gt;%
   nest_by(cut)</code></pre>
 <pre><code>## # A tibble: 5 x 2
 ## # Rowwise:  cut
-##   cut                 data
-##   &lt;ord&gt;     &lt;list&lt;df[,9]&gt;&gt;
-## 1 Fair         [1,610 × 9]
-## 2 Good         [4,906 × 9]
-## 3 Very Good   [12,082 × 9]
-## 4 Premium     [13,791 × 9]
-## 5 Ideal       [21,551 × 9]</code></pre>
+##   cut                     data
+##   &lt;ord&gt;     &lt;list&lt;tbl_df[,9]&gt;&gt;
+## 1 Fair             [1,610 × 9]
+## 2 Good             [4,906 × 9]
+## 3 Very Good       [12,082 × 9]
+## 4 Premium         [13,791 × 9]
+## 5 Ideal           [21,551 × 9]</code></pre>
+<pre class="r"><code>rowwise</code></pre>
+<pre><code>## function (data, ...) 
+## {
+##     UseMethod(&quot;rowwise&quot;)
+## }
+## &lt;bytecode: 0x7faa3896e630&gt;
+## &lt;environment: namespace:dplyr&gt;</code></pre>
+<pre class="r"><code>a &lt;- list(a = 1, b = 2)</code></pre>
+</div>
+<div id="fabricatr" class="section level2">
+<h2>fabricatr</h2>
+<pre class="r"><code>library(fabricatr)
+library(tidyverse)
+library(magrittr)</code></pre>
+<pre class="r"><code>voters &lt;- fabricate(
+  N = 1000,
+  group_id = rep(1:10, 100),
+  ideology = draw_normal_icc(mean = 0, N = N, clusters = group_id, ICC = 0.7)
+) %&gt;%
+  as_tibble()
+
+voters</code></pre>
+<pre><code>## # A tibble: 1,000 x 3
+##    ID    group_id ideology
+##    &lt;chr&gt;    &lt;int&gt;    &lt;dbl&gt;
+##  1 0001         1   -0.258
+##  2 0002         2   -4.43 
+##  3 0003         3   -2.79 
+##  4 0004         4    4.05 
+##  5 0005         5    4.60 
+##  6 0006         6    3.00 
+##  7 0007         7   -1.12 
+##  8 0008         8    0.300
+##  9 0009         9   -2.24 
+## 10 0010        10    0.350
+## # … with 990 more rows</code></pre>
+<pre class="r"><code>voters %&lt;&gt;%
+  mutate(ideological_label = draw_ordered(
+    x = ideology,
+    break_labels = c(
+      &quot;Very Conservative&quot;, &quot;Conservative&quot;,
+      &quot;Liberal&quot;, &quot;Very Liberal&quot;
+    )
+  ))
+
+voters</code></pre>
+<pre><code>## # A tibble: 1,000 x 4
+##    ID    group_id ideology ideological_label
+##    &lt;chr&gt;    &lt;int&gt;    &lt;dbl&gt; &lt;fct&gt;            
+##  1 0001         1   -0.258 Conservative     
+##  2 0002         2   -4.43  Very Conservative
+##  3 0003         3   -2.79  Very Conservative
+##  4 0004         4    4.05  Very Liberal     
+##  5 0005         5    4.60  Very Liberal     
+##  6 0006         6    3.00  Very Liberal     
+##  7 0007         7   -1.12  Very Conservative
+##  8 0008         8    0.300 Liberal          
+##  9 0009         9   -2.24  Very Conservative
+## 10 0010        10    0.350 Liberal          
+## # … with 990 more rows</code></pre>
+<pre class="r"><code>voters %&gt;%
+  mutate(
+    q1_immigration = draw_ordered(x = ideology - 0.5, breaks = 1:10),
+    q2_defense = draw_likert(x = ideology + 0.5, type = 7)
+  ) %&gt;%
+  count(q1_immigration)</code></pre>
+<pre><code>## # A tibble: 7 x 2
+##   q1_immigration     n
+##            &lt;int&gt; &lt;int&gt;
+## 1              1   680
+## 2              2   161
+## 3              3    66
+## 4              4    32
+## 5              5    38
+## 6              6    21
+## 7              7     2</code></pre>
+</div>
+<div id="difference-of-means" class="section level2">
+<h2>Difference of means</h2>
+<ol style="list-style-type: decimal">
+<li>Bayesian</li>
+<li>types of emmeans</li>
+<li>infer package:</li>
+</ol>
+<ul>
+<li><a href="https://infer.netlify.app/reference/calculate.html">calculate diff in means</a></li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>tidymodels interface</li>
+<li><a href="https://indrajeetpatil.github.io/pairwiseComparisons/" class="uri">https://indrajeetpatil.github.io/pairwiseComparisons/</a></li>
+</ol>
+<p>Also difference of proportion with <code>glm</code> and binomial.</p>
+</div>
+<div id="the-case-against-sub-vocalization" class="section level2">
+<h2>The Case Against Sub-Vocalization</h2>
 </div>
