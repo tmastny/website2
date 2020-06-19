@@ -4,3 +4,6 @@
 [submodule "content/blog/external_data/git-blogdown-workflow"]
 	path = content/blog/external_data/git-blogdown-workflow
 	url = https://github.com/tmastny/git-blogdown-workflow
+[submodule "themes/hugo-xmin"]
+	path = themes/hugo-xmin
+	url = https://github.com/tmastny/hugo-xmin.git
