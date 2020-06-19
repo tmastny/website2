@@ -26,8 +26,9 @@ blog = "blog/:slug/"
     url = "/index.xml"
 
 [params]
-preserveTaxonomyNames = true
-lang = "en"
-paginate = 10
+    GithubEdit = "https://github.com/tmastny/website2/tree/master/content/"
+    preserveTaxonomyNames = true
+    lang = "en"
+    paginate = 10
 
-footer = "Tim Mastny 2020 | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/timmastny)"
+    footer = "Tim Mastny 2020 | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/timmastny)"
