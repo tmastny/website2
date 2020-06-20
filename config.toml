@@ -30,7 +30,6 @@ blog = "blog/:slug/"
     preserveTaxonomyNames = true
     lang = "en"
     paginate = 10
-
     footer = "Tim Mastny 2020 | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/timmastny)"
 
 [markup]

@@ -1,0 +1,77 @@
+---
+title: 'R Snytax Highlighting in blogdown'
+author: ~
+date: '2020-06-20'
+slug: r-syntax-highlight-blogdown-hugo
+categories: []
+tags: []
+description:
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<p>Distinct between theme and parsing.</p>
+<p>Hugo shortcodes</p>
+<pre class="r"><code>blogdown::shortcode_html(&quot;highlight&quot;, &quot;r&quot;, .content = code)</code></pre>
+{{< highlight "r" >}}
+library(tidyverse)
+
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+{{< /highlight >}}
+<p>highlight.js</p>
+<pre class="r"><code>library(tidyverse)
+
+urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%
+  setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%
+  mutate(food_regime = factor(food_regime, levels = c(&quot;Initial&quot;, &quot;Low&quot;, &quot;High&quot;)))
+
+urchins %&gt;%
+  group_by(food_regime) %&gt;%
+  summarise(
+    across(everything(), mean), n = n()
+  )</code></pre>
+<p>There is also the highlight <a href="https://github.com/romainfrancois/highlight">R package</a>.</p>
+<p>One option provides standard highlighting:</p>
+<pre class="r"><code>library(highlight)
+highlight(code, detective = highlight::lestrade) %&gt;% cat()</code></pre>
+<pre class='rcode'> <span class='functioncall'>library</span><span class='keyword'>(</span><span class='symbol'>tidyverse</span><span class='keyword'>)</span>
+ 
+ <span class='symbol'>urchins</span> <span class='assignment'>&lt;-</span> <span class='functioncall'>read_csv</span><span class='keyword'>(</span><span class='string'>"https://tidymodels.org/start/models/urchins.csv"</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall'>setNames</span><span class='keyword'>(</span><span class='functioncall'>c</span><span class='keyword'>(</span><span class='string'>"food_regime"</span><span class='keyword'>,</span> <span class='string'>"initial_volume"</span><span class='keyword'>,</span> <span class='string'>"width"</span><span class='keyword'>)</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall'>mutate</span><span class='keyword'>(</span><span class='symbol_argument'>food_regime</span> <span class='argument'>=</span> <span class='functioncall'>factor</span><span class='keyword'>(</span><span class='symbol'>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument'>levels</span> <span class='argument'>=</span> <span class='functioncall'>c</span><span class='keyword'>(</span><span class='string'>"Initial"</span><span class='keyword'>,</span> <span class='string'>"Low"</span><span class='keyword'>,</span> <span class='string'>"High"</span><span class='keyword'>)</span><span class='keyword'>)</span><span class='keyword'>)</span>
+ 
+ <span class='symbol'>urchins</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall'>group_by</span><span class='keyword'>(</span><span class='symbol'>food_regime</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall'>summarise</span><span class='keyword'>(</span>
+     <span class='functioncall'>across</span><span class='keyword'>(</span><span class='functioncall'>everything</span><span class='keyword'>(</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol'>mean</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol_argument'>n</span> <span class='argument'>=</span> <span class='functioncall'>n</span><span class='keyword'>(</span><span class='keyword'>)</span>
+   <span class='keyword'>)</span> </pre>
+<p>The unique one here is the semantic highlighting, where words have
+unique coding depending on the context.</p>
+<pre class="r"><code>highlight(code, detective = sherlock()) %&gt;% cat()</code></pre>
+<pre class='rcode'> <span class='functioncall' style='color: #8166CC ; '>library</span><span class='keyword'>(</span><span class='symbol' style='color: #9ECC66 ; '>tidyverse</span><span class='keyword'>)</span>
+ 
+ <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='assignment'>&lt;-</span> <span class='functioncall' style='color: #B2CC66 ; '>read_csv</span><span class='keyword'>(</span><span class='string'>"https://tidymodels.org/start/models/urchins.csv"</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #66CC97 ; '>setNames</span><span class='keyword'>(</span><span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"food_regime"</span><span class='keyword'>,</span> <span class='string'>"initial_volume"</span><span class='keyword'>,</span> <span class='string'>"width"</span><span class='keyword'>)</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #CC66AA ; '>mutate</span><span class='keyword'>(</span><span class='symbol_argument' style='color: #B0CC66 ; '>food_regime</span> <span class='argument'>=</span> <span class='functioncall' style='color: #66CCB8 ; '>factor</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #B866CC ; '>levels</span> <span class='argument'>=</span> <span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"Initial"</span><span class='keyword'>,</span> <span class='string'>"Low"</span><span class='keyword'>,</span> <span class='string'>"High"</span><span class='keyword'>)</span><span class='keyword'>)</span><span class='keyword'>)</span>
+ 
+ <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #7C66CC ; '>group_by</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #A466CC ; '>summarise</span><span class='keyword'>(</span>
+     <span class='functioncall' style='color: #C466CC ; '>across</span><span class='keyword'>(</span><span class='functioncall' style='color: #9166CC ; '>everything</span><span class='keyword'>(</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol' style='color: #6699CC ; '>mean</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #CC66AD ; '>n</span> <span class='argument'>=</span> <span class='functioncall' style='color: #CC66AD ; '>n</span><span class='keyword'>(</span><span class='keyword'>)</span>
+   <span class='keyword'>)</span> </pre>
+<p>pandoc themes. They are conclusively covered here,
+so I won’t provide a full array: <a href="https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/" class="uri">https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/</a></p>
+<p><a href="https://github.com/rstudio/blogdown/issues/360" class="uri">https://github.com/rstudio/blogdown/issues/360</a></p>
