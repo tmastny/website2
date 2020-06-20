@@ -19,6 +19,7 @@ output:
 <p>Hugo shortcodes</p>
 <pre class="r"><code>blogdown::shortcode_html(&quot;highlight&quot;, &quot;r&quot;, .content = code)</code></pre>
 {{< highlight "r" >}}
+#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789
 library(tidyverse)
 
 urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
@@ -32,7 +33,8 @@ urchins %>%
   )
 {{< /highlight >}}
 <p>highlight.js</p>
-<pre class="r"><code>library(tidyverse)
+<pre class="r"><code>#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789
+library(tidyverse)
 
 urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%
   setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%
@@ -43,25 +45,11 @@ urchins %&gt;%
   summarise(
     across(everything(), mean), n = n()
   )</code></pre>
-<p>There is also the highlight <a href="https://github.com/romainfrancois/highlight">R package</a>.</p>
-<p>One option provides standard highlighting:</p>
-<pre class="r"><code>library(highlight)
-highlight(code, detective = highlight::lestrade) %&gt;% cat()</code></pre>
-<pre class='rcode'> <span class='functioncall'>library</span><span class='keyword'>(</span><span class='symbol'>tidyverse</span><span class='keyword'>)</span>
- 
- <span class='symbol'>urchins</span> <span class='assignment'>&lt;-</span> <span class='functioncall'>read_csv</span><span class='keyword'>(</span><span class='string'>"https://tidymodels.org/start/models/urchins.csv"</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
-   <span class='functioncall'>setNames</span><span class='keyword'>(</span><span class='functioncall'>c</span><span class='keyword'>(</span><span class='string'>"food_regime"</span><span class='keyword'>,</span> <span class='string'>"initial_volume"</span><span class='keyword'>,</span> <span class='string'>"width"</span><span class='keyword'>)</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
-   <span class='functioncall'>mutate</span><span class='keyword'>(</span><span class='symbol_argument'>food_regime</span> <span class='argument'>=</span> <span class='functioncall'>factor</span><span class='keyword'>(</span><span class='symbol'>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument'>levels</span> <span class='argument'>=</span> <span class='functioncall'>c</span><span class='keyword'>(</span><span class='string'>"Initial"</span><span class='keyword'>,</span> <span class='string'>"Low"</span><span class='keyword'>,</span> <span class='string'>"High"</span><span class='keyword'>)</span><span class='keyword'>)</span><span class='keyword'>)</span>
- 
- <span class='symbol'>urchins</span> <span class='magrittr_pipe special'>%&gt;%</span>
-   <span class='functioncall'>group_by</span><span class='keyword'>(</span><span class='symbol'>food_regime</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
-   <span class='functioncall'>summarise</span><span class='keyword'>(</span>
-     <span class='functioncall'>across</span><span class='keyword'>(</span><span class='functioncall'>everything</span><span class='keyword'>(</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol'>mean</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol_argument'>n</span> <span class='argument'>=</span> <span class='functioncall'>n</span><span class='keyword'>(</span><span class='keyword'>)</span>
-   <span class='keyword'>)</span> </pre>
-<p>The unique one here is the semantic highlighting, where words have
-unique coding depending on the context.</p>
-<pre class="r"><code>highlight(code, detective = sherlock()) %&gt;% cat()</code></pre>
-<pre class='rcode'> <span class='functioncall' style='color: #8166CC ; '>library</span><span class='keyword'>(</span><span class='symbol' style='color: #9ECC66 ; '>tidyverse</span><span class='keyword'>)</span>
+<p>There is also the highlight <a href="https://github.com/romainfrancois/highlight">R package</a>,
+which does semantic highlighting, where words have
+unique coloring depending on the context.</p>
+<pre class='rcode'> <span class='comment'>#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789</span>
+ <span class='functioncall' style='color: #8166CC ; '>library</span><span class='keyword'>(</span><span class='symbol' style='color: #9ECC66 ; '>tidyverse</span><span class='keyword'>)</span>
  
  <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='assignment'>&lt;-</span> <span class='functioncall' style='color: #B2CC66 ; '>read_csv</span><span class='keyword'>(</span><span class='string'>"https://tidymodels.org/start/models/urchins.csv"</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
    <span class='functioncall' style='color: #66CC97 ; '>setNames</span><span class='keyword'>(</span><span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"food_regime"</span><span class='keyword'>,</span> <span class='string'>"initial_volume"</span><span class='keyword'>,</span> <span class='string'>"width"</span><span class='keyword'>)</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
