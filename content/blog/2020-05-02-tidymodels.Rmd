@@ -10,11 +10,17 @@ draft: true
 output:
   blogdown::html_page:
     toc: true
+    highlight: tango
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
                       results='show', cache=FALSE, autodep=FALSE, error = TRUE)
+
+# knitr::knit_hooks$set( 
+#   source = highlight::hl_hook_source, 
+#   document = highlight::hl_hook_css
+# )
 ```
 
 ## Introduction
@@ -40,7 +46,6 @@ urchins %>%
     across(everything(), mean), n = n()
   )
 ```
-
 
 ```{r}
 urchins %>%

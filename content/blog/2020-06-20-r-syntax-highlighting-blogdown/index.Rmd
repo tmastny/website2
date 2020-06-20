@@ -1,0 +1,68 @@
+---
+title: 'R Snytax Highlighting in blogdown'
+author: ~
+date: '2020-06-20'
+categories: []
+tags: []
+description:
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
+                      results='show', cache=FALSE, autodep=FALSE)
+
+code <- 'library(tidyverse)
+
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )'
+```
+
+Hugo shortcodes
+
+```{r}
+blogdown::shortcode_html("highlight", "r", .content = code)
+```
+
+highlight.js
+
+```{r eval=FALSE}
+library(tidyverse)
+
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+```
+
+There is also the highlight [R package](https://github.com/romainfrancois/highlight).
+
+One option provides standard highlighting:
+
+```{r}
+library(highlight)
+highlight(code, detective = lestrade)
+```
+
+The unique one here is the semantic highlighting, where words have
+unique coding depending on the context.
+
+
+```{r}
+highlight(code, detective = sherlock())
+```

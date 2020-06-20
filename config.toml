@@ -32,3 +32,17 @@ blog = "blog/:slug/"
     paginate = 10
 
     footer = "Tim Mastny 2020 | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/timmastny)"
+
+[markup]
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = false
+    hl_Lines = ""
+    lineNoStart = 1
+    lineNos = false
+    lineNumbersInTable = true
+    noClasses = true
+    style = "monokai"
+    tabWidth = 4
+# https://gohugo.io/getting-started/configuration-markup#highlight
+# todo: look at markdown render hooks to wrap code in hugo shortcode
