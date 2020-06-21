@@ -46,7 +46,6 @@ How can I have custom partials per section?
 
 
 
-
 ```{r setup, include=FALSE}
 library(magrittr)
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
