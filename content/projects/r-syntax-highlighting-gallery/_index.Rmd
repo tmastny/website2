@@ -2,13 +2,38 @@
 title: "Gallery of R Syntax Highlighting"
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE,
+                      results='show', cache=FALSE, autodep=FALSE, error = TRUE)
+```
+
 Here's a sample of various R syntax highlighting.
 
 
 These are the tags, sort by highlighter and theme.
 
+```{css}
+body {
+	max-width: 1200px;
+}
+```
 
+
+<div class="row">
+<div class="col-md-6">
 
 ```{r}
-knitr::include_url("prism-coy/")
+knitr::include_url("../prism-coy/")
 ```
+
+</div>
+<div class="col-md-6">
+
+```{r}
+knitr::include_url("../prism-default/")
+```
+
+</div>
+</div>
+
+
