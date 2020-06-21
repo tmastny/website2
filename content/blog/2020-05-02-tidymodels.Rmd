@@ -32,6 +32,24 @@ library(readr)
 library(emmeans)
 ```
 
+```{r eval=FALSE}
+library(tidyverse)
+
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+
+ggplot2::cut_interval(urchins$initial_volume)
+lm(width ~ initial_volume * food_regime, data = urchins)
+```
+
+
 
 ```{r}
 urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%

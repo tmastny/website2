@@ -14,52 +14,79 @@ output:
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
+<div id="TOC">
+<ul>
+<li><a href="#monokai">Monokai</a>
+<ul>
+<li><a href="#github">Github</a></li>
+<li><a href="#rstudio">RStudio</a></li>
+<li><a href="#unique-highlighting">Unique highlighting</a></li>
+<li><a href="#themes-and-parsing">Themes and Parsing</a></li>
+<li><a href="#commonalities">Commonalities</a></li>
+</ul></li>
+</ul>
+</div>
 
-<p>Distinct between theme and parsing.</p>
-<p>Hugo shortcodes</p>
-<pre class="r"><code>blogdown::shortcode_html(&quot;highlight&quot;, &quot;r&quot;, .content = code)</code></pre>
-{{< highlight "r" >}}
-#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789
-library(tidyverse)
-
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
-
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
-  )
-{{< /highlight >}}
-<p>highlight.js</p>
-<pre class="r"><code>#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789
-library(tidyverse)
+<div id="monokai" class="section level2">
+<h2>Monokai</h2>
+<p><img src="sublime-monokai.png" /></p>
+<div id="github" class="section level3">
+<h3>Github</h3>
+<p><img src="github.png" /></p>
+<p>And typically this is highlight.js github theme:</p>
+<pre class="r"><code>library(tidyverse)
 
 urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%
   setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%
-  mutate(food_regime = factor(food_regime, levels = c(&quot;Initial&quot;, &quot;Low&quot;, &quot;High&quot;)))
+  mutate(food_regime = factor(food_regime, levels = c(&quot;Init&quot;, &quot;Low&quot;, &quot;High&quot;)))
 
 urchins %&gt;%
   group_by(food_regime) %&gt;%
   summarise(
     across(everything(), mean), n = n()
-  )</code></pre>
+  )
+
+mean(urchins$width)
+ggplot2::cut_interval(urchins$initial_volume)</code></pre>
+</div>
+<div id="rstudio" class="section level3">
+<h3>RStudio</h3>
+<p><img src="rstudio-modern.png" /></p>
+</div>
+<div id="unique-highlighting" class="section level3">
+<h3>Unique highlighting</h3>
 <p>There is also the highlight <a href="https://github.com/romainfrancois/highlight">R package</a>,
 which does semantic highlighting, where words have
 unique coloring depending on the context.</p>
-<pre class='rcode'> <span class='comment'>#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789</span>
- <span class='functioncall' style='color: #8166CC ; '>library</span><span class='keyword'>(</span><span class='symbol' style='color: #9ECC66 ; '>tidyverse</span><span class='keyword'>)</span>
+<pre class='rcode'> <span class='functioncall' style='color: #8166CC ; '>library</span><span class='keyword'>(</span><span class='symbol' style='color: #9ECC66 ; '>tidyverse</span><span class='keyword'>)</span>
  
  <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='assignment'>&lt;-</span> <span class='functioncall' style='color: #B2CC66 ; '>read_csv</span><span class='keyword'>(</span><span class='string'>"https://tidymodels.org/start/models/urchins.csv"</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
    <span class='functioncall' style='color: #66CC97 ; '>setNames</span><span class='keyword'>(</span><span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"food_regime"</span><span class='keyword'>,</span> <span class='string'>"initial_volume"</span><span class='keyword'>,</span> <span class='string'>"width"</span><span class='keyword'>)</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
-   <span class='functioncall' style='color: #CC66AA ; '>mutate</span><span class='keyword'>(</span><span class='symbol_argument' style='color: #B0CC66 ; '>food_regime</span> <span class='argument'>=</span> <span class='functioncall' style='color: #66CCB8 ; '>factor</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #B866CC ; '>levels</span> <span class='argument'>=</span> <span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"Initial"</span><span class='keyword'>,</span> <span class='string'>"Low"</span><span class='keyword'>,</span> <span class='string'>"High"</span><span class='keyword'>)</span><span class='keyword'>)</span><span class='keyword'>)</span>
+   <span class='functioncall' style='color: #CC66AA ; '>mutate</span><span class='keyword'>(</span><span class='symbol_argument' style='color: #B0CC66 ; '>food_regime</span> <span class='argument'>=</span> <span class='functioncall' style='color: #66CCB8 ; '>factor</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #B866CC ; '>levels</span> <span class='argument'>=</span> <span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"Init"</span><span class='keyword'>,</span> <span class='string'>"Low"</span><span class='keyword'>,</span> <span class='string'>"High"</span><span class='keyword'>)</span><span class='keyword'>)</span><span class='keyword'>)</span>
  
  <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='magrittr_pipe special'>%&gt;%</span>
    <span class='functioncall' style='color: #7C66CC ; '>group_by</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
    <span class='functioncall' style='color: #A466CC ; '>summarise</span><span class='keyword'>(</span>
      <span class='functioncall' style='color: #C466CC ; '>across</span><span class='keyword'>(</span><span class='functioncall' style='color: #9166CC ; '>everything</span><span class='keyword'>(</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol' style='color: #6699CC ; '>mean</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #CC66AD ; '>n</span> <span class='argument'>=</span> <span class='functioncall' style='color: #CC66AD ; '>n</span><span class='keyword'>(</span><span class='keyword'>)</span>
-   <span class='keyword'>)</span> </pre>
+   <span class='keyword'>)</span>
+ 
+ <span class='functioncall' style='color: #6699CC ; '>mean</span><span class='keyword'>(</span><span class='symbol' style='color: #66CCCA ; '>urchins</span><span class='keyword'>$</span><span class='symbol' style='color: #CC66A4 ; '>width</span><span class='keyword'>)</span>
+ <span class='tidyverse_package package'>ggplot2</span><span class='keyword'>::</span><span class='functioncall' style='color: #66CC76 ; '>cut_interval</span><span class='keyword'>(</span><span class='symbol' style='color: #66CCCA ; '>urchins</span><span class='keyword'>$</span><span class='symbol' style='color: #6680CC ; '>initial_volume</span><span class='keyword'>)</span> </pre>
 <p>pandoc themes. They are conclusively covered here,
 so I won’t provide a full array: <a href="https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/" class="uri">https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/</a></p>
 <p><a href="https://github.com/rstudio/blogdown/issues/360" class="uri">https://github.com/rstudio/blogdown/issues/360</a></p>
+</div>
+<div id="themes-and-parsing" class="section level3">
+<h3>Themes and Parsing</h3>
+<p>Client-side and server-side.</p>
+</div>
+<div id="commonalities" class="section level3">
+<h3>Commonalities</h3>
+<p>Save for the unique semantic highlight, there we can find commonalities along
+two dimensions: themes and syntax.</p>
+<p>Themes are primarily designed around colors, but even then there isn’t
+a lot of consistency between implementations.</p>
+<p>And then there are the parsing rules. These rules decide what token gets
+highlighted.</p>
+</div>
+</div>

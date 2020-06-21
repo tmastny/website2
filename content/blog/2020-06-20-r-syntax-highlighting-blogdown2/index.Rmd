@@ -17,46 +17,58 @@ library(magrittr)
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
                       results='show', cache=FALSE, autodep=FALSE)
 
-code <- '#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789
-library(tidyverse)
+code <- 'library(tidyverse)
 
 urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
   setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
-
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
-  )'
-```
-
-Distinct between theme and parsing.
-
-
-
-Hugo shortcodes
-
-```{r}
-blogdown::shortcode_html("highlight", "r", .content = code)
-```
-
-highlight.js
-
-```{r eval=FALSE}
-#123456789#123456789#123456789#123456789#123456789#123456789#123456789#123456789
-library(tidyverse)
-
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
+  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
 
 urchins %>%
   group_by(food_regime) %>%
   summarise(
     across(everything(), mean), n = n()
   )
+
+mean(urchins$width)
+ggplot2::cut_interval(urchins$initial_volume)'
 ```
+
+
+## Monokai
+
+
+![](sublime-monokai.png)
+
+### Github
+
+![](github.png)
+
+And typically this is highlight.js github theme:
+
+```{r eval=FALSE}
+library(tidyverse)
+
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+
+mean(urchins$width)
+ggplot2::cut_interval(urchins$initial_volume)
+```
+
+### RStudio
+
+![](rstudio-modern.png)
+
+
+
+### Unique highlighting
 
 There is also the highlight [R package](https://github.com/romainfrancois/highlight),
 which does semantic highlighting, where words have
@@ -70,4 +82,21 @@ highlight(code, detective = sherlock()) %>% cat()
 pandoc themes. They are conclusively covered here,
 so I won't provide a full array: https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/
 
+
 https://github.com/rstudio/blogdown/issues/360
+
+### Themes and Parsing
+
+Client-side and server-side.
+
+### Commonalities
+
+Save for the unique semantic highlight, there we can find commonalities along
+two dimensions: themes and syntax.
+
+Themes are primarily designed around colors, but even then there isn't
+a lot of consistency between implementations.
+
+And then there are the parsing rules. These rules decide what token gets
+highlighted.
+
