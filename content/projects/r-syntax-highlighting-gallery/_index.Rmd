@@ -1,0 +1,14 @@
+---
+title: "Gallery of R Syntax Highlighting"
+---
+
+Here's a sample of various R syntax highlighting.
+
+
+These are the tags, sort by highlighter and theme.
+
+
+
+```{r}
+knitr::include_url("prism-coy/")
+```

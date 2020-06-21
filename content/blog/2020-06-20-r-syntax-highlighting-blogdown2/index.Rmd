@@ -42,6 +42,7 @@ Section: https://gohugo.io/templates/section-templates/
 * sections can have templates
 
 
+How can I have custom partials per section?
 
 
 

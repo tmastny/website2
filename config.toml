@@ -8,6 +8,8 @@ ignoreFiles = ["\\.Rmd$", "_files$", "_cache$", "\\.dta$", "blogdown$", "externa
 
 [permalinks]
 blog = "blog/:slug/"
+projects = "projects/:slug/"
+r-syntax-highlighting-gallery = "projects/r-syntax-highlighting-gallery/:slug/"
 
 [[menu.main]]
     name = "Home"
