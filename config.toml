@@ -19,7 +19,7 @@ blog = "blog/:slug/"
     weight = 2
 [[menu.main]]
     name = "Projects"
-    url = "/blog/"
+    url = "/projects/"
     weight = 2
 [[menu.main]]
     name = "About"
