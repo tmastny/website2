@@ -11,6 +11,41 @@ output:
     toc: true
 ---
 
+Hugo organization: https://gohugo.io/templates/lookup-order/
+Kind 
+* ex, home page
+* single page `_default/single.html` (regular content page like blog post)
+* list page `_default/list.html` (section listings, home page, lists, terms)
+
+Lookup rules for layouts
+* layouts/_default/...
+* layouts/blog/... (for content in blog or any other *section*)
+
+
+Content View Templates: https://gohugo.io/templates/views
+
+Content Summaries: https://gohugo.io/content-management/summaries/
+* useful for previews of projects?
+* https://gohugo.io/templates/views#summaryhtml
+  * entire page object is passed to `summary.html`
+  * can add summaries to a list to make a standard blog type view. 
+  * this could be an effective alternative to the current format of lists
+
+* by default, takes the first 70 words as a preview to the content
+  * can manually place summary marks in text, and will get full render
+    of html content. 
+  * Front matter summary: unique front matter to create as summary
+
+
+Section: https://gohugo.io/templates/section-templates/
+* these are folders under `content` like `/blog/index.html`. 
+* sections can have templates
+
+
+
+
+
+
 ```{r setup, include=FALSE}
 library(magrittr)
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
@@ -50,6 +85,50 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
 |              |        | parentheses   |
 +--------------+--------+---------------+
 
+the declaration that appears last in your CSS file takes precedence.
+So it might be possible to load multiple styles and active .js
+to highlight source code in a gallery fashion. 
+
+https://uxengineer.com/css-specificity-avoid-important-css/
+
+
+Adding `css` to head based on specific events:
+https://stackoverflow.com/questions/10665268/correct-way-to-include-css-after-head
+
+highlighter demo: http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html
+  * this person has one page per demo. Is there a way I can put it all
+    on one page?
+    
+    
+Unloading style sheets:
+https://stackoverflow.com/questions/5033650/how-to-dynamically-remove-a-stylesheet-from-the-current-page
+  * this doesn't quite work. It removes the style sheet, so retroactively
+    removes style from previous elements. 
+
+Page of iframes:
+  * build a page per like this: 
+    http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html
+  
+  * embed these pages as an iframe in a central gallery page
+  * use a new `single.html` to modify content so title is stripped
+    from resulting page. 
+    
+  * can I use page bundles to limit the css/js for highlighting to only those
+    pages? Otherwise I have to include them for the entire website.
+    https://gohugo.io/content-management/page-resources/
+    
+  * 
+
+
+`class.source` to add `language-r` tags
+  * can I improve this knitir hook to add this output based on the 
+    knitr chunk type?
+
+```js
+var sheet = document.getElementById(styleSheetId);
+sheet.disabled = true;
+sheet.parentNode.removeChild(sheet);
+```
 
 ## Monokai
 
@@ -64,6 +143,10 @@ Hugo
 highlight.js
 
 ![](highlightjs-monokai.png)
+
+rainbow.js
+
+![](rainbow-monokai.png)
 
 ### Github
 
@@ -151,5 +234,26 @@ The problem with highlight.js is that there aren't enough parsing rules:
 
 Only strings and the word `library` are being highlighted.
 
+Ideas to improve highlight.js: https://stackoverflow.com/questions/51110878/how-to-highlight-all-r-function-names-with-highlight-js
+
+
+Rainbow is interesting. In monokai, certain tokens are parsed, but not 
+colored by the theme.
+```html
+<pre class="language-r rainbow-show" data-trimmed="true"><code class="rainbow rainbow-show"><span class="function call">library</span>(tidyverse)
+
+urchins <span class="keyword operator">&lt;-</span> <span class="function call">read_csv</span>(<span class="string">"https://tidymodels.org/start/models/urchins.csv"</span>) %<span class="keyword operator">&gt;</span>%
+  <span class="function call">setNames</span>(<span class="function call">c</span>(<span class="string">"food_regime"</span>, <span class="string">"initial_volume"</span>, <span class="string">"width"</span>)) %<span class="keyword operator">&gt;</span>%
+  <span class="function call">mutate</span>(food_regime <span class="keyword operator">=</span> <span class="function call">factor</span>(food_regime, levels <span class="keyword operator">=</span> <span class="function call">c</span>(<span class="string">"Init"</span>, <span class="string">"Low"</span>, <span class="string">"High"</span>)))
+
+urchins %<span class="keyword operator">&gt;</span>%
+  <span class="function call">group_by</span>(food_regime) %<span class="keyword operator">&gt;</span>%
+  <span class="function call">summarise</span>(
+    <span class="function call">across</span>(<span class="function call">everything</span>(), mean), n <span class="keyword operator">=</span> <span class="function call">n</span>()
+  )
+
+<span class="function call">mean</span>(urchins<span class="keyword operator">$</span>width)
+<span class="namespace">ggplot2</span><span class="keyword operator">::</span><span class="function call">cut_interval</span>(urchins<span class="keyword operator">$</span>initial_volume)</code><div class="preloader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div><div class="preloader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></pre>
+```
 
 
