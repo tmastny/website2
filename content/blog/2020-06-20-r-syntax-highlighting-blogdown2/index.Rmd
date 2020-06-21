@@ -6,7 +6,6 @@ slug: r-syntax-highlight-blogdown-hugo
 categories: []
 tags: []
 description:
-draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -14,36 +13,65 @@ output:
 
 ```{r setup, include=FALSE}
 library(magrittr)
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
-                      results='show', cache=FALSE, autodep=FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
+                      results='show', cache=FALSE, autodep=FALSE, error = TRUE)
 
-code <- 'library(tidyverse)
-
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
-
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
-  )
-
-mean(urchins$width)
-ggplot2::cut_interval(urchins$initial_volume)'
+# knitr::knit_hooks$set(
+#   source = highlight::hl_hook_source,
+#   document = highlight::hl_hook_css
+# )
 ```
+
++--------------+--------+---------------+
+| highlighter  |  type  |     tokens    |
++==============+========+===============+
+| highlight.js | client | strings,      |
+|              |        | keywords      |
++--------------+--------+---------------+
+| sublime      | n/a    | strings,      |
+|              |        | keywords,     |
+|              |        | arguments,    |
+|              |        | functions,    |
+|              |        | operators     |
+|              |        |               |
++--------------+--------+---------------+
+| Hugo         | server | strings,      |
+|              |        | keywords,     |
+|              |        | functions,    |
+|              |        | operators     |
++--------------+--------+---------------+
+| Github       | n/a    | strings,      |
+|              |        | argumnets,    |
+|              |        | some keywords |
++--------------+--------+---------------+
+| RStudio      | n/a    | strings,      |
+|              |        | keywords,     |
+|              |        | operators,    |
+|              |        | parentheses   |
++--------------+--------+---------------+
 
 
 ## Monokai
 
+Sublime
 
 ![](sublime-monokai.png)
 
+Hugo
+
+![](hugo-monokai.png)
+
+highlight.js
+
+![](highlightjs-monokai.png)
+
 ### Github
+
+Actual Github
 
 ![](github.png)
 
-And typically this is highlight.js github theme:
+highlight.js
 
 ```{r eval=FALSE}
 library(tidyverse)
@@ -65,8 +93,6 @@ ggplot2::cut_interval(urchins$initial_volume)
 ### RStudio
 
 ![](rstudio-modern.png)
-
-
 
 ### Unique highlighting
 
@@ -97,6 +123,33 @@ two dimensions: themes and syntax.
 Themes are primarily designed around colors, but even then there isn't
 a lot of consistency between implementations.
 
-And then there are the parsing rules. These rules decide what token gets
+And then there are the parsing rules. These rules decide which tokens gets
 highlighted.
+
+The problem with highlight.js is that there aren't enough parsing rules:
+
+```html
+<pre class="r">
+  <code class="hljs">
+    <span class="hljs-keyword">library</span>(tidyverse)
+
+    urchins &lt;- read_csv(<span class="hljs-string">"https://tidymodels.org/start/models/urchins.csv"</span>) %&gt;%
+    setNames(c(<span class="hljs-string">"food_regime"</span>, <span class="hljs-string">"initial_volume"</span>, <span class="hljs-string">"width"</span>)) %&gt;%
+    mutate(food_regime = factor(food_regime, levels = c(<span class="hljs-string">"Init"</span>, <span class="hljs-string">"Low"</span>, <span class="hljs-string">"High"</span>)))
+
+    urchins %&gt;%
+    group_by(food_regime) %&gt;%
+    summarise(
+      across(everything(), mean), n = n()
+    )
+
+    mean(urchins$width)
+    ggplot2::cut_interval(urchins$initial_volume)
+  </code>
+</pre>
+```
+
+Only strings and the word `library` are being highlighted.
+
+
 
