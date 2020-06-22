@@ -3,9 +3,6 @@ title: "Hugo Monokai"
 draft: true
 ---
 
-<link href="theme.css" rel="stylesheet" type="text/css">
-<script src="/highlighter.min.js"></script>
-
 ```r
 library(tidyverse)
 

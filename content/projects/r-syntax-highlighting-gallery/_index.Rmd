@@ -1,5 +1,6 @@
 ---
 title: "Gallery of R Syntax Highlighting"
+type: "r-syntax-highlighting-gallery"
 ---
 
 ```{r setup, include=FALSE}
@@ -7,48 +8,8 @@ knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE,
                       results='show', cache=FALSE, autodep=FALSE, error = TRUE)
 ```
 
-Here's a sample of various R syntax highlighting.
-
-
-These are the tags, sort by highlighter and theme.
-
 ```{css}
 body {
 	max-width: 1200px;
 }
 ```
-
-<div class="row">
-<div class="col-md-6">
-
-<div style="border: 0px none; overflow: hidden; margin: 15px auto; max-width: 575px;">
-<iframe
-  scrolling="no"
-  src="highlight.js-github"
-  style="border: 0px none;
-  margin-left: 20px;
-  height: 560px;
-  margin-top: -80px;
-  width: 650px;">
-</iframe>
-</div>
-
-</div>
-<div class="col-md-6">
-
-<div style="border: 0px none; overflow: hidden; margin: 15px auto; max-width: 575px;">
-<iframe
-  scrolling="no"
-  src="prism-default"
-  style="border: 0px none;
-  margin-left: 20px;
-  height: 660px;
-  margin-top: -85px;
-  width: 650px;">
-</iframe>
-</div>
-
-</div>
-</div>
-
-
