@@ -2,7 +2,9 @@
 title: "About"
 ---
 
-My name is Tim Mastny. 
+# About
+
+My name is Tim Mastny.
 I'm a predictive analyst at [Hudl](https://www.hudl.com/).
 Previously I did requirements management at Boeing and was
 a part-time adjunct professor at Metro Community Collge.
