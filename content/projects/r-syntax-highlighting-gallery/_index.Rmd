@@ -1,6 +1,8 @@
 ---
 title: "Gallery of R Syntax Highlighting"
 type: "r-syntax-highlighting-gallery"
+summary: >
+  ![](highlight-grid.png)
 ---
 
 ```{r setup, include=FALSE}
