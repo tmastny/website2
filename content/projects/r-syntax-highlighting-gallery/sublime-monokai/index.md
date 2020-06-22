@@ -1,5 +1,6 @@
 ---
 title: "Sublime Monokai"
+tags: [editor]
 draft: true
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Hugo Monokai"
+tags: [server]
 draft: true
 ---
 

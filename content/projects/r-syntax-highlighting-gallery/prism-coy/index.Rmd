@@ -1,6 +1,7 @@
 ---
 title: "Prism Coy"
 draft: true
+tags: [client]
 ---
 
 <link href="prism-coy.css" rel="stylesheet" type="text/css">

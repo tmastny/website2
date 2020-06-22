@@ -1,6 +1,7 @@
 ---
 title: "Highlight.js Github"
 draft: true
+tags: [client]
 ---
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" rel="stylesheet">

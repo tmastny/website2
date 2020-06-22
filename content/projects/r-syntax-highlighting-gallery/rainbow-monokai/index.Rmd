@@ -1,5 +1,6 @@
 ---
 title: "Rainbow Monokai"
+tags: [client]
 ---
 
 <link href="rainbow-monokai.css" rel="stylesheet" type="text/css">

@@ -1,6 +1,7 @@
 ---
 title: "Prism Default"
 draft: true
+tags: [client]
 ---
 
 <link href="prism.css" rel="stylesheet" type="text/css">
