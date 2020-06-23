@@ -157,9 +157,10 @@ hugodown
     want to try. 
 
 
-&:hover, &:visited, &:active { color: #696969; }
-
-
+Sass blog post
+- &:hover, &:visited, &:active { color: #696969; }
+- show screen shots of gap in headers and text
+- show simplified sass vs. css
 
 ## Monokai
 
