@@ -8,6 +8,6 @@ tags: [rpackage]
 `sass`: CSS preprocessor for dynamic style sheets
 
   - [Github](https://github.com/rstudio/sass),
-[Documentation](https://rstudio.github.io/sass/articles/sass.html)
+[Documentation](https://rstudio.github.io/sass/index.html)
 
 <!--more-->

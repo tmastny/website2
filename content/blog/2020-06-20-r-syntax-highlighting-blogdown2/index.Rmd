@@ -157,7 +157,7 @@ hugodown
     want to try. 
 
 
-
+&:hover, &:visited, &:active { color: #696969; }
 
 
 
