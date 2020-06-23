@@ -144,6 +144,21 @@ How to learn:
 
 
 Saving HTML and CSS as svg
+- blog post
+
+
+hugodown
+- suggests the move to client-side syntax highlighting
+- frankly a good option
+  - but there's a problem: if you have old blog posts, you'll 
+    have to rerun to change the theme or syntax highlighting if you
+    ever want to change your mind. For me, I'm not confident
+    I could rebuild some of my posts from 3 years ago, and I don't
+    want to try. 
+
+
+
+
 
 
 ## Monokai
