@@ -1,5 +1,5 @@
 ---
-title: "Sass R package"
+title: "sass R package"
 slug: sass
 tags: [rpackage]
 ---
