@@ -1,6 +1,5 @@
 ---
 title: "Highlight.js Monokai"
-draft: true
 tags: [client]
 ---
 

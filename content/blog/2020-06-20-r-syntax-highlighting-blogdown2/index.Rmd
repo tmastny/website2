@@ -6,6 +6,7 @@ slug: r-syntax-highlight-blogdown-hugo
 categories: []
 tags: []
 description:
+draft: true
 output:
   blogdown::html_page:
     toc: true

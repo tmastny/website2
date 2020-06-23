@@ -1,6 +1,5 @@
 ---
 title: "Highlight.js Github"
-draft: true
 tags: [client]
 ---
 
