@@ -4,7 +4,7 @@ tags: [rpackage]
 ---
 
 <a><img src="/images/bookmark-tabs.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
-`leadr`: local leaderboard and ensemble tools for data science projects and Kaggle competitions
+`leadr`: leaderboard and ensemble tools for machine learning and Kaggle
 
   - [Github](https://github.com/tmastny/leadr),
 [Vignettes](https://tmastny.github.io/leadr/)
