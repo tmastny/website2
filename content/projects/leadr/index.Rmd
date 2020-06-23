@@ -7,6 +7,6 @@ tags: [rpackage]
 `leadr`: leaderboard and ensemble tools for machine learning and Kaggle
 
   - [Github](https://github.com/tmastny/leadr),
-[Vignettes](https://tmastny.github.io/leadr/)
+[Documentation](https://tmastny.github.io/leadr/)
 
 <!--more-->

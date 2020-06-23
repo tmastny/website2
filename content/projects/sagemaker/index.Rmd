@@ -7,6 +7,6 @@ tags: [rpackage]
 `sagemaker`: R Interface to AWS Sagemaker
 
   - [Github](https://github.com/tmastny/sagemaker),
-[Vignettes](https://tmastny.github.io/sagemaker/articles/sagemaker.html)
+[Documentation](https://tmastny.github.io/sagemaker/articles/sagemaker.html)
 
 <!--more-->
