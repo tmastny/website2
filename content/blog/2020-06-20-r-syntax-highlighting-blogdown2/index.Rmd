@@ -137,6 +137,15 @@ https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304
 
 https://gohugo.io/content-management/summaries/
 
+
+How to learn: 
+- https://yihui.org/en/2017/11/tweak-blogdown-site/
+- https://yihui.org/en/2017/08/hugo-post-summary/
+
+
+Saving HTML and CSS as svg
+
+
 ## Monokai
 
 Sublime

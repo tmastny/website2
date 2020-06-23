@@ -3,10 +3,10 @@ title: "Sass R package"
 tags: [rpackage]
 ---
 
-<a href="https://sass-lang.com"><img src="sass.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
+<a href="https://sass-lang.com"><img src="/images/sass.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
 `sass`: CSS preprocessor for dynamic style sheets
 
-  - Github: https://github.com/rstudio/sass
-  - Introduction: https://rstudio.github.io/sass/articles/sass.html
+  - [Github](https://github.com/rstudio/sass),
+[Introduction](https://rstudio.github.io/sass/articles/sass.html)
 
 <!--more-->
