@@ -1,0 +1,24 @@
+---
+title: "Highlight R Package Sherlock"
+tags: [server]
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<pre class='rcode'> <span class='functioncall' style='color: #8166CC ; '>library</span><span class='keyword'>(</span><span class='symbol' style='color: #9ECC66 ; '>tidyverse</span><span class='keyword'>)</span>
+ 
+ <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='assignment'>&lt;-</span> <span class='functioncall' style='color: #B2CC66 ; '>read_csv</span><span class='keyword'>(</span><span class='string'>"https://tidymodels.org/start/models/urchins.csv"</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #66CC97 ; '>setNames</span><span class='keyword'>(</span><span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"food_regime"</span><span class='keyword'>,</span> <span class='string'>"initial_volume"</span><span class='keyword'>,</span> <span class='string'>"width"</span><span class='keyword'>)</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #CC66AA ; '>mutate</span><span class='keyword'>(</span><span class='symbol_argument' style='color: #B0CC66 ; '>food_regime</span> <span class='argument'>=</span> <span class='functioncall' style='color: #66CCB8 ; '>factor</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #B866CC ; '>levels</span> <span class='argument'>=</span> <span class='functioncall' style='color: #6766CC ; '>c</span><span class='keyword'>(</span><span class='string'>"Init"</span><span class='keyword'>,</span> <span class='string'>"Low"</span><span class='keyword'>,</span> <span class='string'>"High"</span><span class='keyword'>)</span><span class='keyword'>)</span><span class='keyword'>)</span>
+ 
+ <span class='symbol' style='color: #66CCCA ; '>urchins</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #7C66CC ; '>group_by</span><span class='keyword'>(</span><span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>)</span> <span class='magrittr_pipe special'>%&gt;%</span>
+   <span class='functioncall' style='color: #A466CC ; '>summarise</span><span class='keyword'>(</span>
+     <span class='functioncall' style='color: #C466CC ; '>across</span><span class='keyword'>(</span><span class='functioncall' style='color: #9166CC ; '>everything</span><span class='keyword'>(</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol' style='color: #6699CC ; '>mean</span><span class='keyword'>)</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #CC66AD ; '>n</span> <span class='argument'>=</span> <span class='functioncall' style='color: #CC66AD ; '>n</span><span class='keyword'>(</span><span class='keyword'>)</span>
+   <span class='keyword'>)</span>
+ 
+ <span class='functioncall' style='color: #6699CC ; '>mean</span><span class='keyword'>(</span><span class='symbol' style='color: #66CCCA ; '>urchins</span><span class='keyword'>$</span><span class='symbol' style='color: #CC66A4 ; '>width</span><span class='keyword'>)</span>
+ <span class='tidyverse_package package'>ggplot2</span><span class='keyword'>::</span><span class='functioncall' style='color: #66CC76 ; '>cut_interval</span><span class='keyword'>(</span><span class='symbol' style='color: #66CCCA ; '>urchins</span><span class='keyword'>$</span><span class='symbol' style='color: #6680CC ; '>initial_volume</span><span class='keyword'>)</span>
+ 
+ <span class='functioncall' style='color: #668BCC ; '>lm</span><span class='keyword'>(</span><span class='symbol' style='color: #CC66A4 ; '>width</span> <span class='keyword'>~</span> <span class='symbol' style='color: #6680CC ; '>initial_volume</span> <span class='keyword'>*</span> <span class='symbol' style='color: #B0CC66 ; '>food_regime</span><span class='keyword'>,</span> <span class='symbol_argument' style='color: #CC66C7 ; '>data</span> <span class='argument'>=</span> <span class='symbol' style='color: #66CCCA ; '>urchins</span><span class='keyword'>)</span> </pre>
