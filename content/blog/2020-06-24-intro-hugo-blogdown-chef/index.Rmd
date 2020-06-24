@@ -1,0 +1,96 @@
+---
+title: 'Intro to Hugo: The Masterchef Behind Easy Blogging'
+author: ~
+date: '2020-06-24'
+categories: []
+tags: []
+description:
+draft: true
+slug: intro-hugo-blogdown-chef
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+![](/blog/intro-hugo-blogdown-chef/hugo-chef.svg)
+
+What is Hugo? The magic behind blogdown
+
+
+
+
+
+The goal isn’t to talk about the details of Hugo.
+Both [Hugo](https://gohugo.io/documentation/) and
+[blogdown](https://bookdown.org/yihui/blogdown/) have excellent
+documentation on that front.
+In this article, I’ll conceptually example hugo with diagrams.
+
+
+<img src="/blog/intro-hugo-blogdown-chef/hugo-chef.svg"
+  align="left"
+  height=200
+  style="background-color: white; padding-right: 20px;"
+/>
+
+Hugo makes it so you can focus on content.
+We just need to fill in the “leaves” at the bottom of the tree:
+the posts and projects.
+
+
+
+One we do that, Hugo (and the Hugo theme) do all the work of making the website.
+
+This post will explain what that work actually is.
+We’ll attempt to explain the Hugo magic that powers blogdown and other websites
+that make it easy to create websites, without knowing web development.
+
+Why learn about Hugo? If you’ve ever wanted to customize your website,
+it will help to understand what Hugo does and how it can help you.
+Ideally, you’ll feel more confident making changes,
+and maybe take a stab at customizing your theme.
+
+To begin, we need to understand what a website is.
+These days, websites can be incredibly complicated,
+so let’s look at a model of a website you might use for a blog:
+
+
+
+Let’s call this model the *simple tree website*.
+Your home page links to your blog page.
+And your blog page links to your blog posts.
+You can see how this makes a tree.
+
+Remember: Hugo enables us to focus on the *posts* and ignore everything else.
+So let’s focus there.
+
+When we write a blogpost with Hugo, we focus on the content.
+What are the words and images our readers will see.
+But there are components to a webpage (pic). We typically have a navigation bar,
+and a footer (potentially with comments). This creates a sandwich.
+
+What Hugo does for us is make that sandwich.
+We write the content, and Hugo glues the header and footer.
+The headers and footers, by web-design convent,
+also content useful things like styles and extra JavaScript.
+
+---
+Hugo is the master chef, putting buns on the protein and cheese we made.
+But let’s refer back to our model of websites.
+Posts (and projects) are only one type of web page.
+We also have Home pages, project pages,
+and places to scroll through our blog posts.
+Conceptually, these pages are all **lists** of content below them.
+
+A good Home Page will link to your blog and projects pages.
+And your blog page will need to list all your articles so readers can scroll
+through them to read and discover. Fundamentally, they are all lists.
+
+Lucky for us, Hugo is a master chef.
+Not only can they put buns on our burger, but they can also add the cheese.
+So when necessary, Hugo glues on the header and footer,
+and adds lists describing content below the tree.
+
+
+
