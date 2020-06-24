@@ -1,0 +1,13 @@
+---
+title: "leadr R package"
+slug: leadr
+tags: [rpackage]
+---
+
+<a><img src="/projects/leadr/bookmark-tabs.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
+`leadr`: leaderboard and ensemble tools for machine learning and Kaggle
+
+  - [Github](https://github.com/tmastny/leadr),
+[Documentation](https://tmastny.github.io/leadr/)
+
+<!--more-->

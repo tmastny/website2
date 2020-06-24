@@ -1,0 +1,17 @@
+---
+title: "Gallery of R Syntax Highlighting"
+type: "r-syntax-highlighting-gallery"
+summary: >
+  ![](/projects/r-syntax-highlighting-gallery/r-gallery.svg)
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE,
+                      results='show', cache=FALSE, autodep=FALSE, error = TRUE)
+```
+
+```{css}
+body {
+	max-width: 1200px;
+}
+```

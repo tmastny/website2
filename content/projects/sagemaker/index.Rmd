@@ -1,0 +1,13 @@
+---
+title: "sagemaker R package"
+slug: sagemaker
+tags: [rpackage]
+---
+
+<a><img src="/projects/sagemaker/sagemaker.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
+`sagemaker`: R Interface to AWS Sagemaker
+
+  - [Github](https://github.com/tmastny/sagemaker),
+[Documentation](https://tmastny.github.io/sagemaker/index.html)
+
+<!--more-->

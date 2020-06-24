@@ -1,0 +1,26 @@
+---
+title: "Rainbow Monokai"
+tags: [client]
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<link href="rainbow-monokai.css" rel="stylesheet" type="text/css">
+<script src="rainbow-custom.min.js"></script>
+<pre class="r language-r"><code>library(tidyverse)
+
+urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%
+  setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%
+  mutate(food_regime = factor(food_regime, levels = c(&quot;Init&quot;, &quot;Low&quot;, &quot;High&quot;)))
+
+urchins %&gt;%
+  group_by(food_regime) %&gt;%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+
+mean(urchins$width)
+ggplot2::cut_interval(urchins$initial_volume)
+
+lm(width ~ initial_volume * food_regime, data = urchins)</code></pre>

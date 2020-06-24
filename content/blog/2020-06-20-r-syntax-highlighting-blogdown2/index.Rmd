@@ -6,6 +6,7 @@ slug: r-syntax-highlight-blogdown-hugo
 categories: []
 tags: []
 description:
+draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -42,7 +43,7 @@ Section: https://gohugo.io/templates/section-templates/
 * sections can have templates
 
 
-
+How can I have custom partials per section?
 
 
 
@@ -129,6 +130,38 @@ var sheet = document.getElementById(styleSheetId);
 sheet.disabled = true;
 sheet.parentNode.removeChild(sheet);
 ```
+
+Grouping by year
+https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304/layouts/_default/list.html#L4
+
+
+
+https://gohugo.io/content-management/summaries/
+
+
+How to learn: 
+- https://yihui.org/en/2017/11/tweak-blogdown-site/
+- https://yihui.org/en/2017/08/hugo-post-summary/
+
+
+Saving HTML and CSS as svg
+- blog post
+
+
+hugodown
+- suggests the move to client-side syntax highlighting
+- frankly a good option
+  - but there's a problem: if you have old blog posts, you'll 
+    have to rerun to change the theme or syntax highlighting if you
+    ever want to change your mind. For me, I'm not confident
+    I could rebuild some of my posts from 3 years ago, and I don't
+    want to try. 
+
+
+Sass blog post
+- &:hover, &:visited, &:active { color: #696969; }
+- show screen shots of gap in headers and text
+- show simplified sass vs. css
 
 ## Monokai
 

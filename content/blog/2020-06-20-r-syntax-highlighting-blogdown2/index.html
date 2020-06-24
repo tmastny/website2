@@ -6,6 +6,7 @@ slug: r-syntax-highlight-blogdown-hugo
 categories: []
 tags: []
 description:
+draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -52,6 +53,7 @@ of html content.</li>
 <p>Section: <a href="https://gohugo.io/templates/section-templates/" class="uri">https://gohugo.io/templates/section-templates/</a>
 * these are folders under <code>content</code> like <code>/blog/index.html</code>.
 * sections can have templates</p>
+<p>How can I have custom partials per section?</p>
 <table style="width:56%;">
 <colgroup>
 <col width="20%" />
@@ -137,6 +139,26 @@ knitr chunk type?</p>
 <pre class="js"><code>var sheet = document.getElementById(styleSheetId);
 sheet.disabled = true;
 sheet.parentNode.removeChild(sheet);</code></pre>
+<p>Grouping by year
+<a href="https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304/layouts/_default/list.html#L4" class="uri">https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304/layouts/_default/list.html#L4</a></p>
+<p><a href="https://gohugo.io/content-management/summaries/" class="uri">https://gohugo.io/content-management/summaries/</a></p>
+<p>How to learn:
+- <a href="https://yihui.org/en/2017/11/tweak-blogdown-site/" class="uri">https://yihui.org/en/2017/11/tweak-blogdown-site/</a>
+- <a href="https://yihui.org/en/2017/08/hugo-post-summary/" class="uri">https://yihui.org/en/2017/08/hugo-post-summary/</a></p>
+<p>Saving HTML and CSS as svg
+- blog post</p>
+<p>hugodown
+- suggests the move to client-side syntax highlighting
+- frankly a good option
+- but there’s a problem: if you have old blog posts, you’ll
+have to rerun to change the theme or syntax highlighting if you
+ever want to change your mind. For me, I’m not confident
+I could rebuild some of my posts from 3 years ago, and I don’t
+want to try.</p>
+<p>Sass blog post
+- &amp;:hover, &amp;:visited, &amp;:active { color: #696969; }
+- show screen shots of gap in headers and text
+- show simplified sass vs. css</p>
 <div id="monokai" class="section level2">
 <h2>Monokai</h2>
 <p>Sublime</p>
