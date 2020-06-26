@@ -117,7 +117,7 @@ blogdown::shortcode_html(
 
 These 14 lines of code make up the hugo template [hugo-xmin](https://github.com/yihui/hugo-xmin)
 uses to create a webpage. Lines 1, 10, and 14 are where the real action happens.
-These lines tell Hugo to insert the body between header and footer to complete
+These lines tell Hugo to insert the body between the header and footer to complete
 the sandwich. 
 
 This template is the starting point for your page layout, 
@@ -151,7 +151,7 @@ and list them all in one place (a menu).
 ![](hugo-menu.svg)
 
 Diving into the [list template](https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/_default/list.html#L5-L21)
-for my own theme, you can see that it's fundamentally powered by a `for` loop: 
+for my own theme, you can see that it's powered by a `for` loop: 
 
 ```{r echo=FALSE}
 html <- '{{ partial "header.html" . }}

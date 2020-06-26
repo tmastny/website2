@@ -111,7 +111,7 @@ Once again, Yihui Xie has another good example in this
 {{< /highlight >}}
 <p>These 14 lines of code make up the hugo template <a href="https://github.com/yihui/hugo-xmin">hugo-xmin</a>
 uses to create a webpage. Lines 1, 10, and 14 are where the real action happens.
-These lines tell Hugo to insert the body between header and footer to complete
+These lines tell Hugo to insert the body between the header and footer to complete
 the sandwich.</p>
 <p>This template is the starting point for your page layout,
 and you can modify it however you’d like! You can change how this template
@@ -139,7 +139,7 @@ These are the instructions that tell Hugo how to find all your posts (sandwiches
 and list them all in one place (a menu).</p>
 <p><img src="hugo-menu.svg" /></p>
 <p>Diving into the <a href="https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/_default/list.html#L5-L21">list template</a>
-for my own theme, you can see that it’s fundamentally powered by a <code>for</code> loop:</p>
+for my own theme, you can see that it’s powered by a <code>for</code> loop:</p>
 {{< highlight "html" "style=pastie,hl_lines=1 10-15 20,linenos=true" >}}
 {{ partial "header.html" . }}
 
