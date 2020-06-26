@@ -95,7 +95,7 @@ lm(outcome ~ cat, data = df) %>%
 
 ```{r echo = FALSE, out.height="300px"}
 # ![](/blog/cat-pairwise.png)
-knitr::include_graphics("/blog/cat-pairwise.png")
+knitr::include_graphics("/blog/cat-pairwise.png", error = FALSE)
 ```
 
 The goal of this section is to look at pairwise differences
@@ -215,7 +215,7 @@ lm_airlines %>%
 
 ```{r echo = FALSE, out.height="300px"}
 # ![](/blog/cat-pairwise-within.png)
-knitr::include_graphics("/blog/cat-pairwise-within.png")
+knitr::include_graphics("/blog/cat-pairwise-within.png", error = FALSE)
 ```
 
 It's common to check pairwise comparisons within groups. 
