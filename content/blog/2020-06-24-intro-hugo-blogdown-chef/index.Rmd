@@ -72,7 +72,8 @@ The body is your blog post. All the words, images, and code you want to share
 with the world. It's converted into what you see from your `*.md` or `*.Rmd` 
 source.
 
-The header and footer _sandwich_ the body with other relevant information. 
+The header and footer _sandwich_ the body with other relevant information
+that is the same for all other posts. 
 In my case, the header is the connection to the rest of my website, with
 links to my home, blog, and projects.
 The footer contains things that go at the end, like comments and additional
@@ -81,8 +82,8 @@ links off-site.
 Headers and footers also serve a purpose in web-development. 
 Yihui Xie has an [instructional PR](https://github.com/yihui/hugo-xmin/pull/5)
 on syntax highlighting showing that styling (CSS) goes in the header, 
-and JavaScript goes in the footer. If you want to modifying styling, or 
-add JavaScript elements, you'll want to dig in here. 
+and JavaScript goes in the footer. If you want to style your page, or 
+add JavaScript elements, you'll want to dig in there.
 
 Chef Hugo is responsible for combining these ingredients into an actual webpage: 
 ![](hugo-sandwich.svg)
@@ -136,7 +137,7 @@ evolved from Yihui's instructional theme.
 As a Master Chef, Hugo knows some people want to make more than one sandwich; 
 they want a whole _menu_ to build a restaurant. 
 
-The same is true for a blog: you'll need a menu show-casing all your posts
+The same is true for a blog: you'll need a menu showcasing all your posts
 so people can find and read them. I have two "menus" on my website. 
 
 ![](hugo-lists.svg)
@@ -144,8 +145,8 @@ so people can find and read them. I have two "menus" on my website.
 Menus, posts, pages: at the end of the day they are all _lists_. 
 Hugo knows you need it, so they offer 
 [list templates](https://gohugo.io/templates/lists/).
-These are the instructions to find all your posts (sandwiches) and
-list them all in one place (a menu).
+These are the instructions that tell Hugo how to find all your posts (sandwiches) 
+and list them all in one place (a menu).
 
 ![](hugo-menu.svg)
 
@@ -180,11 +181,12 @@ blogdown::shortcode_html(
 )
 ```
 
-The homepage, like the blog post in the last section, is still a webpage, 
-so it's sandwiched by the header and footer on lines 1 and 20. 
-`range` on line 10 how the list is made. It loops through all the pages
-in `$paginator.Pages` and inserts the html providing the date, title, and link
-to the blog post. 
+The `range` function iterates over a set of pages you choose 
+and inserts the html providing the date, title, and link
+to the blog post in a bullet point.
+
+This list, like the blog post in the last section, is still a webpage, 
+so it's also sandwiched by the header and footer on lines 1 and 20.
 
 Hugo provides all the tools to create lists anyway you desire. 
 You can include or exclude sections or individual posts. 
@@ -198,10 +200,8 @@ There's a lot to learn about Hugo, but making simple changes to templates
 in existing themes is a great way to get started. 
 
 Credit goes to Yihui's [instructional Hugo Theme](https://yihui.org/en/2017/11/tweak-blogdown-site/).
-The theme design is straighforward, and he left breadcrumbs throughout the 
-template designed to help you understand the technical details. 
-I used his theme for a long time, 
-until I got the urge to customize it and found myself learning Hugo. 
-Also Hugo's excellent [documentation](https://gohugo.io/documentation/) provides
+The theme design is straighforward, and there are breadcrumbs throughout, 
+guiding you through the technical details.
+And Hugo's excellent [documentation](https://gohugo.io/documentation/) provides
 comprehensive coverage of all the functions and parameters, as well as many
 examples to learn from and tweak.

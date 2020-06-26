@@ -76,7 +76,8 @@ pieces of information and iconography on a website. In general, there are
 <p>The body is your blog post. All the words, images, and code you want to share
 with the world. It’s converted into what you see from your <code>*.md</code> or <code>*.Rmd</code>
 source.</p>
-<p>The header and footer <em>sandwich</em> the body with other relevant information.
+<p>The header and footer <em>sandwich</em> the body with other relevant information
+that is the same for all other posts.
 In my case, the header is the connection to the rest of my website, with
 links to my home, blog, and projects.
 The footer contains things that go at the end, like comments and additional
@@ -84,8 +85,8 @@ links off-site.</p>
 <p>Headers and footers also serve a purpose in web-development.
 Yihui Xie has an <a href="https://github.com/yihui/hugo-xmin/pull/5">instructional PR</a>
 on syntax highlighting showing that styling (CSS) goes in the header,
-and JavaScript goes in the footer. If you want to modifying styling, or
-add JavaScript elements, you’ll want to dig in here.</p>
+and JavaScript goes in the footer. If you want to style your page, or
+add JavaScript elements, you’ll want to dig in there.</p>
 <p>Chef Hugo is responsible for combining these ingredients into an actual webpage:
 <img src="hugo-sandwich.svg" /></p>
 <p>The recipe Chef follows is found in the theme
@@ -128,14 +129,14 @@ evolved from Yihui’s instructional theme.</p>
 <h2>Lists (and menus)</h2>
 <p>As a Master Chef, Hugo knows some people want to make more than one sandwich;
 they want a whole <em>menu</em> to build a restaurant.</p>
-<p>The same is true for a blog: you’ll need a menu show-casing all your posts
+<p>The same is true for a blog: you’ll need a menu showcasing all your posts
 so people can find and read them. I have two “menus” on my website.</p>
 <p><img src="hugo-lists.svg" /></p>
 <p>Menus, posts, pages: at the end of the day they are all <em>lists</em>.
 Hugo knows you need it, so they offer
 <a href="https://gohugo.io/templates/lists/">list templates</a>.
-These are the instructions to find all your posts (sandwiches) and
-list them all in one place (a menu).</p>
+These are the instructions that tell Hugo how to find all your posts (sandwiches)
+and list them all in one place (a menu).</p>
 <p><img src="hugo-menu.svg" /></p>
 <p>Diving into the <a href="https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/_default/list.html#L5-L21">list template</a>
 for my own theme, you can see that it’s fundamentally powered by a <code>for</code> loop:</p>
@@ -161,11 +162,11 @@ for my own theme, you can see that it’s fundamentally powered by a <code>for</
 
 {{ partial "footer.html" . }}
 {{< /highlight >}}
-<p>The homepage, like the blog post in the last section, is still a webpage,
-so it’s sandwiched by the header and footer on lines 1 and 20.
-<code>range</code> on line 10 how the list is made. It loops through all the pages
-in <code>$paginator.Pages</code> and inserts the html providing the date, title, and link
-to the blog post.</p>
+<p>The <code>range</code> function iterates over a set of pages you choose
+and inserts the html providing the date, title, and link
+to the blog post in a bullet point.</p>
+<p>This list, like the blog post in the last section, is still a webpage,
+so it’s also sandwiched by the header and footer on lines 1 and 20.</p>
 <p>Hugo provides all the tools to create lists anyway you desire.
 You can include or exclude sections or individual posts.
 I’ve even extend it to create a <a href="https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/partials/two-column.html#L10-L30">two-column list</a>
@@ -177,11 +178,9 @@ that you see on my homepage.</p>
 There’s a lot to learn about Hugo, but making simple changes to templates
 in existing themes is a great way to get started.</p>
 <p>Credit goes to Yihui’s <a href="https://yihui.org/en/2017/11/tweak-blogdown-site/">instructional Hugo Theme</a>.
-The theme design is straighforward, and he left breadcrumbs throughout the
-template designed to help you understand the technical details.
-I used his theme for a long time,
-until I got the urge to customize it and found myself learning Hugo.
-Also Hugo’s excellent <a href="https://gohugo.io/documentation/">documentation</a> provides
+The theme design is straighforward, and there are breadcrumbs throughout,
+guiding you through the technical details.
+And Hugo’s excellent <a href="https://gohugo.io/documentation/">documentation</a> provides
 comprehensive coverage of all the functions and parameters, as well as many
 examples to learn from and tweak.</p>
 </div>
