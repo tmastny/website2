@@ -1,0 +1,207 @@
+---
+title: 'Intro to Hugo: The Masterchef of Layouts'
+author: ~
+date: '2020-06-24'
+categories: []
+tags: []
+nohl: true
+description:
+slug: intro-hugo-blogdown-chef
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<img src="/blog/intro-hugo-blogdown-chef/hugo-chef.svg"
+  align="center"
+  height=400
+  style="background-color: white; padding-right: 0px;"
+/>
+
+## Introduction
+
+[Hugo Themes](https://themes.gohugo.io/) and [blogdown](https://bookdown.org/yihui/blogdown/) 
+make blogging as easy as writing [markdown](https://gohugo.io/content-management/formats/#learn-markdown)
+or [RMarkdown](https://rmarkdown.rstudio.com/),
+but in the back of my mind I've never been totally satisfied by the defaults. 
+Scrolling through the themes, I could never find one that was _just_ right.
+And it wasn't just the appearance. I wanted to organize and layout my website
+in a way none of the existing themes offered:
+
+* two-column blog previews
+* sections for projects, and subsections within projects
+* special lists and previews for certain content
+
+So last weekend, I decided to take matters into my own hands and customize my
+[existing theme](https://github.com/yihui/hugo-xmin). 
+After hours of frustration, the layout of my website started coming
+together. Eventually, I was even having fun, as I realized how much control I
+had over the layout and appearance of my website. 
+
+Looking back at my experience, I realized that some of my frustration stemmed 
+from the fact that I didn't really understand what Hugo _was_. 
+Hugo's own answer to [What is Hugo](https://gohugo.io/about/what-is-hugo/) states
+
+> In technical terms, Hugo takes a source directory of files and templates and uses these as input to create a complete website.
+
+I'm sure this is technically true, but it didn't really help me understand the 
+conceptual purpose of Hugo. 
+So in this article, I'm going to explain what Hugo is and does by cooking metaphor, 
+inspired by Alison Hill's [A Spoonful of Hugo](https://alison.rbind.io/post/2019-02-19-hugo-archetypes/)
+blog series. 
+
+Hugo is a master chef: it follows recipes to build
+gourmet websites, and helps you design and build a menu to showcase all your
+great content. I'll breakdown two important components of websites, pages and lists,
+and explain using food metaphors how Hugo lets you define, modify, and expand
+the layout options. 
+
+## Pages (and sandwiches)
+
+A restaurant needs food and websites need content. With Hugo and 
+[Hugo Themes](https://themes.gohugo.io/), you can focus on writing the content,
+while Chef Hugo makes the rest of the dish. 
+
+While the content is the most important part of the page, there are other
+pieces of information and iconography on a website. In general, there are
+3 sections to a webpage. I've used an example from my own website below:
+
+![](webpage.svg)
+
+The body is your blog post. All the words, images, and code you want to share
+with the world. It's converted into what you see from your `*.md` or `*.Rmd` 
+source.
+
+The header and footer _sandwich_ the body with other relevant information
+that is the same for all other posts. 
+In my case, the header is the connection to the rest of my website, with
+links to my home, blog, and projects.
+The footer contains things that go at the end, like comments and additional
+links off-site. 
+
+Headers and footers also serve a purpose in web-development. 
+Yihui Xie has an [instructional PR](https://github.com/yihui/hugo-xmin/pull/5)
+on syntax highlighting showing that styling (CSS) goes in the header, 
+and JavaScript goes in the footer. If you want to style your page, or 
+add JavaScript elements, you'll want to dig in there.
+
+Chef Hugo is responsible for combining these ingredients into an actual webpage: 
+![](hugo-sandwich.svg)
+
+The recipe Chef follows is found in the theme
+and is constructed with [Hugo Templates](https://gohugo.io/templates/introduction/).
+Once again, Yihui Xie has another good example in this 
+[snippet of code](https://github.com/yihui/hugo-xmin/blob/982dfb320e8ac58a78203be76c5b06beae25d4f9/layouts/_default/single.html#L1-L12):
+
+
+```{r echo=FALSE}
+html <- '{{ partial "header.html" . }}
+<div class="article-meta">
+<h1><span class="title">{{ .Title | markdownify }}</span></h1>
+{{ with .Params.author }}<h2 class="author">{{ . }}</h2>{{ end }}
+{{ if (gt .Params.date 0) }}<h2 class="date">{{ .Date.Format "2006/01/02" }}</h2>{{ end }}
+</div>
+
+
+<main>
+{{ .Content }}
+</main>
+
+
+{{ partial "footer.html" . }}'
+
+blogdown::shortcode_html(
+  "highlight", "html", "style=pastie,hl_lines=1 10 14,linenos=true", .content = html
+)
+```
+
+These 14 lines of code make up the hugo template [hugo-xmin](https://github.com/yihui/hugo-xmin)
+uses to create a webpage. Lines 1, 10, and 14 are where the real action happens.
+These lines tell Hugo to insert the body between the header and footer to complete
+the sandwich. 
+
+This template is the starting point for your page layout, 
+and you can modify it however you'd like! You can change how this template
+combines the header and footer with page data like titles or dates, or you
+can dive into a
+[`partial`](https://gohugo.io/templates/partials/)
+to modify the header's content or style!
+It's really fun with `blogdown::serve_site`, since you can see your changes
+happen almost in real-time.
+Modifying your existing theme is a great way to learn about Hugo and web-design.
+My own website [theme](https://github.com/tmastny/hugo-xmin)
+evolved from Yihui's instructional theme.
+
+## Lists (and menus)
+
+As a Master Chef, Hugo knows some people want to make more than one sandwich; 
+they want a whole _menu_ to build a restaurant. 
+
+The same is true for a blog: you'll need a menu showcasing all your posts
+so people can find and read them. I have two "menus" on my website. 
+
+![](hugo-lists.svg)
+
+Menus, posts, pages: at the end of the day they are all _lists_. 
+Hugo knows you need it, so they offer 
+[list templates](https://gohugo.io/templates/lists/).
+These are the instructions that tell Hugo how to find all your posts (sandwiches) 
+and list them all in one place (a menu).
+
+![](hugo-menu.svg)
+
+Diving into the [list template](https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/_default/list.html#L5-L21)
+for my own theme, you can see that it's powered by a `for` loop: 
+
+```{r echo=FALSE}
+html <- '{{ partial "header.html" . }}
+
+
+{{ .Content }}
+
+
+<ul>
+  {{ $pages := .Pages }}
+  {{ $paginator := .Paginate (where $pages "Section" "!=" "") }}
+  {{ range $paginator.Pages }}
+  <li>
+    <span class="date">{{ .Date.Format "2006/01/02" }}</span>
+    <a href="{{ .RelPermalink }}">{{ .Title | markdownify }}</a>
+  </li>
+  {{ end }}
+</ul>
+{{ template "_internal/pagination.html" . }}
+
+
+{{ partial "footer.html" . }}'
+
+blogdown::shortcode_html(
+  "highlight", "html", "style=pastie,hl_lines=1 10-15 20,linenos=true", 
+  .content = html
+)
+```
+
+The `range` function iterates over a set of pages you choose 
+and inserts the html providing the date, title, and link
+to the blog post in a bullet point.
+
+This list, like the blog post in the last section, is still a webpage, 
+so it's also sandwiched by the header and footer on lines 1 and 20.
+
+Hugo provides all the tools to create lists anyway you desire. 
+You can include or exclude sections or individual posts. 
+I've even extend it to create a [two-column list](https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/partials/two-column.html#L10-L30)
+that you see on my homepage.
+
+## Dinner is served
+
+In truth, this article is just the appetizer. 
+There's a lot to learn about Hugo, but making simple changes to templates
+in existing themes is a great way to get started. 
+
+Credit goes to Yihui's [instructional Hugo Theme](https://yihui.org/en/2017/11/tweak-blogdown-site/).
+The theme design is straighforward, and there are breadcrumbs throughout, 
+guiding you through the technical details.
+And Hugo's excellent [documentation](https://gohugo.io/documentation/) provides
+comprehensive coverage of all the functions and parameters, as well as many
+examples to learn from and tweak.

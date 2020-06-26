@@ -1,0 +1,186 @@
+---
+title: 'Intro to Hugo: The Masterchef of Layouts'
+author: ~
+date: '2020-06-24'
+categories: []
+tags: []
+nohl: true
+description:
+slug: intro-hugo-blogdown-chef
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#pages-and-sandwiches">Pages (and sandwiches)</a></li>
+<li><a href="#lists-and-menus">Lists (and menus)</a></li>
+<li><a href="#dinner-is-served">Dinner is served</a></li>
+</ul>
+</div>
+
+<p><img src="/blog/intro-hugo-blogdown-chef/hugo-chef.svg"
+  align="center"
+  height=400
+  style="background-color: white; padding-right: 0px;"
+/></p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><a href="https://themes.gohugo.io/">Hugo Themes</a> and <a href="https://bookdown.org/yihui/blogdown/">blogdown</a>
+make blogging as easy as writing <a href="https://gohugo.io/content-management/formats/#learn-markdown">markdown</a>
+or <a href="https://rmarkdown.rstudio.com/">RMarkdown</a>,
+but in the back of my mind I’ve never been totally satisfied by the defaults.
+Scrolling through the themes, I could never find one that was <em>just</em> right.
+And it wasn’t just the appearance. I wanted to organize and layout my website
+in a way none of the existing themes offered:</p>
+<ul>
+<li>two-column blog previews</li>
+<li>sections for projects, and subsections within projects</li>
+<li>special lists and previews for certain content</li>
+</ul>
+<p>So last weekend, I decided to take matters into my own hands and customize my
+<a href="https://github.com/yihui/hugo-xmin">existing theme</a>.
+After hours of frustration, the layout of my website started coming
+together. Eventually, I was even having fun, as I realized how much control I
+had over the layout and appearance of my website.</p>
+<p>Looking back at my experience, I realized that some of my frustration stemmed
+from the fact that I didn’t really understand what Hugo <em>was</em>.
+Hugo’s own answer to <a href="https://gohugo.io/about/what-is-hugo/">What is Hugo</a> states</p>
+<blockquote>
+<p>In technical terms, Hugo takes a source directory of files and templates and uses these as input to create a complete website.</p>
+</blockquote>
+<p>I’m sure this is technically true, but it didn’t really help me understand the
+conceptual purpose of Hugo.
+So in this article, I’m going to explain what Hugo is and does by cooking metaphor,
+inspired by Alison Hill’s <a href="https://alison.rbind.io/post/2019-02-19-hugo-archetypes/">A Spoonful of Hugo</a>
+blog series.</p>
+<p>Hugo is a master chef: it follows recipes to build
+gourmet websites, and helps you design and build a menu to showcase all your
+great content. I’ll breakdown two important components of websites, pages and lists,
+and explain using food metaphors how Hugo lets you define, modify, and expand
+the layout options.</p>
+</div>
+<div id="pages-and-sandwiches" class="section level2">
+<h2>Pages (and sandwiches)</h2>
+<p>A restaurant needs food and websites need content. With Hugo and
+<a href="https://themes.gohugo.io/">Hugo Themes</a>, you can focus on writing the content,
+while Chef Hugo makes the rest of the dish.</p>
+<p>While the content is the most important part of the page, there are other
+pieces of information and iconography on a website. In general, there are
+3 sections to a webpage. I’ve used an example from my own website below:</p>
+<p><img src="webpage.svg" /></p>
+<p>The body is your blog post. All the words, images, and code you want to share
+with the world. It’s converted into what you see from your <code>*.md</code> or <code>*.Rmd</code>
+source.</p>
+<p>The header and footer <em>sandwich</em> the body with other relevant information
+that is the same for all other posts.
+In my case, the header is the connection to the rest of my website, with
+links to my home, blog, and projects.
+The footer contains things that go at the end, like comments and additional
+links off-site.</p>
+<p>Headers and footers also serve a purpose in web-development.
+Yihui Xie has an <a href="https://github.com/yihui/hugo-xmin/pull/5">instructional PR</a>
+on syntax highlighting showing that styling (CSS) goes in the header,
+and JavaScript goes in the footer. If you want to style your page, or
+add JavaScript elements, you’ll want to dig in there.</p>
+<p>Chef Hugo is responsible for combining these ingredients into an actual webpage:
+<img src="hugo-sandwich.svg" /></p>
+<p>The recipe Chef follows is found in the theme
+and is constructed with <a href="https://gohugo.io/templates/introduction/">Hugo Templates</a>.
+Once again, Yihui Xie has another good example in this
+<a href="https://github.com/yihui/hugo-xmin/blob/982dfb320e8ac58a78203be76c5b06beae25d4f9/layouts/_default/single.html#L1-L12">snippet of code</a>:</p>
+{{< highlight "html" "style=pastie,hl_lines=1 10 14,linenos=true" >}}
+{{ partial "header.html" . }}
+<div class="article-meta">
+<h1><span class="title">{{ .Title | markdownify }}</span></h1>
+{{ with .Params.author }}<h2 class="author">{{ . }}</h2>{{ end }}
+{{ if (gt .Params.date 0) }}<h2 class="date">{{ .Date.Format "2006/01/02" }}</h2>{{ end }}
+</div>
+
+
+<main>
+{{ .Content }}
+</main>
+
+
+{{ partial "footer.html" . }}
+{{< /highlight >}}
+<p>These 14 lines of code make up the hugo template <a href="https://github.com/yihui/hugo-xmin">hugo-xmin</a>
+uses to create a webpage. Lines 1, 10, and 14 are where the real action happens.
+These lines tell Hugo to insert the body between the header and footer to complete
+the sandwich.</p>
+<p>This template is the starting point for your page layout,
+and you can modify it however you’d like! You can change how this template
+combines the header and footer with page data like titles or dates, or you
+can dive into a
+<a href="https://gohugo.io/templates/partials/"><code>partial</code></a>
+to modify the header’s content or style!
+It’s really fun with <code>blogdown::serve_site</code>, since you can see your changes
+happen almost in real-time.
+Modifying your existing theme is a great way to learn about Hugo and web-design.
+My own website <a href="https://github.com/tmastny/hugo-xmin">theme</a>
+evolved from Yihui’s instructional theme.</p>
+</div>
+<div id="lists-and-menus" class="section level2">
+<h2>Lists (and menus)</h2>
+<p>As a Master Chef, Hugo knows some people want to make more than one sandwich;
+they want a whole <em>menu</em> to build a restaurant.</p>
+<p>The same is true for a blog: you’ll need a menu showcasing all your posts
+so people can find and read them. I have two “menus” on my website.</p>
+<p><img src="hugo-lists.svg" /></p>
+<p>Menus, posts, pages: at the end of the day they are all <em>lists</em>.
+Hugo knows you need it, so they offer
+<a href="https://gohugo.io/templates/lists/">list templates</a>.
+These are the instructions that tell Hugo how to find all your posts (sandwiches)
+and list them all in one place (a menu).</p>
+<p><img src="hugo-menu.svg" /></p>
+<p>Diving into the <a href="https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/_default/list.html#L5-L21">list template</a>
+for my own theme, you can see that it’s powered by a <code>for</code> loop:</p>
+{{< highlight "html" "style=pastie,hl_lines=1 10-15 20,linenos=true" >}}
+{{ partial "header.html" . }}
+
+
+{{ .Content }}
+
+
+<ul>
+  {{ $pages := .Pages }}
+  {{ $paginator := .Paginate (where $pages "Section" "!=" "") }}
+  {{ range $paginator.Pages }}
+  <li>
+    <span class="date">{{ .Date.Format "2006/01/02" }}</span>
+    <a href="{{ .RelPermalink }}">{{ .Title | markdownify }}</a>
+  </li>
+  {{ end }}
+</ul>
+{{ template "_internal/pagination.html" . }}
+
+
+{{ partial "footer.html" . }}
+{{< /highlight >}}
+<p>The <code>range</code> function iterates over a set of pages you choose
+and inserts the html providing the date, title, and link
+to the blog post in a bullet point.</p>
+<p>This list, like the blog post in the last section, is still a webpage,
+so it’s also sandwiched by the header and footer on lines 1 and 20.</p>
+<p>Hugo provides all the tools to create lists anyway you desire.
+You can include or exclude sections or individual posts.
+I’ve even extend it to create a <a href="https://github.com/tmastny/hugo-xmin/blob/f70eb23c496cfe5a4ab51c9f27d487641313b3bd/layouts/partials/two-column.html#L10-L30">two-column list</a>
+that you see on my homepage.</p>
+</div>
+<div id="dinner-is-served" class="section level2">
+<h2>Dinner is served</h2>
+<p>In truth, this article is just the appetizer.
+There’s a lot to learn about Hugo, but making simple changes to templates
+in existing themes is a great way to get started.</p>
+<p>Credit goes to Yihui’s <a href="https://yihui.org/en/2017/11/tweak-blogdown-site/">instructional Hugo Theme</a>.
+The theme design is straighforward, and there are breadcrumbs throughout,
+guiding you through the technical details.
+And Hugo’s excellent <a href="https://gohugo.io/documentation/">documentation</a> provides
+comprehensive coverage of all the functions and parameters, as well as many
+examples to learn from and tweak.</p>
+</div>
