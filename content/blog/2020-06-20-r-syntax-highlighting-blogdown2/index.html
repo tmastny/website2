@@ -16,44 +16,12 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#monokai">Monokai</a>
-<ul>
-<li><a href="#github">Github</a></li>
-<li><a href="#rstudio">RStudio</a></li>
 <li><a href="#unique-highlighting">Unique highlighting</a></li>
 <li><a href="#themes-and-parsing">Themes and Parsing</a></li>
 <li><a href="#commonalities">Commonalities</a></li>
-</ul></li>
 </ul>
 </div>
 
-<p>Hugo organization: <a href="https://gohugo.io/templates/lookup-order/" class="uri">https://gohugo.io/templates/lookup-order/</a>
-Kind
-* ex, home page
-* single page <code>_default/single.html</code> (regular content page like blog post)
-* list page <code>_default/list.html</code> (section listings, home page, lists, terms)</p>
-<p>Lookup rules for layouts
-* layouts/_default/…
-* layouts/blog/… (for content in blog or any other <em>section</em>)</p>
-<p>Content View Templates: <a href="https://gohugo.io/templates/views" class="uri">https://gohugo.io/templates/views</a></p>
-<p>Content Summaries: <a href="https://gohugo.io/content-management/summaries/" class="uri">https://gohugo.io/content-management/summaries/</a>
-* useful for previews of projects?
-* <a href="https://gohugo.io/templates/views#summaryhtml" class="uri">https://gohugo.io/templates/views#summaryhtml</a>
-* entire page object is passed to <code>summary.html</code>
-* can add summaries to a list to make a standard blog type view.
-* this could be an effective alternative to the current format of lists</p>
-<ul>
-<li>by default, takes the first 70 words as a preview to the content
-<ul>
-<li>can manually place summary marks in text, and will get full render
-of html content.</li>
-<li>Front matter summary: unique front matter to create as summary</li>
-</ul></li>
-</ul>
-<p>Section: <a href="https://gohugo.io/templates/section-templates/" class="uri">https://gohugo.io/templates/section-templates/</a>
-* these are folders under <code>content</code> like <code>/blog/index.html</code>.
-* sections can have templates</p>
-<p>How can I have custom partials per section?</p>
 <table style="width:56%;">
 <colgroup>
 <col width="20%" />
@@ -108,91 +76,6 @@ parentheses</td>
 </tr>
 </tbody>
 </table>
-<p>the declaration that appears last in your CSS file takes precedence.
-So it might be possible to load multiple styles and active .js
-to highlight source code in a gallery fashion.</p>
-<p><a href="https://uxengineer.com/css-specificity-avoid-important-css/" class="uri">https://uxengineer.com/css-specificity-avoid-important-css/</a></p>
-<p>Adding <code>css</code> to head based on specific events:
-<a href="https://stackoverflow.com/questions/10665268/correct-way-to-include-css-after-head" class="uri">https://stackoverflow.com/questions/10665268/correct-way-to-include-css-after-head</a></p>
-<p>highlighter demo: <a href="http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html" class="uri">http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html</a>
-* this person has one page per demo. Is there a way I can put it all
-on one page?</p>
-<p>Unloading style sheets:
-<a href="https://stackoverflow.com/questions/5033650/how-to-dynamically-remove-a-stylesheet-from-the-current-page" class="uri">https://stackoverflow.com/questions/5033650/how-to-dynamically-remove-a-stylesheet-from-the-current-page</a>
-* this doesn’t quite work. It removes the style sheet, so retroactively
-removes style from previous elements.</p>
-<p>Page of iframes:
-* build a page per like this:
-<a href="http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html" class="uri">http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html</a></p>
-<ul>
-<li><p>embed these pages as an iframe in a central gallery page</p></li>
-<li><p>use a new <code>single.html</code> to modify content so title is stripped
-from resulting page.</p></li>
-<li><p>can I use page bundles to limit the css/js for highlighting to only those
-pages? Otherwise I have to include them for the entire website.
-<a href="https://gohugo.io/content-management/page-resources/" class="uri">https://gohugo.io/content-management/page-resources/</a></p></li>
-<li></li>
-</ul>
-<p><code>class.source</code> to add <code>language-r</code> tags
-* can I improve this knitir hook to add this output based on the
-knitr chunk type?</p>
-<pre class="js"><code>var sheet = document.getElementById(styleSheetId);
-sheet.disabled = true;
-sheet.parentNode.removeChild(sheet);</code></pre>
-<p>Grouping by year
-<a href="https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304/layouts/_default/list.html#L4" class="uri">https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304/layouts/_default/list.html#L4</a></p>
-<p><a href="https://gohugo.io/content-management/summaries/" class="uri">https://gohugo.io/content-management/summaries/</a></p>
-<p>How to learn:
-- <a href="https://yihui.org/en/2017/11/tweak-blogdown-site/" class="uri">https://yihui.org/en/2017/11/tweak-blogdown-site/</a>
-- <a href="https://yihui.org/en/2017/08/hugo-post-summary/" class="uri">https://yihui.org/en/2017/08/hugo-post-summary/</a></p>
-<p>Saving HTML and CSS as svg
-- blog post</p>
-<p>hugodown
-- suggests the move to client-side syntax highlighting
-- frankly a good option
-- but there’s a problem: if you have old blog posts, you’ll
-have to rerun to change the theme or syntax highlighting if you
-ever want to change your mind. For me, I’m not confident
-I could rebuild some of my posts from 3 years ago, and I don’t
-want to try.</p>
-<p>Sass blog post
-- &amp;:hover, &amp;:visited, &amp;:active { color: #696969; }
-- show screen shots of gap in headers and text
-- show simplified sass vs. css</p>
-<div id="monokai" class="section level2">
-<h2>Monokai</h2>
-<p>Sublime</p>
-<p><img src="sublime-monokai.png" /></p>
-<p>Hugo</p>
-<p><img src="hugo-monokai.png" /></p>
-<p>highlight.js</p>
-<p><img src="highlightjs-monokai.png" /></p>
-<p>rainbow.js</p>
-<p><img src="rainbow-monokai.png" /></p>
-<div id="github" class="section level3">
-<h3>Github</h3>
-<p>Actual Github</p>
-<p><img src="github.png" /></p>
-<p>highlight.js</p>
-<pre class="r"><code>library(tidyverse)
-
-urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%
-  setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%
-  mutate(food_regime = factor(food_regime, levels = c(&quot;Init&quot;, &quot;Low&quot;, &quot;High&quot;)))
-
-urchins %&gt;%
-  group_by(food_regime) %&gt;%
-  summarise(
-    across(everything(), mean), n = n()
-  )
-
-mean(urchins$width)
-ggplot2::cut_interval(urchins$initial_volume)</code></pre>
-</div>
-<div id="rstudio" class="section level3">
-<h3>RStudio</h3>
-<p><img src="rstudio-modern.png" /></p>
-</div>
 <div id="unique-highlighting" class="section level3">
 <h3>Unique highlighting</h3>
 <p>There is also the highlight <a href="https://github.com/romainfrancois/highlight">R package</a>,
@@ -251,5 +134,4 @@ urchins %&lt;span class=&quot;keyword operator&quot;&gt;&amp;gt;&lt;/span&gt;%
 
 &lt;span class=&quot;function call&quot;&gt;mean&lt;/span&gt;(urchins&lt;span class=&quot;keyword operator&quot;&gt;$&lt;/span&gt;width)
 &lt;span class=&quot;namespace&quot;&gt;ggplot2&lt;/span&gt;&lt;span class=&quot;keyword operator&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;function call&quot;&gt;cut_interval&lt;/span&gt;(urchins&lt;span class=&quot;keyword operator&quot;&gt;$&lt;/span&gt;initial_volume)&lt;/code&gt;&lt;div class=&quot;preloader&quot;&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;preloader&quot;&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;</code></pre>
-</div>
 </div>
