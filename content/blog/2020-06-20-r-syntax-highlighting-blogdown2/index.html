@@ -1,7 +1,7 @@
 ---
 title: 'R Snytax Highlighting in blogdown'
 author: ~
-date: '2020-06-20'
+date: '2020-06-27'
 slug: r-syntax-highlight-blogdown-hugo
 categories: []
 tags: []
@@ -16,17 +16,30 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#unique-highlighting">Unique highlighting</a></li>
-<li><a href="#themes-and-parsing">Themes and Parsing</a></li>
-<li><a href="#commonalities">Commonalities</a></li>
+<li><a href="#themes-and-parsing">Themes and Parsing</a>
+<ul>
+<li><a href="#parsing">Parsing</a></li>
+<li><a href="#themes">Themes</a></li>
+</ul></li>
 </ul>
 </div>
 
-<table style="width:56%;">
+<div id="themes-and-parsing" class="section level2">
+<h2>Themes and Parsing</h2>
+<p>There are two dimensions to syntax highlighting: parsing and themes.</p>
+<p>Parsing are the tokens identified by the highligher. The theme defines
+how those individual tokens are styled.</p>
+<div id="parsing" class="section level3">
+<h3>Parsing</h3>
+<p>Parsing is the foundation of syntax highlighting, because it defines the space
+of possible highlighting.</p>
+<p>For examples,
+here are the tokens identified by some of the popular syntax highlighters:</p>
+<table>
 <colgroup>
-<col width="20%" />
-<col width="12%" />
-<col width="22%" />
+<col width="19%" />
+<col width="11%" />
+<col width="68%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -39,10 +52,28 @@ output:
 <tr class="odd">
 <td>highlight.js</td>
 <td>client</td>
-<td>strings,
-keywords</td>
+<td>string,
+keyword</td>
 </tr>
 <tr class="even">
+<td>rainbow.js</td>
+<td>client</td>
+<td>function call, string, keyword operator, namespace</td>
+</tr>
+<tr class="odd">
+<td>prism.js</td>
+<td>client</td>
+<td>operator, punctation, string</td>
+</tr>
+<tr class="even">
+<td>Hugo</td>
+<td>server</td>
+<td>strings,
+keywords,
+functions,
+operators</td>
+</tr>
+<tr class="odd">
 <td>sublime</td>
 <td>n/a</td>
 <td>strings,
@@ -51,19 +82,11 @@ arguments,
 functions,
 operators</td>
 </tr>
-<tr class="odd">
-<td>Hugo</td>
-<td>server</td>
-<td>strings,
-keywords,
-functions,
-operators</td>
-</tr>
 <tr class="even">
 <td>Github</td>
 <td>n/a</td>
 <td>strings,
-argumnets,
+arguments,
 some keywords</td>
 </tr>
 <tr class="odd">
@@ -76,51 +99,55 @@ parentheses</td>
 </tr>
 </tbody>
 </table>
-<div id="unique-highlighting" class="section level3">
-<h3>Unique highlighting</h3>
-<p>There is also the highlight <a href="https://github.com/romainfrancois/highlight">R package</a>,
-which does semantic highlighting, where words have
-unique coloring depending on the context.</p>
-<p>pandoc themes. They are conclusively covered here,
-so I won’t provide a full array: <a href="https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/" class="uri">https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/</a></p>
-<p><a href="https://github.com/rstudio/blogdown/issues/360" class="uri">https://github.com/rstudio/blogdown/issues/360</a></p>
-</div>
-<div id="themes-and-parsing" class="section level3">
-<h3>Themes and Parsing</h3>
-<p>Client-side and server-side.</p>
-</div>
-<div id="commonalities" class="section level3">
-<h3>Commonalities</h3>
-<p>Save for the unique semantic highlight, there we can find commonalities along
-two dimensions: themes and syntax.</p>
-<p>Themes are primarily designed around colors, but even then there isn’t
-a lot of consistency between implementations.</p>
-<p>And then there are the parsing rules. These rules decide which tokens gets
-highlighted.</p>
-<p>The problem with highlight.js is that there aren’t enough parsing rules:</p>
-<pre class="html"><code>&lt;pre class=&quot;r&quot;&gt;
-  &lt;code class=&quot;hljs&quot;&gt;
-    &lt;span class=&quot;hljs-keyword&quot;&gt;library&lt;/span&gt;(tidyverse)
+<p>Parsing annotates tokens in the code with specific CSS classes. Below,
+I’ll show some examples from my <a href="/projects/r-syntax-highlighting-gallery">R Sytnax Highlighting Gallery</a>.</p>
+<p>Here’s how <code>highlight.js</code> parses the following:</p>
+<pre class="html"><code>&lt;pre class=&quot;r language-r&quot;&gt;&lt;code class=&quot;hljs&quot;&gt;&lt;span class=&quot;hljs-keyword&quot;&gt;library&lt;/span&gt;(tidyverse)
 
-    urchins &amp;lt;- read_csv(&lt;span class=&quot;hljs-string&quot;&gt;&quot;https://tidymodels.org/start/models/urchins.csv&quot;&lt;/span&gt;) %&amp;gt;%
-    setNames(c(&lt;span class=&quot;hljs-string&quot;&gt;&quot;food_regime&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;initial_volume&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;width&quot;&lt;/span&gt;)) %&amp;gt;%
-    mutate(food_regime = factor(food_regime, levels = c(&lt;span class=&quot;hljs-string&quot;&gt;&quot;Init&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;Low&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;High&quot;&lt;/span&gt;)))
+urchins &amp;lt;- read_csv(&lt;span class=&quot;hljs-string&quot;&gt;&quot;https://tidymodels.org/start/models/urchins.csv&quot;&lt;/span&gt;) %&amp;gt;%
+  setNames(c(&lt;span class=&quot;hljs-string&quot;&gt;&quot;food_regime&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;initial_volume&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;width&quot;&lt;/span&gt;)) %&amp;gt;%
+  mutate(food_regime = factor(food_regime, levels = c(&lt;span class=&quot;hljs-string&quot;&gt;&quot;Init&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;Low&quot;&lt;/span&gt;, &lt;span class=&quot;hljs-string&quot;&gt;&quot;High&quot;&lt;/span&gt;)))
 
-    urchins %&amp;gt;%
-    group_by(food_regime) %&amp;gt;%
-    summarise(
-      across(everything(), mean), n = n()
-    )
+urchins %&amp;gt;%
+  group_by(food_regime) %&amp;gt;%
+  summarise(
+    across(everything(), mean), n = n()
+  )
 
-    mean(urchins$width)
-    ggplot2::cut_interval(urchins$initial_volume)
-  &lt;/code&gt;
-&lt;/pre&gt;</code></pre>
-<p>Only strings and the word <code>library</code> are being highlighted.</p>
-<p>Ideas to improve highlight.js: <a href="https://stackoverflow.com/questions/51110878/how-to-highlight-all-r-function-names-with-highlight-js" class="uri">https://stackoverflow.com/questions/51110878/how-to-highlight-all-r-function-names-with-highlight-js</a></p>
-<p>Rainbow is interesting. In monokai, certain tokens are parsed, but not
-colored by the theme.</p>
-<pre class="html"><code>&lt;pre class=&quot;language-r rainbow-show&quot; data-trimmed=&quot;true&quot;&gt;&lt;code class=&quot;rainbow rainbow-show&quot;&gt;&lt;span class=&quot;function call&quot;&gt;library&lt;/span&gt;(tidyverse)
+mean(urchins$width)
+ggplot2::cut_interval(urchins$initial_volume)
+
+lm(width ~ initial_volume * food_regime, data = urchins)&lt;/code&gt;&lt;/pre&gt;</code></pre>
+<table style="width:68%;">
+<colgroup>
+<col width="20%" />
+<col width="13%" />
+<col width="33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>highlighter</th>
+<th>tokens</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>highlight.js</td>
+<td>keyword</td>
+<td>library</td>
+</tr>
+<tr class="even">
+<td>highlight.js</td>
+<td>string</td>
+<td>“Init”, “food_regime”</td>
+</tr>
+</tbody>
+</table>
+<p>There really aren’t that many words that <code>highlight.js</code> is even able to
+highlight. This drastically limits the potential for highlighting.</p>
+<p>Rainbow.js parsing includes more tokens:</p>
+<pre class="html"><code>&lt;pre class=&quot;r language-r rainbow-show&quot; data-trimmed=&quot;true&quot;&gt;&lt;code class=&quot;rainbow rainbow-show&quot;&gt;&lt;span class=&quot;function call&quot;&gt;library&lt;/span&gt;(tidyverse)
 
 urchins &lt;span class=&quot;keyword operator&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;function call&quot;&gt;read_csv&lt;/span&gt;(&lt;span class=&quot;string&quot;&gt;&quot;https://tidymodels.org/start/models/urchins.csv&quot;&lt;/span&gt;) %&lt;span class=&quot;keyword operator&quot;&gt;&amp;gt;&lt;/span&gt;%
   &lt;span class=&quot;function call&quot;&gt;setNames&lt;/span&gt;(&lt;span class=&quot;function call&quot;&gt;c&lt;/span&gt;(&lt;span class=&quot;string&quot;&gt;&quot;food_regime&quot;&lt;/span&gt;, &lt;span class=&quot;string&quot;&gt;&quot;initial_volume&quot;&lt;/span&gt;, &lt;span class=&quot;string&quot;&gt;&quot;width&quot;&lt;/span&gt;)) %&lt;span class=&quot;keyword operator&quot;&gt;&amp;gt;&lt;/span&gt;%
@@ -133,5 +160,112 @@ urchins %&lt;span class=&quot;keyword operator&quot;&gt;&amp;gt;&lt;/span&gt;%
   )
 
 &lt;span class=&quot;function call&quot;&gt;mean&lt;/span&gt;(urchins&lt;span class=&quot;keyword operator&quot;&gt;$&lt;/span&gt;width)
-&lt;span class=&quot;namespace&quot;&gt;ggplot2&lt;/span&gt;&lt;span class=&quot;keyword operator&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;function call&quot;&gt;cut_interval&lt;/span&gt;(urchins&lt;span class=&quot;keyword operator&quot;&gt;$&lt;/span&gt;initial_volume)&lt;/code&gt;&lt;div class=&quot;preloader&quot;&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;preloader&quot;&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;</code></pre>
+&lt;span class=&quot;namespace&quot;&gt;ggplot2&lt;/span&gt;&lt;span class=&quot;keyword operator&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;function call&quot;&gt;cut_interval&lt;/span&gt;(urchins&lt;span class=&quot;keyword operator&quot;&gt;$&lt;/span&gt;initial_volume)
+
+&lt;span class=&quot;function call&quot;&gt;lm&lt;/span&gt;(width &lt;span class=&quot;keyword operator&quot;&gt;~&lt;/span&gt; initial_volume &lt;span class=&quot;keyword operator&quot;&gt;*&lt;/span&gt; food_regime, data &lt;span class=&quot;keyword operator&quot;&gt;=&lt;/span&gt; urchins)&lt;/code&gt;&lt;div class=&quot;preloader&quot;&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/pre&gt;```</code></pre>
+<table style="width:90%;">
+<colgroup>
+<col width="19%" />
+<col width="26%" />
+<col width="44%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>highlighter</th>
+<th>tokens</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Rainbow.js</td>
+<td>function call</td>
+<td>library, setNames, mutate</td>
+</tr>
+<tr class="even">
+<td>Rainbow.js</td>
+<td>string</td>
+<td>“Init”, “food_regime”</td>
+</tr>
+<tr class="odd">
+<td>Rainbow.js</td>
+<td>keyword operator</td>
+<td><code>&lt;-</code>, <code>=</code>, <code>&gt;</code>, <code>~</code>, <code>*</code>, <code>$</code></td>
+</tr>
+<tr class="even">
+<td>Rainbow.js</td>
+<td>namespace</td>
+<td>ggplot2</td>
+</tr>
+</tbody>
+</table>
+<p>Prism.js takes a different approach:</p>
+<pre class="html"><code>&lt;pre class=&quot;r  language-r&quot;&gt;&lt;code class=&quot; language-r&quot;&gt;library&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;tidyverse&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+
+urchins &lt;span class=&quot;token operator&quot;&gt;&amp;lt;-&lt;/span&gt; read_csv&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;https://tidymodels.org/start/models/urchins.csv&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token percent-operator operator&quot;&gt;%&amp;gt;%&lt;/span&gt;
+  setNames&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;c&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;food_regime&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;initial_volume&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;width&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token percent-operator operator&quot;&gt;%&amp;gt;%&lt;/span&gt;
+  mutate&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;food_regime &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; factor&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;food_regime&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; levels &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; c&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token string&quot;&gt;&quot;Init&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;Low&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;token string&quot;&gt;&quot;High&quot;&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+
+urchins &lt;span class=&quot;token percent-operator operator&quot;&gt;%&amp;gt;%&lt;/span&gt;
+  group_by&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;food_regime&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;token percent-operator operator&quot;&gt;%&amp;gt;%&lt;/span&gt;
+  summarise&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;
+    across&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;everything&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; mean&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; n &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; n&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+
+mean&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;urchins&lt;span class=&quot;token operator&quot;&gt;$&lt;/span&gt;width&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+ggplot2&lt;span class=&quot;token operator&quot;&gt;::&lt;/span&gt;cut_interval&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;urchins&lt;span class=&quot;token operator&quot;&gt;$&lt;/span&gt;initial_volume&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;
+
+lm&lt;span class=&quot;token punctuation&quot;&gt;(&lt;/span&gt;width &lt;span class=&quot;token operator&quot;&gt;~&lt;/span&gt; initial_volume &lt;span class=&quot;token operator&quot;&gt;*&lt;/span&gt; food_regime&lt;span class=&quot;token punctuation&quot;&gt;,&lt;/span&gt; data &lt;span class=&quot;token operator&quot;&gt;=&lt;/span&gt; urchins&lt;span class=&quot;token punctuation&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;</code></pre>
+<table style="width:86%;">
+<colgroup>
+<col width="19%" />
+<col width="19%" />
+<col width="47%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>highlighter</th>
+<th>tokens</th>
+<th>example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Prism.js</td>
+<td>operator</td>
+<td><code>&lt;-</code>, <code>=</code>, <code>%&gt;%</code>, <code>~</code>, <code>*</code>, <code>$</code></td>
+</tr>
+<tr class="even">
+<td>Prism.js</td>
+<td>punctuation</td>
+<td><code>(</code>, <code>)</code>, <code>,</code>,</td>
+</tr>
+<tr class="odd">
+<td>Prism.js</td>
+<td>string</td>
+<td>“Init”, “food_regime”</td>
+</tr>
+</tbody>
+</table>
+<p>All of the JavaScript parsers are lm</p>
+</div>
+<div id="themes" class="section level3">
+<h3>Themes</h3>
+<p>Themes determine the final appearance of the code. While parsing defines
+the space of possibilities, the theme may not live up to it.</p>
+<p>In the last section, we showed that the Rainbow.js parse is more complete
+than highlight.js, since it labels more tokens. The parsing, however,
+only defines the space of possibilities. It’s the theme that’s responsible
+for the final appearance.</p>
+<p>For the Github theme they look almost identical, although neither look anything
+like the actual Github syntax highlighting for R.</p>
+<p><img src="highlightjs-rainbowjs.svg" /></p>
+<p>On the left, we have <a href="/projects/r-syntax-highlighting-gallery/highlight.js-github/">Highlight.js Github</a>
+and on the right <a href="/projects/r-syntax-highlighting-gallery/rainbow-github/">Rainbow.js Github</a>.
+If you look really closely (or follow the links to high-quality Gallery renders)
+you’ll see that Rainbow.js operators are <em>slightly</em> darker than the ones in
+Highlight.js.</p>
+<p>Even if a parser identifies the token, it’s the theme’s choice whether to
+emphasize certain tokens.</p>
+</div>
 </div>
