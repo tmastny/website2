@@ -13,6 +13,7 @@ output:
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<script src="/rmarkdown-libs/accessible-code-block/empty-anchor.js"></script>
 <style type="text/css">
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
@@ -85,57 +86,32 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 </div>
 
-<STYLE type='text/css' scoped>
-PRE.fansi SPAN {padding-top: .25em; padding-bottom: .25em};
-</STYLE>
 <style type="text/css">
 body {
   max-width: 1000px;
 }
 </style>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>blogdown<span class="op">::</span><span class="kw">shortcode_html</span>(<span class="st">&quot;highlight&quot;</span>, <span class="st">&quot;r&quot;</span>, <span class="dt">.content =</span> <span class="st">&#39;urchins &lt;- read_csv(&quot;https://tidymodels.org/start/models/urchins.csv&quot;) %&gt;%</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="st">  setNames(c(&quot;food_regime&quot;, &quot;initial_volume&quot;, &quot;width&quot;)) %&gt;%</span></span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="st">  mutate(food_regime = factor(food_regime, levels = c(&quot;Initial&quot;, &quot;Low&quot;, &quot;High&quot;)))</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a></span>
-<span id="cb1-5"><a href="#cb1-5"></a><span class="st">urchins</span></span>
-<span id="cb1-6"><a href="#cb1-6"></a></span>
-<span id="cb1-7"><a href="#cb1-7"></a><span class="st">urchins %&gt;%</span></span>
-<span id="cb1-8"><a href="#cb1-8"></a><span class="st">  group_by(food_regime) %&gt;%</span></span>
-<span id="cb1-9"><a href="#cb1-9"></a><span class="st">  summarise(</span></span>
-<span id="cb1-10"><a href="#cb1-10"></a><span class="st">    across(everything(), mean), n = n()</span></span>
-<span id="cb1-11"><a href="#cb1-11"></a><span class="st">  )&#39;</span>)</span></code></pre></div>
-{{< highlight "r" >}}
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
-
-urchins
-
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
-  )
-{{< /highlight >}}
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb2-3"><a href="#cb2-3"></a></span>
-<span id="cb2-4"><a href="#cb2-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
-<PRE class="fansi fansi-output"><CODE>## <span style='color: #555555;'># A tibble: 53,940 x 10</span><span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3"></a></span>
+<span id="cb1-4"><a href="#cb1-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
+<pre><code>## # A tibble: 53,940 x 10
 ##    carat cut       color clarity depth table price     x     y     z
-##    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;ord&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;ord&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;ord&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-## </span><span style='color: #555555;'> 1</span><span> 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
-## </span><span style='color: #555555;'> 2</span><span> 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
-## </span><span style='color: #555555;'> 3</span><span> 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
-## </span><span style='color: #555555;'> 4</span><span> 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
-## </span><span style='color: #555555;'> 5</span><span> 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
-## </span><span style='color: #555555;'> 6</span><span> 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
-## </span><span style='color: #555555;'> 7</span><span> 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
-## </span><span style='color: #555555;'> 8</span><span> 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
-## </span><span style='color: #555555;'> 9</span><span> 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
-## </span><span style='color: #555555;'>10</span><span> 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
-## </span><span style='color: #555555;'># … with 53,930 more rows</span><span>
-</span></CODE></PRE>
+##    &lt;dbl&gt; &lt;ord&gt;     &lt;ord&gt; &lt;ord&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
+##  2 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
+##  3 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
+##  4 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
+##  5 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
+##  6 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
+##  7 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
+##  8 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
+##  9 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
+## 10 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
+## # … with 53,930 more rows</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="cf">while</span> (<span class="ot">FALSE</span>) {</span>
+<span id="cb3-2"><a href="#cb3-2"></a></span>
+<span id="cb3-3"><a href="#cb3-3"></a>}</span></code></pre></div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p><a href="https://www.tidymodels.org/">tidymodels</a> is the new framework from
@@ -166,58 +142,67 @@ frameworks better.</p>
 <h2>
 R sagemaker
 </h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb3-3"><a href="#cb3-3"></a></span>
-<span id="cb3-4"><a href="#cb3-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
-<PRE class="fansi fansi-output"><CODE>## <span style='color: #555555;'># A tibble: 53,940 x 10</span><span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
+<pre><code>## # A tibble: 53,940 x 10
 ##    carat cut       color clarity depth table price     x     y     z
-##    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;ord&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;ord&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;ord&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;int&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-## </span><span style='color: #555555;'> 1</span><span> 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
-## </span><span style='color: #555555;'> 2</span><span> 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
-## </span><span style='color: #555555;'> 3</span><span> 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
-## </span><span style='color: #555555;'> 4</span><span> 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
-## </span><span style='color: #555555;'> 5</span><span> 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
-## </span><span style='color: #555555;'> 6</span><span> 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
-## </span><span style='color: #555555;'> 7</span><span> 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
-## </span><span style='color: #555555;'> 8</span><span> 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
-## </span><span style='color: #555555;'> 9</span><span> 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
-## </span><span style='color: #555555;'>10</span><span> 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
-## </span><span style='color: #555555;'># … with 53,930 more rows</span><span>
-</span></CODE></PRE>
+##    &lt;dbl&gt; &lt;ord&gt;     &lt;ord&gt; &lt;ord&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
+##  2 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
+##  3 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
+##  4 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
+##  5 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
+##  6 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
+##  7 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
+##  8 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
+##  9 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
+## 10 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
+## # … with 53,930 more rows</code></pre>
 </div>
 <div class="col-md-6">
 <h2>
 AWS Sagemaker
 </h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb4-3"><a href="#cb4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
-<span id="cb4-5"><a href="#cb4-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
-<span id="cb4-6"><a href="#cb4-6"></a>df.head()</span></code></pre></div>
-<pre><code>##    age                  class of worker  ...  year     income
-## 0   73                  Not in universe  ...    95   - 50000.
-## 1   58   Self-employed-not incorporated  ...    94   - 50000.
-## 2   18                  Not in universe  ...    95   - 50000.
-## 3    9                  Not in universe  ...    94   - 50000.
-## 4   10                  Not in universe  ...    94   - 50000.
-##
-## [5 rows x 42 columns]</code></pre>
-</div>
-</div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>blogdown<span class="op">::</span><span class="kw">shortcode_html</span>(<span class="st">&quot;highlight&quot;</span>, <span class="st">&quot;python&quot;</span>, <span class="dt">.content =</span> <span class="st">&quot;import pandas as pd</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="st">import numpy as np</span></span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb6-3"><a href="#cb6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="st">input_data = &#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="st">df = pd.read_csv(input_data, nrows=1000)</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="st">df.head()&quot;</span>)</span></code></pre></div>
-{{< highlight "python" >}}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
-{{< /highlight >}}
+<span id="cb6-4"><a href="#cb6-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb6-6"><a href="#cb6-6"></a>df.head()</span></code></pre></div>
+</div>
+</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">def</span> model_stats(model, X_test, y_test):</span>
+<span id="cb7-2"><a href="#cb7-2"></a>    prob <span class="op">=</span> model.predict_proba(X_test)[:,<span class="dv">1</span>]</span>
+<span id="cb7-3"><a href="#cb7-3"></a>    pred <span class="op">=</span> model.predict(X_test)</span>
+<span id="cb7-4"><a href="#cb7-4"></a></span>
+<span id="cb7-5"><a href="#cb7-5"></a>    <span class="bu">print</span>(<span class="st">&quot;roc: </span><span class="sc">{:.2f}</span><span class="st">&quot;</span>.<span class="bu">format</span>(roc_auc_score(y_test, prob)))</span>
+<span id="cb7-6"><a href="#cb7-6"></a>    <span class="bu">print</span>(<span class="st">&quot;prc: </span><span class="sc">{:.2f}</span><span class="st">&quot;</span>.<span class="bu">format</span>(average_precision_score(y_test, prob, pos_label<span class="op">=</span><span class="st">&#39; 50000+.&#39;</span>)))</span>
+<span id="cb7-7"><a href="#cb7-7"></a>    <span class="bu">print</span>()</span>
+<span id="cb7-8"><a href="#cb7-8"></a>    <span class="bu">print</span>(classification_report(y_test, pred))</span>
+<span id="cb7-9"><a href="#cb7-9"></a></span>
+<span id="cb7-10"><a href="#cb7-10"></a></span>
+<span id="cb7-11"><a href="#cb7-11"></a>model_stats(model, X_test, y_test)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb8-2"><a href="#cb8-2"></a></span>
+<span id="cb8-3"><a href="#cb8-3"></a>urchins &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://tidymodels.org/start/models/urchins.csv&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">setNames</span>(<span class="kw">c</span>(<span class="st">&quot;food_regime&quot;</span>, <span class="st">&quot;initial_volume&quot;</span>, <span class="st">&quot;width&quot;</span>)) <span class="op">%&gt;%</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">food_regime =</span> <span class="kw">factor</span>(food_regime, <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;Init&quot;</span>, <span class="st">&quot;Low&quot;</span>, <span class="st">&quot;High&quot;</span>)))</span>
+<span id="cb8-6"><a href="#cb8-6"></a></span>
+<span id="cb8-7"><a href="#cb8-7"></a>urchins <span class="op">%&gt;%</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="st">  </span><span class="kw">group_by</span>(food_regime) <span class="op">%&gt;%</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="st">  </span><span class="kw">summarise</span>(</span>
+<span id="cb8-10"><a href="#cb8-10"></a>    <span class="kw">across</span>(<span class="kw">everything</span>(), mean), <span class="dt">n =</span> <span class="kw">n</span>()</span>
+<span id="cb8-11"><a href="#cb8-11"></a>  )</span>
+<span id="cb8-12"><a href="#cb8-12"></a></span>
+<span id="cb8-13"><a href="#cb8-13"></a><span class="kw">mean</span>(urchins<span class="op">$</span>width)</span>
+<span id="cb8-14"><a href="#cb8-14"></a>ggplot2<span class="op">::</span><span class="kw">cut_interval</span>(urchins<span class="op">$</span>initial_volume)</span>
+<span id="cb8-15"><a href="#cb8-15"></a></span>
+<span id="cb8-16"><a href="#cb8-16"></a><span class="kw">lm</span>(width <span class="op">~</span><span class="st"> </span>initial_volume <span class="op">*</span><span class="st"> </span>food_regime, <span class="dt">data =</span> urchins)</span>
+<span id="cb8-17"><a href="#cb8-17"></a></span>
+<span id="cb8-18"><a href="#cb8-18"></a><span class="cf">while</span> (<span class="ot">FALSE</span>) {</span>
+<span id="cb8-19"><a href="#cb8-19"></a>}</span>
+<span id="cb8-20"><a href="#cb8-20"></a></span>
+<span id="cb8-21"><a href="#cb8-21"></a><span class="dv">18423</span> <span class="op">*</span><span class="st"> </span><span class="dv">4</span></span></code></pre></div>
 </div>

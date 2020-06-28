@@ -1,7 +1,7 @@
 ---
 title: 'R Snytax Highlighting in blogdown'
 author: ~
-date: '2020-06-20'
+date: '2020-06-27'
 slug: r-syntax-highlight-blogdown-hugo
 categories: []
 tags: []
@@ -12,268 +12,97 @@ output:
     toc: true
 ---
 
-Hugo organization: https://gohugo.io/templates/lookup-order/
-Kind 
-* ex, home page
-* single page `_default/single.html` (regular content page like blog post)
-* list page `_default/list.html` (section listings, home page, lists, terms)
-
-Lookup rules for layouts
-* layouts/_default/...
-* layouts/blog/... (for content in blog or any other *section*)
-
-
-Content View Templates: https://gohugo.io/templates/views
-
-Content Summaries: https://gohugo.io/content-management/summaries/
-* useful for previews of projects?
-* https://gohugo.io/templates/views#summaryhtml
-  * entire page object is passed to `summary.html`
-  * can add summaries to a list to make a standard blog type view. 
-  * this could be an effective alternative to the current format of lists
-
-* by default, takes the first 70 words as a preview to the content
-  * can manually place summary marks in text, and will get full render
-    of html content. 
-  * Front matter summary: unique front matter to create as summary
-
-
-Section: https://gohugo.io/templates/section-templates/
-* these are folders under `content` like `/blog/index.html`. 
-* sections can have templates
-
-
-How can I have custom partials per section?
-
-
-
 ```{r setup, include=FALSE}
-library(magrittr)
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, eval = FALSE,
                       results='show', cache=FALSE, autodep=FALSE, error = TRUE)
-
-# knitr::knit_hooks$set(
-#   source = highlight::hl_hook_source,
-#   document = highlight::hl_hook_css
-# )
 ```
 
-+--------------+--------+---------------+
-| highlighter  |  type  |     tokens    |
-+==============+========+===============+
-| highlight.js | client | strings,      |
-|              |        | keywords      |
-+--------------+--------+---------------+
-| sublime      | n/a    | strings,      |
-|              |        | keywords,     |
-|              |        | arguments,    |
-|              |        | functions,    |
-|              |        | operators     |
-|              |        |               |
-+--------------+--------+---------------+
-| Hugo         | server | strings,      |
-|              |        | keywords,     |
-|              |        | functions,    |
-|              |        | operators     |
-+--------------+--------+---------------+
-| Github       | n/a    | strings,      |
-|              |        | argumnets,    |
-|              |        | some keywords |
-+--------------+--------+---------------+
-| RStudio      | n/a    | strings,      |
-|              |        | keywords,     |
-|              |        | operators,    |
-|              |        | parentheses   |
-+--------------+--------+---------------+
+## Themes and Parsing
 
-the declaration that appears last in your CSS file takes precedence.
-So it might be possible to load multiple styles and active .js
-to highlight source code in a gallery fashion. 
+There are two dimensions to syntax highlighting: parsing and themes.
 
-https://uxengineer.com/css-specificity-avoid-important-css/
+Parsing are the tokens identified by the highligher. The theme defines
+how those individual tokens are styled.
 
+### Parsing
 
-Adding `css` to head based on specific events:
-https://stackoverflow.com/questions/10665268/correct-way-to-include-css-after-head
+Parsing is the foundation of syntax highlighting, because it defines the space
+of possible highlighting.
 
-highlighter demo: http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html
-  * this person has one page per demo. Is there a way I can put it all
-    on one page?
-    
-    
-Unloading style sheets:
-https://stackoverflow.com/questions/5033650/how-to-dynamically-remove-a-stylesheet-from-the-current-page
-  * this doesn't quite work. It removes the style sheet, so retroactively
-    removes style from previous elements. 
+For examples,
+here are the tokens identified by some of the popular syntax highlighters:
 
-Page of iframes:
-  * build a page per like this: 
-    http://tutsplus.github.io/syntax-highlighter-demos/rainbow.html
-  
-  * embed these pages as an iframe in a central gallery page
-  * use a new `single.html` to modify content so title is stripped
-    from resulting page. 
-    
-  * can I use page bundles to limit the css/js for highlighting to only those
-    pages? Otherwise I have to include them for the entire website.
-    https://gohugo.io/content-management/page-resources/
-    
-  * 
++--------------+--------+----------------------------------------------------+
+| highlighter  |  type  |                       tokens                       |
++==============+========+====================================================+
+| highlight.js | client | string,                                            |
+|              |        | keyword                                            |
++--------------+--------+----------------------------------------------------+
+| rainbow.js   | client | function call, string, keyword operator, namespace |
++--------------+--------+----------------------------------------------------+
+| prism.js     | client | operator, punctation, string                       |
++--------------+--------+----------------------------------------------------+
+| Hugo         | server | strings,                                           |
+|              |        | keywords,                                          |
+|              |        | functions,                                         |
+|              |        | operators                                          |
++--------------+--------+----------------------------------------------------+
+| sublime      | n/a    | strings,                                           |
+|              |        | keywords,                                          |
+|              |        | arguments,                                         |
+|              |        | functions,                                         |
+|              |        | operators                                          |
+|              |        |                                                    |
++--------------+--------+----------------------------------------------------+
+| Github       | n/a    | strings,                                           |
+|              |        | arguments,                                         |
+|              |        | some keywords                                      |
++--------------+--------+----------------------------------------------------+
+| RStudio      | n/a    | strings,                                           |
+|              |        | keywords,                                          |
+|              |        | operators,                                         |
+|              |        | parentheses                                        |
++--------------+--------+----------------------------------------------------+
 
+Parsing annotates tokens in the code with specific CSS classes. Below,
+I'll show some examples from my [R Sytnax Highlighting Gallery](/projects/r-syntax-highlighting-gallery).
 
-`class.source` to add `language-r` tags
-  * can I improve this knitir hook to add this output based on the 
-    knitr chunk type?
+Here's how `highlight.js` parses the following:
 
-```js
-var sheet = document.getElementById(styleSheetId);
-sheet.disabled = true;
-sheet.parentNode.removeChild(sheet);
-```
+```html
+<pre class="r language-r"><code class="hljs"><span class="hljs-keyword">library</span>(tidyverse)
 
-Grouping by year
-https://github.com/yihui/yihui.org/blob/703d24b0ce678150a67749ed417dcef532f1b304/layouts/_default/list.html#L4
+urchins &lt;- read_csv(<span class="hljs-string">"https://tidymodels.org/start/models/urchins.csv"</span>) %&gt;%
+  setNames(c(<span class="hljs-string">"food_regime"</span>, <span class="hljs-string">"initial_volume"</span>, <span class="hljs-string">"width"</span>)) %&gt;%
+  mutate(food_regime = factor(food_regime, levels = c(<span class="hljs-string">"Init"</span>, <span class="hljs-string">"Low"</span>, <span class="hljs-string">"High"</span>)))
 
-
-
-https://gohugo.io/content-management/summaries/
-
-
-How to learn: 
-- https://yihui.org/en/2017/11/tweak-blogdown-site/
-- https://yihui.org/en/2017/08/hugo-post-summary/
-
-
-Saving HTML and CSS as svg
-- blog post
-
-
-hugodown
-- suggests the move to client-side syntax highlighting
-- frankly a good option
-  - but there's a problem: if you have old blog posts, you'll 
-    have to rerun to change the theme or syntax highlighting if you
-    ever want to change your mind. For me, I'm not confident
-    I could rebuild some of my posts from 3 years ago, and I don't
-    want to try. 
-
-
-Sass blog post
-- &:hover, &:visited, &:active { color: #696969; }
-- show screen shots of gap in headers and text
-- show simplified sass vs. css
-
-## Monokai
-
-Sublime
-
-![](sublime-monokai.png)
-
-Hugo
-
-![](hugo-monokai.png)
-
-highlight.js
-
-![](highlightjs-monokai.png)
-
-rainbow.js
-
-![](rainbow-monokai.png)
-
-### Github
-
-Actual Github
-
-![](github.png)
-
-highlight.js
-
-```{r eval=FALSE}
-library(tidyverse)
-
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
-
-urchins %>%
-  group_by(food_regime) %>%
+urchins %&gt;%
+  group_by(food_regime) %&gt;%
   summarise(
     across(everything(), mean), n = n()
   )
 
 mean(urchins$width)
 ggplot2::cut_interval(urchins$initial_volume)
+
+lm(width ~ initial_volume * food_regime, data = urchins)</code></pre>
 ```
 
-### RStudio
++--------------+---------+-----------------------+
+| highlighter  |  tokens |        example        |
++==============+=========+=======================+
+| highlight.js | keyword | library               |
++--------------+---------+-----------------------+
+| highlight.js | string  | "Init", "food_regime" |
++--------------+---------+-----------------------+
 
-![](rstudio-modern.png)
-
-### Unique highlighting
-
-There is also the highlight [R package](https://github.com/romainfrancois/highlight),
-which does semantic highlighting, where words have
-unique coloring depending on the context.
-
-```{r echo=FALSE, results='asis'}
-library(highlight)
-highlight(code, detective = sherlock()) %>% cat()
-```
-
-pandoc themes. They are conclusively covered here,
-so I won't provide a full array: https://www.garrickadenbuie.com/blog/pandoc-syntax-highlighting-examples/
+There really aren't that many words that `highlight.js` is even able to
+highlight. This drastically limits the potential for highlighting.
 
 
-https://github.com/rstudio/blogdown/issues/360
-
-### Themes and Parsing
-
-Client-side and server-side.
-
-### Commonalities
-
-Save for the unique semantic highlight, there we can find commonalities along
-two dimensions: themes and syntax.
-
-Themes are primarily designed around colors, but even then there isn't
-a lot of consistency between implementations.
-
-And then there are the parsing rules. These rules decide which tokens gets
-highlighted.
-
-The problem with highlight.js is that there aren't enough parsing rules:
-
+Rainbow.js parsing includes more tokens:
 ```html
-<pre class="r">
-  <code class="hljs">
-    <span class="hljs-keyword">library</span>(tidyverse)
-
-    urchins &lt;- read_csv(<span class="hljs-string">"https://tidymodels.org/start/models/urchins.csv"</span>) %&gt;%
-    setNames(c(<span class="hljs-string">"food_regime"</span>, <span class="hljs-string">"initial_volume"</span>, <span class="hljs-string">"width"</span>)) %&gt;%
-    mutate(food_regime = factor(food_regime, levels = c(<span class="hljs-string">"Init"</span>, <span class="hljs-string">"Low"</span>, <span class="hljs-string">"High"</span>)))
-
-    urchins %&gt;%
-    group_by(food_regime) %&gt;%
-    summarise(
-      across(everything(), mean), n = n()
-    )
-
-    mean(urchins$width)
-    ggplot2::cut_interval(urchins$initial_volume)
-  </code>
-</pre>
-```
-
-Only strings and the word `library` are being highlighted.
-
-Ideas to improve highlight.js: https://stackoverflow.com/questions/51110878/how-to-highlight-all-r-function-names-with-highlight-js
-
-
-Rainbow is interesting. In monokai, certain tokens are parsed, but not 
-colored by the theme.
-```html
-<pre class="language-r rainbow-show" data-trimmed="true"><code class="rainbow rainbow-show"><span class="function call">library</span>(tidyverse)
+<pre class="r language-r rainbow-show" data-trimmed="true"><code class="rainbow rainbow-show"><span class="function call">library</span>(tidyverse)
 
 urchins <span class="keyword operator">&lt;-</span> <span class="function call">read_csv</span>(<span class="string">"https://tidymodels.org/start/models/urchins.csv"</span>) %<span class="keyword operator">&gt;</span>%
   <span class="function call">setNames</span>(<span class="function call">c</span>(<span class="string">"food_regime"</span>, <span class="string">"initial_volume"</span>, <span class="string">"width"</span>)) %<span class="keyword operator">&gt;</span>%
@@ -286,7 +115,76 @@ urchins %<span class="keyword operator">&gt;</span>%
   )
 
 <span class="function call">mean</span>(urchins<span class="keyword operator">$</span>width)
-<span class="namespace">ggplot2</span><span class="keyword operator">::</span><span class="function call">cut_interval</span>(urchins<span class="keyword operator">$</span>initial_volume)</code><div class="preloader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div><div class="preloader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></pre>
+<span class="namespace">ggplot2</span><span class="keyword operator">::</span><span class="function call">cut_interval</span>(urchins<span class="keyword operator">$</span>initial_volume)
+
+<span class="function call">lm</span>(width <span class="keyword operator">~</span> initial_volume <span class="keyword operator">*</span> food_regime, data <span class="keyword operator">=</span> urchins)</code><div class="preloader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></pre>```
 ```
 
++-------------+------------------+-------------------------------+
+| highlighter |      tokens      |            example            |
++=============+==================+===============================+
+| Rainbow.js  | function call    | library, setNames, mutate     |
++-------------+------------------+-------------------------------+
+| Rainbow.js  | string           | "Init", "food_regime"         |
++-------------+------------------+-------------------------------+
+| Rainbow.js  | keyword operator | `<-`, `=`, `>`, `~`, `*`, `$` |
++-------------+------------------+-------------------------------+
+| Rainbow.js  | namespace        | ggplot2                       |
++-------------+------------------+-------------------------------+
 
+Prism.js takes a different approach:
+
+```html
+<pre class="r  language-r"><code class=" language-r">library<span class="token punctuation">(</span>tidyverse<span class="token punctuation">)</span>
+
+urchins <span class="token operator">&lt;-</span> read_csv<span class="token punctuation">(</span><span class="token string">"https://tidymodels.org/start/models/urchins.csv"</span><span class="token punctuation">)</span> <span class="token percent-operator operator">%&gt;%</span>
+  setNames<span class="token punctuation">(</span>c<span class="token punctuation">(</span><span class="token string">"food_regime"</span><span class="token punctuation">,</span> <span class="token string">"initial_volume"</span><span class="token punctuation">,</span> <span class="token string">"width"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token percent-operator operator">%&gt;%</span>
+  mutate<span class="token punctuation">(</span>food_regime <span class="token operator">=</span> factor<span class="token punctuation">(</span>food_regime<span class="token punctuation">,</span> levels <span class="token operator">=</span> c<span class="token punctuation">(</span><span class="token string">"Init"</span><span class="token punctuation">,</span> <span class="token string">"Low"</span><span class="token punctuation">,</span> <span class="token string">"High"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+urchins <span class="token percent-operator operator">%&gt;%</span>
+  group_by<span class="token punctuation">(</span>food_regime<span class="token punctuation">)</span> <span class="token percent-operator operator">%&gt;%</span>
+  summarise<span class="token punctuation">(</span>
+    across<span class="token punctuation">(</span>everything<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> mean<span class="token punctuation">)</span><span class="token punctuation">,</span> n <span class="token operator">=</span> n<span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">)</span>
+
+mean<span class="token punctuation">(</span>urchins<span class="token operator">$</span>width<span class="token punctuation">)</span>
+ggplot2<span class="token operator">::</span>cut_interval<span class="token punctuation">(</span>urchins<span class="token operator">$</span>initial_volume<span class="token punctuation">)</span>
+
+lm<span class="token punctuation">(</span>width <span class="token operator">~</span> initial_volume <span class="token operator">*</span> food_regime<span class="token punctuation">,</span> data <span class="token operator">=</span> urchins<span class="token punctuation">)</span></code></pre>
+```
+
++-------------+-------------+---------------------------------+
+| highlighter |    tokens   |             example             |
++=============+=============+=================================+
+| Prism.js    | operator    | `<-`, `=`, `%>%`, `~`, `*`, `$` |
++-------------+-------------+---------------------------------+
+| Prism.js    | punctuation | `(`, `)`, `,`,                  |
++-------------+-------------+---------------------------------+
+| Prism.js    | string      | "Init", "food_regime"           |
++-------------+-------------+---------------------------------+
+
+All of the JavaScript parsers are lm
+
+### Themes
+
+Themes determine the final appearance of the code. While parsing defines
+the space of possibilities, the theme may not live up to it.
+
+In the last section, we showed that the Rainbow.js parse is more complete
+than highlight.js, since it labels more tokens. The parsing, however,
+only defines the space of possibilities. It's the theme that's responsible
+for the final appearance.
+
+For the Github theme they look almost identical, although neither look anything
+like the actual Github syntax highlighting for R.
+
+![](highlightjs-rainbowjs.svg)
+
+On the left, we have [Highlight.js Github](/projects/r-syntax-highlighting-gallery/highlight.js-github/)
+and on the right [Rainbow.js Github](/projects/r-syntax-highlighting-gallery/rainbow-github/).
+If you look really closely (or follow the links to high-quality Gallery renders)
+you'll see that Rainbow.js operators are _slightly_ darker than the ones in
+Highlight.js.
+
+Even if a parser identifies the token, it's the theme's choice whether to
+emphasize certain tokens.

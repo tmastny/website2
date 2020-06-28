@@ -15,17 +15,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
                       results='show', cache=FALSE, autodep=FALSE)
-
-# knitr::knit_hooks$set( 
-#   source = highlight::hl_hook_source, 
-#   document = highlight::hl_hook_css
-# )
-```
-
-```{r color, echo = FALSE, results='asis'}
-options(crayon.enabled = TRUE)
-old_hooks <- fansi::set_knit_hooks(knitr::knit_hooks, 
-                                   which = c("output", "message", "error"))
 ```
 
 ```{css, echo=FALSE}
@@ -35,25 +24,14 @@ body {
 ```
 
 ```{r}
-blogdown::shortcode_html("highlight", "r", .content = 'urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Initial", "Low", "High")))
-
-urchins
-
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
-  )')
-```
-
-
-```{r}
 #1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12
 library(tidyverse)
 
 ggplot2::diamonds
+
+while (FALSE) {
+
+}
 ```
 
 ## Introduction
@@ -96,7 +74,7 @@ ggplot2::diamonds
 ```
 </div>
 <div class="col-md-6"><h2>AWS Sagemaker</h2>
-```{python}
+```{python, eval=FALSE}
 import pandas as pd
 import numpy as np
 
@@ -107,12 +85,42 @@ df.head()
 </div>
 </div>
 
-```{r}
-blogdown::shortcode_html("highlight", "python", .content = "import pandas as pd
-import numpy as np
+```{python, eval=FALSE}
+def model_stats(model, X_test, y_test):
+    prob = model.predict_proba(X_test)[:,1]
+    pred = model.predict(X_test)
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()")
+    print("roc: {:.2f}".format(roc_auc_score(y_test, prob)))
+    print("prc: {:.2f}".format(average_precision_score(y_test, prob, pos_label=' 50000+.')))
+    print()
+    print(classification_report(y_test, pred))
+
+
+model_stats(model, X_test, y_test)
 ```
+
+```{r eval=FALSE}
+library(tidyverse)
+
+urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
+  setNames(c("food_regime", "initial_volume", "width")) %>%
+  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
+
+urchins %>%
+  group_by(food_regime) %>%
+  summarise(
+    across(everything(), mean), n = n()
+  )
+
+mean(urchins$width)
+ggplot2::cut_interval(urchins$initial_volume)
+
+lm(width ~ initial_volume * food_regime, data = urchins)
+
+while (FALSE) {
+}
+
+18423 * 4
+```
+
 
