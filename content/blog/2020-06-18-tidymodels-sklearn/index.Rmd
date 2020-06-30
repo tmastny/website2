@@ -80,33 +80,7 @@ df.head()
 </div>
 </div>
 
-We have to do a little preprocessing. All the features are numeric,
-but the outcome is binary. R expects categorical outcomes as factors. 
-With sklearn, we need to binarize it. 
-
-<div class="row">
-<div class="col-md-6">## tidymodels
-```{r}
-tree_rec <- recipe(class ~ ., data = cells) %>%
-  step_rm(case) %>%
-  step_string2factor(all_outcomes())
-```
-</div>
-<div class="col-md-6">## sklearn
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
-```
-</div>
-</div>
-
-
-
-
+Split raw data
 <div class="row">
 <div class="col-md-6">## tidymodels
 ```{r}
@@ -131,6 +105,30 @@ df.head()
 </div>
 </div>
 
+
+We have to do a little preprocessing. All the features are numeric,
+but the outcome is binary. R expects categorical outcomes as factors. 
+With sklearn, we need to binarize it. 
+
+<div class="row">
+<div class="col-md-6">## tidymodels
+```{r}
+tree_rec <- recipe(class ~ ., data = cells) %>%
+  step_rm(case) %>%
+  step_string2factor(all_outcomes())
+```
+</div>
+<div class="col-md-6">## sklearn
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
 
 <div class="row">
 <div class="col-md-6">
