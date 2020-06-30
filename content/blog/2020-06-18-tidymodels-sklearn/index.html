@@ -82,7 +82,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#testing-columns">Testing columns</a></li>
+<li><a href="#comparisons">Comparisons</a></li>
 </ul>
 </div>
 
@@ -91,27 +91,6 @@ body {
   max-width: 1000px;
 }
 </style>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb1-3"><a href="#cb1-3"></a></span>
-<span id="cb1-4"><a href="#cb1-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
-<pre><code>## # A tibble: 53,940 x 10
-##    carat cut       color clarity depth table price     x     y     z
-##    &lt;dbl&gt; &lt;ord&gt;     &lt;ord&gt; &lt;ord&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-##  1 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
-##  2 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
-##  3 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
-##  4 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
-##  5 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
-##  6 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
-##  7 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
-##  8 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
-##  9 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
-## 10 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
-## # … with 53,930 more rows</code></pre>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="cf">while</span> (<span class="ot">FALSE</span>) {</span>
-<span id="cb3-2"><a href="#cb3-2"></a></span>
-<span id="cb3-3"><a href="#cb3-3"></a>}</span></code></pre></div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p><a href="https://www.tidymodels.org/">tidymodels</a> is the new framework from
@@ -134,75 +113,142 @@ model tranining and cross-validation, as well as evaluation and comparison.</p>
 there are many conceptual similarities that have helped me understand both
 frameworks better.</p>
 </div>
-<div id="testing-columns" class="section level2">
-<h2>Testing columns</h2>
-<p>Lorem ipsum.</p>
+<div id="comparisons" class="section level2">
+<h2>Comparisons</h2>
+<p>4 Tune Model Parameters</p>
+<p>tidymodels example.</p>
+</div>
+<div class="row">
+<div id="tidymodels" class="section level2 col-md-6">
+<h2>tidymodels</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(tidymodels)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(modeldata)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">library</span>(vip)</span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="kw">library</span>(readr)</span>
+<span id="cb1-5"><a href="#cb1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># data(cells, package = &quot;modeldata&quot;)</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>cells &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;cells.csv&quot;</span>)</span>
+<span id="cb1-8"><a href="#cb1-8"></a></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="kw">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb1-10"><a href="#cb1-10"></a></span>
+<span id="cb1-11"><a href="#cb1-11"></a>cell_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(</span>
+<span id="cb1-12"><a href="#cb1-12"></a>  cells <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(<span class="op">-</span>case),</span>
+<span id="cb1-13"><a href="#cb1-13"></a>  <span class="dt">strata =</span> class</span>
+<span id="cb1-14"><a href="#cb1-14"></a>)</span>
+<span id="cb1-15"><a href="#cb1-15"></a></span>
+<span id="cb1-16"><a href="#cb1-16"></a>cell_train &lt;-<span class="st"> </span><span class="kw">training</span>(cell_split)</span>
+<span id="cb1-17"><a href="#cb1-17"></a>cell_test &lt;-<span class="st"> </span><span class="kw">testing</span>(cell_split)</span></code></pre></div>
+</div>
+<div id="sklearn" class="section level2 col-md-6">
+<h2>sklearn</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-3"><a href="#cb2-3"></a></span>
+<span id="cb2-4"><a href="#cb2-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb2-6"><a href="#cb2-6"></a>df.head()</span></code></pre></div>
+</div>
+</div>
 <div class="row">
 <div class="col-md-6">
-<h2>
-R sagemaker
-</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb4-3"><a href="#cb4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
-<pre><code>## # A tibble: 53,940 x 10
-##    carat cut       color clarity depth table price     x     y     z
-##    &lt;dbl&gt; &lt;ord&gt;     &lt;ord&gt; &lt;ord&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-##  1 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
-##  2 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
-##  3 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
-##  4 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
-##  5 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
-##  6 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
-##  7 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
-##  8 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
-##  9 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
-## 10 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
-## # … with 53,930 more rows</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>tree_model &lt;-<span class="st"> </span><span class="kw">decision_tree</span>(</span>
+<span id="cb3-2"><a href="#cb3-2"></a>  <span class="dt">cost_complexity =</span> <span class="kw">tune</span>(),</span>
+<span id="cb3-3"><a href="#cb3-3"></a>  <span class="dt">tree_depth =</span> <span class="kw">tune</span>()</span>
+<span id="cb3-4"><a href="#cb3-4"></a>) <span class="op">%&gt;%</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="st">  </span><span class="kw">set_engine</span>(<span class="st">&quot;rpart&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="st">  </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span></code></pre></div>
 </div>
 <div class="col-md-6">
-<h2>
-AWS Sagemaker
-</h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb6-3"><a href="#cb6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
-<span id="cb6-6"><a href="#cb6-6"></a>df.head()</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb4-6"><a href="#cb4-6"></a>df.head()</span></code></pre></div>
 </div>
 </div>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">def</span> model_stats(model, X_test, y_test):</span>
-<span id="cb7-2"><a href="#cb7-2"></a>    prob <span class="op">=</span> model.predict_proba(X_test)[:,<span class="dv">1</span>]</span>
-<span id="cb7-3"><a href="#cb7-3"></a>    pred <span class="op">=</span> model.predict(X_test)</span>
-<span id="cb7-4"><a href="#cb7-4"></a></span>
-<span id="cb7-5"><a href="#cb7-5"></a>    <span class="bu">print</span>(<span class="st">&quot;roc: </span><span class="sc">{:.2f}</span><span class="st">&quot;</span>.<span class="bu">format</span>(roc_auc_score(y_test, prob)))</span>
-<span id="cb7-6"><a href="#cb7-6"></a>    <span class="bu">print</span>(<span class="st">&quot;prc: </span><span class="sc">{:.2f}</span><span class="st">&quot;</span>.<span class="bu">format</span>(average_precision_score(y_test, prob, pos_label<span class="op">=</span><span class="st">&#39; 50000+.&#39;</span>)))</span>
-<span id="cb7-7"><a href="#cb7-7"></a>    <span class="bu">print</span>()</span>
-<span id="cb7-8"><a href="#cb7-8"></a>    <span class="bu">print</span>(classification_report(y_test, pred))</span>
-<span id="cb7-9"><a href="#cb7-9"></a></span>
-<span id="cb7-10"><a href="#cb7-10"></a></span>
-<span id="cb7-11"><a href="#cb7-11"></a>model_stats(model, X_test, y_test)</span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb8-2"><a href="#cb8-2"></a></span>
-<span id="cb8-3"><a href="#cb8-3"></a>urchins &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://tidymodels.org/start/models/urchins.csv&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">setNames</span>(<span class="kw">c</span>(<span class="st">&quot;food_regime&quot;</span>, <span class="st">&quot;initial_volume&quot;</span>, <span class="st">&quot;width&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">food_regime =</span> <span class="kw">factor</span>(food_regime, <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;Init&quot;</span>, <span class="st">&quot;Low&quot;</span>, <span class="st">&quot;High&quot;</span>)))</span>
-<span id="cb8-6"><a href="#cb8-6"></a></span>
-<span id="cb8-7"><a href="#cb8-7"></a>urchins <span class="op">%&gt;%</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a><span class="st">  </span><span class="kw">group_by</span>(food_regime) <span class="op">%&gt;%</span></span>
-<span id="cb8-9"><a href="#cb8-9"></a><span class="st">  </span><span class="kw">summarise</span>(</span>
-<span id="cb8-10"><a href="#cb8-10"></a>    <span class="kw">across</span>(<span class="kw">everything</span>(), mean), <span class="dt">n =</span> <span class="kw">n</span>()</span>
-<span id="cb8-11"><a href="#cb8-11"></a>  )</span>
-<span id="cb8-12"><a href="#cb8-12"></a></span>
-<span id="cb8-13"><a href="#cb8-13"></a><span class="kw">mean</span>(urchins<span class="op">$</span>width)</span>
-<span id="cb8-14"><a href="#cb8-14"></a>ggplot2<span class="op">::</span><span class="kw">cut_interval</span>(urchins<span class="op">$</span>initial_volume)</span>
-<span id="cb8-15"><a href="#cb8-15"></a></span>
-<span id="cb8-16"><a href="#cb8-16"></a><span class="kw">lm</span>(width <span class="op">~</span><span class="st"> </span>initial_volume <span class="op">*</span><span class="st"> </span>food_regime, <span class="dt">data =</span> urchins)</span>
-<span id="cb8-17"><a href="#cb8-17"></a></span>
-<span id="cb8-18"><a href="#cb8-18"></a><span class="cf">while</span> (<span class="ot">FALSE</span>) {</span>
-<span id="cb8-19"><a href="#cb8-19"></a>}</span>
-<span id="cb8-20"><a href="#cb8-20"></a></span>
-<span id="cb8-21"><a href="#cb8-21"></a><span class="dv">18423</span> <span class="op">*</span><span class="st"> </span><span class="dv">4</span></span></code></pre></div>
+One advantage here is sensible defaults for tidymodel tuning grids.
+<div class="row">
+<div class="col-md-6">
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>tree_grid &lt;-<span class="st"> </span><span class="kw">grid_regular</span>(</span>
+<span id="cb5-2"><a href="#cb5-2"></a>  <span class="kw">cost_complexity</span>(),</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="kw">tree_depth</span>(),</span>
+<span id="cb5-4"><a href="#cb5-4"></a>  <span class="dt">levels =</span> <span class="dv">5</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>)</span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a>tree_grid</span></code></pre></div>
+<pre><code>## # A tibble: 25 x 2
+##    cost_complexity tree_depth
+##              &lt;dbl&gt;      &lt;int&gt;
+##  1    0.0000000001          1
+##  2    0.0000000178          1
+##  3    0.00000316            1
+##  4    0.000562              1
+##  5    0.1                   1
+##  6    0.0000000001          4
+##  7    0.0000000178          4
+##  8    0.00000316            4
+##  9    0.000562              4
+## 10    0.1                   4
+## # … with 15 more rows</code></pre>
+</div>
+<div class="col-md-6">
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb7-3"><a href="#cb7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb7-6"><a href="#cb7-6"></a>df.head()</span></code></pre></div>
+</div>
+</div>
+<div class="row">
+<div class="col-md-6">
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">set.seed</span>(<span class="dv">234</span>)</span>
+<span id="cb8-2"><a href="#cb8-2"></a>cell_folds &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(cell_train)</span></code></pre></div>
+</div>
+<div class="col-md-6">
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb9-3"><a href="#cb9-3"></a></span>
+<span id="cb9-4"><a href="#cb9-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb9-5"><a href="#cb9-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb9-6"><a href="#cb9-6"></a>df.head()</span></code></pre></div>
+</div>
+</div>
+<p>Both structures have a way to combine all the components of the model.</p>
+<div class="row">
+<div class="col-md-6">
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">set.seed</span>(<span class="dv">345</span>)</span>
+<span id="cb10-2"><a href="#cb10-2"></a></span>
+<span id="cb10-3"><a href="#cb10-3"></a>tree_wf &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4"></a><span class="st">  </span><span class="kw">add_model</span>(tree_model) <span class="op">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a><span class="st">  </span><span class="kw">add_formula</span>(class <span class="op">~</span><span class="st"> </span>.)</span></code></pre></div>
+</div>
+<div class="col-md-6">
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb11-3"><a href="#cb11-3"></a></span>
+<span id="cb11-4"><a href="#cb11-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb11-6"><a href="#cb11-6"></a>df.head()</span></code></pre></div>
+</div>
+</div>
+<p>Then to fit:</p>
+<p>Both structures have a way to combine all the components of the model.</p>
+<div class="row">
+<div class="col-md-6">
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>tree_res &lt;-<span class="st"> </span>tree_wf <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb12-2"><a href="#cb12-2"></a><span class="st">  </span><span class="kw">tune_grid</span>(</span>
+<span id="cb12-3"><a href="#cb12-3"></a>    <span class="dt">resamples =</span> cell_folds,</span>
+<span id="cb12-4"><a href="#cb12-4"></a>    <span class="dt">grid =</span> tree_grid</span>
+<span id="cb12-5"><a href="#cb12-5"></a>  )</span></code></pre></div>
+</div>
+<div class="col-md-6">
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb13-2"><a href="#cb13-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb13-3"><a href="#cb13-3"></a></span>
+<span id="cb13-4"><a href="#cb13-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
+<span id="cb13-5"><a href="#cb13-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
+<span id="cb13-6"><a href="#cb13-6"></a>df.head()</span></code></pre></div>
+</div>
 </div>

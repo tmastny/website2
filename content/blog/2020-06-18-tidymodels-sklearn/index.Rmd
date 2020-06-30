@@ -23,17 +23,6 @@ body {
 }
 ```
 
-```{r}
-#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12
-library(tidyverse)
-
-ggplot2::diamonds
-
-while (FALSE) {
-
-}
-```
-
 ## Introduction
 
 [tidymodels](https://www.tidymodels.org/) is the new framework from
@@ -60,20 +49,26 @@ I think you'll find that while both frameworks have their own unique advantages,
 there are many conceptual similarities that have helped me understand both
 frameworks better.
 
-## Testing columns
 
-Lorem ipsum.
+## Comparisons
+
+4 Tune Model Parameters 
+
+tidymodels example.
 
 <div class="row">
-<div class="col-md-6"><h2>R sagemaker</h2>
+<div class="col-md-6">## tidymodels
 ```{r}
-#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12
-library(tidyverse)
+library(tidymodels)
+library(modeldata)
+library(vip)
+library(readr)
 
-ggplot2::diamonds
+# data(cells, package = "modeldata")
+cells <- read_csv("cells.csv")
 ```
 </div>
-<div class="col-md-6"><h2>AWS Sagemaker</h2>
+<div class="col-md-6">## sklearn
 ```{python, eval=FALSE}
 import pandas as pd
 import numpy as np
@@ -85,42 +80,257 @@ df.head()
 </div>
 </div>
 
+We have to do a little preprocessing. All the features are numeric,
+but the outcome is binary. R expects categorical outcomes as factors. 
+With sklearn, we need to binarize it. 
+
+<div class="row">
+<div class="col-md-6">## tidymodels
+```{r}
+tree_rec <- recipe(class ~ ., data = cells) %>%
+  step_rm(case) %>%
+  step_string2factor(all_outcomes())
+```
+</div>
+<div class="col-md-6">## sklearn
 ```{python, eval=FALSE}
-def model_stats(model, X_test, y_test):
-    prob = model.predict_proba(X_test)[:,1]
-    pred = model.predict(X_test)
+import pandas as pd
+import numpy as np
 
-    print("roc: {:.2f}".format(roc_auc_score(y_test, prob)))
-    print("prc: {:.2f}".format(average_precision_score(y_test, prob, pos_label=' 50000+.')))
-    print()
-    print(classification_report(y_test, pred))
-
-
-model_stats(model, X_test, y_test)
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
 ```
+</div>
+</div>
 
-```{r eval=FALSE}
-library(tidyverse)
 
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
 
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
+
+<div class="row">
+<div class="col-md-6">## tidymodels
+```{r}
+cell_split <- initial_split(
+  cells,
+  strata = class
+)
+
+cell_train <- training(cell_split)
+cell_test <- testing(cell_split)
+```
+</div>
+<div class="col-md-6">## sklearn
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_model <- decision_tree(
+  cost_complexity = tune(),
+  tree_depth = tune()
+) %>%
+  set_engine("rpart") %>%
+  set_mode("classification")
+```
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+One advantage here is sensible defaults for tidymodel tuning grids. 
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_grid <- grid_regular(
+  cost_complexity(),
+  tree_depth(),
+  levels = 5
+)
+
+tree_grid
+```
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+set.seed(234)
+cell_folds <- vfold_cv(cell_train)
+```
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+
+Both structures have a way to combine all the components of the model. 
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+set.seed(345)
+
+tree_wf <- workflow() %>%
+  add_model(tree_model) %>%
+  add_recipe(tree_rec)
+```
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+
+
+Then to fit: 
+
+Both structures have a way to combine all the components of the model. 
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_res <- tree_wf %>% 
+  tune_grid(
+    resamples = cell_folds,
+    grid = tree_grid
   )
+```
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
 
-mean(urchins$width)
-ggplot2::cut_interval(urchins$initial_volume)
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
 
-lm(width ~ initial_volume * food_regime, data = urchins)
 
-while (FALSE) {
-}
 
-18423 * 4
+Get metrics
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+best_param <- tree_res %>%
+  select_best("roc_auc")
+
+tree_res %>%
+  show_best("roc_auc")
 ```
 
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
 
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+Variable importance
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+best_tree <- tree_wf %>%
+  finalize_workflow(best_param) %>%
+  fit(data = cell_train)
+
+best_tree %>%
+  pull_workflow_fit() %>%
+  vip()
+```
+
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+
+Final validation
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+best_tree %>%
+  last_fit(cell_split) %>%
+  collect_metrics()
+```
+
+</div>
+<div class="col-md-6">
+```{python, eval=FALSE}
+import pandas as pd
+import numpy as np
+
+input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
+df = pd.read_csv(input_data, nrows=1000)
+df.head()
+```
+</div>
+</div>
+
+```{r}
+fs::dir_ls()
+```
