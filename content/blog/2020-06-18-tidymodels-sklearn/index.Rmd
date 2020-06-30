@@ -3,13 +3,12 @@ title: 'Tuning and Cross-validation with tidymodels and scikit learn'
 author: ~
 date: '2020-06-30'
 categories: []
-tags: []
+tags: ['sklearn', 'tidymodels']
 description:
 draft: true
 output:
   blogdown::html_page:
     toc: true
-    highlight: pygments
 ---
 
 ```{r setup, include=FALSE}
@@ -50,11 +49,13 @@ there are many conceptual similarities that have helped me understand both
 frameworks better.
 
 
-## Comparisons
+## tidymodels and sklearn
 
-4 Tune Model Parameters 
+We'll go through this tidymodels example: 
+[4 Tune Model Parameters](https://www.tidymodels.org/start/tuning/) 
+side-by-sideline with sklearn.
 
-tidymodels example.
+Notebook saved here: https://github.com/tmastny/sageprocess/blob/master/vignettes/sklearn-tidymodels-example1.ipynb
 
 <div class="row">
 <div class="col-md-6">## tidymodels
@@ -64,18 +65,16 @@ library(modeldata)
 library(vip)
 library(readr)
 
-# data(cells, package = "modeldata")
 cells <- read_csv("cells.csv")
 ```
 </div>
 <div class="col-md-6">## sklearn
-```{python, eval=FALSE}
+```{python}
 import pandas as pd
 import numpy as np
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+np.random.seed(753)
+cells = pd.read_csv("cells.csv")
 ```
 </div>
 </div>
@@ -94,13 +93,18 @@ cell_test <- testing(cell_split)
 ```
 </div>
 <div class="col-md-6">## sklearn
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
+```{python}
+from sklearn.model_selection import train_test_split
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+features = cells.drop('class', axis=1)
+outcome = cells['class']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    features, 
+    outcome, 
+    test_size=0.25, 
+    stratify=outcome
+)
 ```
 </div>
 </div>
@@ -108,7 +112,9 @@ df.head()
 
 We have to do a little preprocessing. All the features are numeric,
 but the outcome is binary. R expects categorical outcomes as factors. 
-With sklearn, we need to binarize it. 
+Python automatically changes outcome strings with `LabelBinarizer`. 
+We also use the identity transformation `FunctionTransformer()` to remove
+the `case` column by dropping it from selected columns.
 
 <div class="row">
 <div class="col-md-6">## tidymodels
@@ -119,16 +125,20 @@ tree_rec <- recipe(class ~ ., data = cells) %>%
 ```
 </div>
 <div class="col-md-6">## sklearn
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
+```{python}
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.compose import make_column_transformer
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+tree_preprocess = make_column_transformer(
+    (FunctionTransformer(), features.drop('case', axis=1).columns)
+)
 ```
 </div>
 </div>
+
+With R, we chose the implementation using `set_engine` and `set_mode`. 
+For sklearn, if we wanted a different implementation we would import
+a different module that implemented the sklearn interface. 
 
 <div class="row">
 <div class="col-md-6">
@@ -142,18 +152,43 @@ tree_model <- decision_tree(
 ```
 </div>
 <div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+```{python}
+from sklearn.tree import DecisionTreeClassifier
 ```
 </div>
 </div>
 
-One advantage here is sensible defaults for tidymodel tuning grids. 
+
+
+Both frameworks have a way to combine all the components of the model. 
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+set.seed(345)
+
+tree_wf <- workflow() %>%
+  add_model(tree_model) %>%
+  add_recipe(tree_rec)
+```
+</div>
+<div class="col-md-6">
+```{python}
+from sklearn.pipeline import make_pipeline
+
+tree_pipeline = make_pipeline(
+    tree_preprocess,
+    DecisionTreeClassifier()
+)
+```
+</div>
+</div>
+
+
+Next, we can come up with tuning grids. tidymodels has sensible defaults
+for all parameters. With sklearn, you typically have to come up with them 
+yourself.
+
 <div class="row">
 <div class="col-md-6">
 ```{r}
@@ -167,71 +202,27 @@ tree_grid
 ```
 </div>
 <div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+```{python}
+param_grid = {
+    'decisiontreeclassifier__max_depth': [1, 4, 8, 11, 15],
+    'decisiontreeclassifier__ccp_alpha': [
+        0.0000000001, 0.0000000178, 0.00000316, 0.000562, 0.1
+    ] 
+}
 ```
 </div>
 </div>
 
+Next, we construct and run cross-validation. By default, tidymodels calculates
+both accuracy and area under the ROC curve. We'll need to add those manually
+to sklearn's metrics.
 
 <div class="row">
 <div class="col-md-6">
-```{r}
+```{r cache=TRUE}
 set.seed(234)
-cell_folds <- vfold_cv(cell_train)
-```
-</div>
-<div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
+cell_folds <- vfold_cv(cell_train, v = 5)
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
-```
-</div>
-</div>
-
-
-Both structures have a way to combine all the components of the model. 
-
-<div class="row">
-<div class="col-md-6">
-```{r}
-set.seed(345)
-
-tree_wf <- workflow() %>%
-  add_model(tree_model) %>%
-  add_recipe(tree_rec)
-```
-</div>
-<div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
-```
-</div>
-</div>
-
-
-
-Then to fit: 
-
-Both structures have a way to combine all the components of the model. 
-
-<div class="row">
-<div class="col-md-6">
-```{r}
 tree_res <- tree_wf %>% 
   tune_grid(
     resamples = cell_folds,
@@ -240,20 +231,30 @@ tree_res <- tree_wf %>%
 ```
 </div>
 <div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
+```{python}
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+tree_scorer = {
+    'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
+    'accuray': make_scorer(accuracy_score)
+}
+
+tree_tuner = GridSearchCV(
+    tree_pipeline, param_grid, cv=5, 
+    scoring=tree_scorer,
+    refit='roc_auc'
+)
+
+tree_res = tree_tuner.fit(X_train, y_train)
 ```
 </div>
 </div>
 
 
-
-Get metrics
+List training metrics and hyperparamterics.
 
 <div class="row">
 <div class="col-md-6">
@@ -261,24 +262,44 @@ Get metrics
 best_param <- tree_res %>%
   select_best("roc_auc")
 
+best_param
+```
+</div>
+<div class="col-md-6">
+```{python}
+tree_res.best_params_
+```
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-6">
+```{r}
 tree_res %>%
   show_best("roc_auc")
 ```
-
 </div>
 <div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+```{python}
+pd.DataFrame(tree_res.cv_results_) \
+    .sort_values('mean_test_roc_auc', ascending=False) \
+    .rename(columns={
+        'param_decisiontreeclassifier__ccp_alpha': 'cost',
+        'param_decisiontreeclassifier__max_depth': 'max_depth'
+    }) \
+    [[
+        'cost', 'max_depth',
+        'mean_test_accuray', 'mean_test_roc_auc'
+    ]] \
+    .head(5)
 ```
 </div>
 </div>
 
-Variable importance
+
+Variable importance. This is where sklearn becomes significantly more difficult.
+Column name metadata is not saved in the final output, so we have to
+manually add column names back to an ordered list of feature importances.
 
 <div class="row">
 <div class="col-md-6">
@@ -294,13 +315,16 @@ best_tree %>%
 
 </div>
 <div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
+```{python}
+best_tree = tree_res.best_estimator_.named_steps['decisiontreeclassifier']
+ct = tree_res.best_estimator_.named_steps['columntransformer']
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+feature_importances = pd.DataFrame({'name': ct.transformers_[0][2]}) \
+    .assign(importance = best_tree.feature_importances_) \
+    .sort_values('importance', ascending=False)
+    
+import seaborn as sns
+sns.barplot(x='importance', y='name', data=feature_importances.head(10))
 ```
 </div>
 </div>
@@ -318,17 +342,11 @@ best_tree %>%
 
 </div>
 <div class="col-md-6">
-```{python, eval=FALSE}
-import pandas as pd
-import numpy as np
-
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+```{python}
+pd.DataFrame.from_records([
+    (name, scorer(tree_res.best_estimator_, X_test, y_test)) 
+    for name, scorer in tree_scorer.items()
+], columns=['metric', 'score'])
 ```
 </div>
 </div>
-
-```{r}
-fs::dir_ls()
-```
