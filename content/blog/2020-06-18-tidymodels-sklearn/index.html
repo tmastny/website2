@@ -73,10 +73,8 @@ np.random.seed(753)
 cells = pd.read_csv(&quot;cells.csv&quot;)</code></pre>
 </div>
 </div>
-Split raw data
 <div class="row">
-<div id="tidymodels-1" class="section level2 col-md-6">
-<h2>tidymodels</h2>
+<div class="col-md-6">
 <pre class="r"><code>cell_split &lt;- initial_split(
   cells,
   strata = class
@@ -85,8 +83,7 @@ Split raw data
 cell_train &lt;- training(cell_split)
 cell_test &lt;- testing(cell_split)</code></pre>
 </div>
-<div id="sklearn-1" class="section level2 col-md-6">
-<h2>sklearn</h2>
+<div class="col-md-6">
 <pre class="python"><code>from sklearn.model_selection import train_test_split
 
 features = cells.drop(&#39;class&#39;, axis=1)
@@ -106,14 +103,12 @@ Python automatically changes outcome strings with <code>LabelBinarizer</code>.
 We also use the identity transformation <code>FunctionTransformer()</code> to remove
 the <code>case</code> column by dropping it from selected columns.</p>
 <div class="row">
-<div id="tidymodels-2" class="section level2 col-md-6">
-<h2>tidymodels</h2>
+<div class="col-md-6">
 <pre class="r"><code>tree_rec &lt;- recipe(class ~ ., data = cells) %&gt;%
   step_rm(case) %&gt;%
   step_string2factor(all_outcomes())</code></pre>
 </div>
-<div id="sklearn-2" class="section level2 col-md-6">
-<h2>sklearn</h2>
+<div class="col-md-6">
 <pre class="python"><code>from sklearn.preprocessing import FunctionTransformer
 from sklearn.compose import make_column_transformer
 
@@ -312,8 +307,8 @@ sns.barplot(x=&#39;importance&#39;, y=&#39;name&#39;, data=feature_importances.h
 <pre><code>## # A tibble: 2 x 3
 ##   .metric  .estimator .estimate
 ##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
-## 1 accuracy binary         0.802
-## 2 roc_auc  binary         0.859</code></pre>
+## 1 accuracy binary         0.778
+## 2 roc_auc  binary         0.827</code></pre>
 </div>
 <div class="col-md-6">
 <pre class="python"><code>pd.DataFrame.from_records([

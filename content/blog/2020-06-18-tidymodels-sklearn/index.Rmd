@@ -79,9 +79,8 @@ cells = pd.read_csv("cells.csv")
 </div>
 </div>
 
-Split raw data
 <div class="row">
-<div class="col-md-6">## tidymodels
+<div class="col-md-6">
 ```{r}
 cell_split <- initial_split(
   cells,
@@ -92,7 +91,7 @@ cell_train <- training(cell_split)
 cell_test <- testing(cell_split)
 ```
 </div>
-<div class="col-md-6">## sklearn
+<div class="col-md-6">
 ```{python}
 from sklearn.model_selection import train_test_split
 
@@ -117,14 +116,14 @@ We also use the identity transformation `FunctionTransformer()` to remove
 the `case` column by dropping it from selected columns.
 
 <div class="row">
-<div class="col-md-6">## tidymodels
+<div class="col-md-6">
 ```{r}
 tree_rec <- recipe(class ~ ., data = cells) %>%
   step_rm(case) %>%
   step_string2factor(all_outcomes())
 ```
 </div>
-<div class="col-md-6">## sklearn
+<div class="col-md-6">
 ```{python}
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.compose import make_column_transformer
