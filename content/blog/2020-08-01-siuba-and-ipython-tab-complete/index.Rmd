@@ -45,9 +45,81 @@ I worked on a small PR with Michael Chow
 ([Github](https://github.com/machow), [Twitter](https://twitter.com/chowthedog)),
 the creator of Siuba to make this a reality!
 
-And I'm excited to share what I learned about IPython and Siuba in the progress.
+I'm excited to share what I learned about IPython and Siuba in the progress.
 
-# Siuba
+# Completion
+
+How does RStudio tab-complete work?
+
+The RStudio tab-completer is context aware: 
+it knows that the cursor is in a `%>%` pipe chain, and that the `mtcars`
+data frame is the input. 
+
+It then inspects the `mtcars` data frame for column names
+and suggests them during tab-completion.
+
+We took a similar approach with Siuba.
+
+## IPython and Completions
+
+We need a way to inspect Python objects and find relevant context.
+
+The secret ingredient here is IPython: 
+not only does IPython power (python) Jupyter notebooks,
+but everything in IPython _**is also a Python object**_.
+
+This means we can search, inspect, find, and modify everything in the
+notebook programmatically!
+
+
+### Environment
+
+First, we want find all data frames defined in the environment.
+
+There a couple different ways to do this, but IPython has built
+short-cut using 
+[magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-who_ls).
+
+```{python, eval=FALSE}
+IPython.get_ipython().run_line_magic("who_ls", "DataFrame")
+```
+
+![](carbon-env.svg)
+
+## Commands
+
+After finding candidate data frames, we want find the data frame
+in the most relevant context. 
+At the moment, that's defined to be the data frame
+referenced in the most recent input.
+
+![](carbon-code.svg)
+
+I think there's a lot of room for improvement. RStudio definitely
+has a more sophisticated method, because it doesn't rely on previously 
+executed code. 
+
+But it works surprisingly well,
+and once you know the quirk you can easily fire off a new input with the
+data frame you want to complete to get it working again.
+
+
+## Completion
+
+This is my favorite part. Know that you can think of `_` as a placeholder
+for the actual data frame (see [Appendix Siuba](#siuba) for more details).
+
+Well, we literally put the data frame object into the placeholder. 
+Effectively, IPython runs tab-completion on `df.<TAB>`!
+
+![](df-placeholder.svg)
+
+This also has a side benefit of working really well with pandas Series methods,
+so things like `_.hp.<TAB>` also provide suggestions.
+
+# Appendix
+
+## Siuba
 
 One major syntactical difference between Siuba and dplyr is how
 columns are referenced.
@@ -77,100 +149,7 @@ which is very similar to how I wrote the expression in Siuba:
 `_` stands in for the actual name of the data frame, 
 and `.` is used for column names or attributes.
 
-See [Why not `hp`?](#why-not-hp) for more.
-
-# Completion
-
-So how does RStudio tab-complete work, and how did we figure out how to do it
-in Siuba?
-
-The RStudio tab-completer is context aware: 
-it knows that the cursor is in a `%>%` pipe chain, and that the `mtcars`
-data frame is the input. 
-
-It then inspects the `mtcars` data frame for column names
-and suggests them during tab-completion.
-
-We took a similar approach with Siuba.
-
-## IPython and Completions
-
-We'll need a way to inspect Python objects and find relevant context.
-
-The secret ingredient here is IPython: 
-not only does IPython power (python) Jupyter notebooks,
-but everything in IPython _**is also a Python object**_.
-
-This means we can search, inspect, find, and modify everything in the
-notebook programmatically!
-
-
-### Environment
-
-First, we want find all (if any) data frames are defined in the environment.
-
-There a couple different ways to do this, but IPython has built
-short-cut using 
-[magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-who_ls).
-
-```{python, eval=FALSE}
-IPython.get_ipython().run_line_magic("who_ls", "DataFrame")
-```
-
-![](carbon-env.svg)
-
-## Commands
-
-After finding candidate data frames, we want find the data frame
-in the most relevant context. 
-At the moment, that's defined to be the data frame
-referenced in the most recent input.
-
-![](carbon-code.svg)
-
-I think there's a lot of room to improve here. For example, RStudio definitely
-has a more sophisticated method. But it works surprisingly well,
-and once you know the quirk you can easily fire off a new input with the
-data frame you want to complete to make sure it's working.
-
-
-## Completion
-
-This is my favorite part: remember how I said that `_` is a placeholder
-for the data frame?
-
-Well, we literally put the data frame object into the placeholder. 
-Effectively, IPython runs tab-completion on `df.<TAB>`!
-
-![](df-placeholder.svg)
-
-This also has a side benefit of working really well with pandas Series methods,
-so things like `_.hp.<TAB>` also provide suggestions.
-
-# Appendix
-
-## Python and Basic Completion
-
-Normal tab-completion in Python isn't very magical. 
-All attributes and methods that don't start with an underscore are
-suggested. The names of these attributes and methods are easily found
-with the built-in function [`dir`](https://docs.python.org/3/library/functions.html#dir).
-
-Simple customization can be added by defining a method named
-[`__dir__`](https://docs.python.org/3/reference/datamodel.html#object.__dir__)
-in the object. 
-
-These methods are what [IPython](https://ipython.readthedocs.io/en/stable/config/integrating.html)
-and Jupyter notebooks use by default. 
-And pandas provides [tab-completion](https://github.com/pandas-dev/pandas/pull/5050/files#diff-9c718a39eb63c1bfac4fbeacf2906ffdR56-R60)
-for data frame columns by defining the the custom `__dir__` method
-
-Siuba's needs are more complicated. There's no column information stored
-within the data pronoun `_`. We need to somehow search the surrounding context
-for a suitable data frame. That requires IPython.
-
-
-## Why not `hp`?
+### Why not `hp`?
 
 Why can't we just use `hp` like in R? There's a couple reasons.
 
@@ -189,3 +168,27 @@ In fact, if you really want to, you can almost make this work:
 the creator pandas, did an experiment in 2011 showing how something like this 
 could be possible in Python. But he also concluded that this didn't really
 fit into the Python philosophy.
+
+
+
+## Basic Python Completion
+
+Normal tab-completion in Python isn't very magical. 
+All attributes and methods that don't start with an underscore are
+suggested. The names of these attributes and methods are easily found
+with the built-in function [`dir`](https://docs.python.org/3/library/functions.html#dir).
+
+Simple customization can be added by defining a method named
+[`__dir__`](https://docs.python.org/3/reference/datamodel.html#object.__dir__)
+in the object. 
+
+These methods are what [IPython](https://ipython.readthedocs.io/en/stable/config/integrating.html)
+and Jupyter notebooks use by default. 
+And pandas provides [tab-completion](https://github.com/pandas-dev/pandas/pull/5050/files#diff-9c718a39eb63c1bfac4fbeacf2906ffdR56-R60)
+for data frame columns by defining the the custom `__dir__` method
+
+Siuba's needs are more complicated. There's no column information stored
+within the data pronoun `_`. We need to search the surrounding context
+for a suitable data frame and that requires IPython.
+
+

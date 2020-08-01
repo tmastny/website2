@@ -15,7 +15,6 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#siuba">Siuba</a></li>
 <li><a href="#completion">Completion</a>
 <ul>
 <li><a href="#ipython-and-completions">IPython and Completions</a>
@@ -27,8 +26,11 @@ output:
 </ul></li>
 <li><a href="#appendix">Appendix</a>
 <ul>
-<li><a href="#python-and-basic-completion">Python and Basic Completion</a></li>
+<li><a href="#siuba">Siuba</a>
+<ul>
 <li><a href="#why-not-hp">Why not <code>hp</code>?</a></li>
+</ul></li>
+<li><a href="#basic-python-completion">Basic Python Completion</a></li>
 </ul></li>
 </ul>
 </div>
@@ -50,10 +52,64 @@ data frames, as well as SQL and Spark
 <p>I worked on a small PR with Michael Chow
 (<a href="https://github.com/machow">Github</a>, <a href="https://twitter.com/chowthedog">Twitter</a>),
 the creator of Siuba to make this a reality!</p>
-<p>And I’m excited to share what I learned about IPython and Siuba in the progress.</p>
+<p>I’m excited to share what I learned about IPython and Siuba in the progress.</p>
 </div>
-<div id="siuba" class="section level1">
-<h1>Siuba</h1>
+<div id="completion" class="section level1">
+<h1>Completion</h1>
+<p>How does RStudio tab-complete work?</p>
+<p>The RStudio tab-completer is context aware:
+it knows that the cursor is in a <code>%&gt;%</code> pipe chain, and that the <code>mtcars</code>
+data frame is the input.</p>
+<p>It then inspects the <code>mtcars</code> data frame for column names
+and suggests them during tab-completion.</p>
+<p>We took a similar approach with Siuba.</p>
+<div id="ipython-and-completions" class="section level2">
+<h2>IPython and Completions</h2>
+<p>We need a way to inspect Python objects and find relevant context.</p>
+<p>The secret ingredient here is IPython:
+not only does IPython power (python) Jupyter notebooks,
+but everything in IPython <em><strong>is also a Python object</strong></em>.</p>
+<p>This means we can search, inspect, find, and modify everything in the
+notebook programmatically!</p>
+<div id="environment" class="section level3">
+<h3>Environment</h3>
+<p>First, we want find all data frames defined in the environment.</p>
+<p>There a couple different ways to do this, but IPython has built
+short-cut using
+<a href="https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-who_ls">magics</a>.</p>
+<pre class="python"><code>IPython.get_ipython().run_line_magic(&quot;who_ls&quot;, &quot;DataFrame&quot;)</code></pre>
+<p><img src="carbon-env.svg" /></p>
+</div>
+</div>
+<div id="commands" class="section level2">
+<h2>Commands</h2>
+<p>After finding candidate data frames, we want find the data frame
+in the most relevant context.
+At the moment, that’s defined to be the data frame
+referenced in the most recent input.</p>
+<p><img src="carbon-code.svg" /></p>
+<p>I think there’s a lot of room for improvement. RStudio definitely
+has a more sophisticated method, because it doesn’t rely on previously
+executed code.</p>
+<p>But it works surprisingly well,
+and once you know the quirk you can easily fire off a new input with the
+data frame you want to complete to get it working again.</p>
+</div>
+<div id="completion-1" class="section level2">
+<h2>Completion</h2>
+<p>This is my favorite part. Know that you can think of <code>_</code> as a placeholder
+for the actual data frame (see <a href="#siuba">Appendix Siuba</a> for more details).</p>
+<p>Well, we literally put the data frame object into the placeholder.
+Effectively, IPython runs tab-completion on <code>df.&lt;TAB&gt;</code>!</p>
+<p><img src="df-placeholder.svg" /></p>
+<p>This also has a side benefit of working really well with pandas Series methods,
+so things like <code>_.hp.&lt;TAB&gt;</code> also provide suggestions.</p>
+</div>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="siuba" class="section level2">
+<h2>Siuba</h2>
 <p>One major syntactical difference between Siuba and dplyr is how
 columns are referenced.</p>
 <p>In dplyr, we just write the name of the column:</p>
@@ -70,80 +126,8 @@ from dplyr. For example, you can also write the dplyr expression like this:</p>
 <p>which is very similar to how I wrote the expression in Siuba:
 <code>_</code> stands in for the actual name of the data frame,
 and <code>.</code> is used for column names or attributes.</p>
-<p>See <a href="#why-not-hp">Why not <code>hp</code>?</a> for more.</p>
-</div>
-<div id="completion" class="section level1">
-<h1>Completion</h1>
-<p>So how does RStudio tab-complete work, and how did we figure out how to do it
-in Siuba?</p>
-<p>The RStudio tab-completer is context aware:
-it knows that the cursor is in a <code>%&gt;%</code> pipe chain, and that the <code>mtcars</code>
-data frame is the input.</p>
-<p>It then inspects the <code>mtcars</code> data frame for column names
-and suggests them during tab-completion.</p>
-<p>We took a similar approach with Siuba.</p>
-<div id="ipython-and-completions" class="section level2">
-<h2>IPython and Completions</h2>
-<p>We’ll need a way to inspect Python objects and find relevant context.</p>
-<p>The secret ingredient here is IPython:
-not only does IPython power (python) Jupyter notebooks,
-but everything in IPython <em><strong>is also a Python object</strong></em>.</p>
-<p>This means we can search, inspect, find, and modify everything in the
-notebook programmatically!</p>
-<div id="environment" class="section level3">
-<h3>Environment</h3>
-<p>First, we want find all (if any) data frames are defined in the environment.</p>
-<p>There a couple different ways to do this, but IPython has built
-short-cut using
-<a href="https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-who_ls">magics</a>.</p>
-<pre class="python"><code>IPython.get_ipython().run_line_magic(&quot;who_ls&quot;, &quot;DataFrame&quot;)</code></pre>
-<p><img src="carbon-env.svg" /></p>
-</div>
-</div>
-<div id="commands" class="section level2">
-<h2>Commands</h2>
-<p>After finding candidate data frames, we want find the data frame
-in the most relevant context.
-At the moment, that’s defined to be the data frame
-referenced in the most recent input.</p>
-<p><img src="carbon-code.svg" /></p>
-<p>I think there’s a lot of room to improve here. For example, RStudio definitely
-has a more sophisticated method. But it works surprisingly well,
-and once you know the quirk you can easily fire off a new input with the
-data frame you want to complete to make sure it’s working.</p>
-</div>
-<div id="completion-1" class="section level2">
-<h2>Completion</h2>
-<p>This is my favorite part: remember how I said that <code>_</code> is a placeholder
-for the data frame?</p>
-<p>Well, we literally put the data frame object into the placeholder.
-Effectively, IPython runs tab-completion on <code>df.&lt;TAB&gt;</code>!</p>
-<p><img src="df-placeholder.svg" /></p>
-<p>This also has a side benefit of working really well with pandas Series methods,
-so things like <code>_.hp.&lt;TAB&gt;</code> also provide suggestions.</p>
-</div>
-</div>
-<div id="appendix" class="section level1">
-<h1>Appendix</h1>
-<div id="python-and-basic-completion" class="section level2">
-<h2>Python and Basic Completion</h2>
-<p>Normal tab-completion in Python isn’t very magical.
-All attributes and methods that don’t start with an underscore are
-suggested. The names of these attributes and methods are easily found
-with the built-in function <a href="https://docs.python.org/3/library/functions.html#dir"><code>dir</code></a>.</p>
-<p>Simple customization can be added by defining a method named
-<a href="https://docs.python.org/3/reference/datamodel.html#object.__dir__"><code>__dir__</code></a>
-in the object.</p>
-<p>These methods are what <a href="https://ipython.readthedocs.io/en/stable/config/integrating.html">IPython</a>
-and Jupyter notebooks use by default.
-And pandas provides <a href="https://github.com/pandas-dev/pandas/pull/5050/files#diff-9c718a39eb63c1bfac4fbeacf2906ffdR56-R60">tab-completion</a>
-for data frame columns by defining the the custom <code>__dir__</code> method</p>
-<p>Siuba’s needs are more complicated. There’s no column information stored
-within the data pronoun <code>_</code>. We need to somehow search the surrounding context
-for a suitable data frame. That requires IPython.</p>
-</div>
-<div id="why-not-hp" class="section level2">
-<h2>Why not <code>hp</code>?</h2>
+<div id="why-not-hp" class="section level3">
+<h3>Why not <code>hp</code>?</h3>
 <p>Why can’t we just use <code>hp</code> like in R? There’s a couple reasons.</p>
 <p>Python doesn’t have the tools built-in to make this easy.
 By default, Python would try to search for the value of <code>hp</code> in the environment,
@@ -158,5 +142,23 @@ In R this kind of stuff is normal, but in Python it would be quite surprising.</
 the creator pandas, did an experiment in 2011 showing how something like this
 could be possible in Python. But he also concluded that this didn’t really
 fit into the Python philosophy.</p>
+</div>
+</div>
+<div id="basic-python-completion" class="section level2">
+<h2>Basic Python Completion</h2>
+<p>Normal tab-completion in Python isn’t very magical.
+All attributes and methods that don’t start with an underscore are
+suggested. The names of these attributes and methods are easily found
+with the built-in function <a href="https://docs.python.org/3/library/functions.html#dir"><code>dir</code></a>.</p>
+<p>Simple customization can be added by defining a method named
+<a href="https://docs.python.org/3/reference/datamodel.html#object.__dir__"><code>__dir__</code></a>
+in the object.</p>
+<p>These methods are what <a href="https://ipython.readthedocs.io/en/stable/config/integrating.html">IPython</a>
+and Jupyter notebooks use by default.
+And pandas provides <a href="https://github.com/pandas-dev/pandas/pull/5050/files#diff-9c718a39eb63c1bfac4fbeacf2906ffdR56-R60">tab-completion</a>
+for data frame columns by defining the the custom <code>__dir__</code> method</p>
+<p>Siuba’s needs are more complicated. There’s no column information stored
+within the data pronoun <code>_</code>. We need to search the surrounding context
+for a suitable data frame and that requires IPython.</p>
 </div>
 </div>
