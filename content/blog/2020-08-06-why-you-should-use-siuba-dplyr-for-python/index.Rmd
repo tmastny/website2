@@ -54,7 +54,6 @@ Let's walk through each case with some [example data](https://github.com/rfordat
 ```{python}
 from siuba import *
 from siuba.data import mtcars
-import siuba.experimental.completer
 
 import pandas as pd
 bridges = pd.read_csv("maryland_bridges.csv")
@@ -89,7 +88,11 @@ suggesting column names and pandas data frame and series methods:
 ![](/blog/siuba-and-ipython-tab-complete/ipython-mtcars.gif)
 
 This was my [small contribution](/blog/siuba-and-ipython-tab-complete) to Siuba, 
-with lots of help from Michael Chow.
+with lots of help from Michael Chow. Include the following to try it out!
+
+```python
+import siuba.experimental.completer
+```
 
 
 ## Consistent output for common operations
