@@ -1,88 +1,22 @@
 ---
 title: 'Tuning and Cross-validation with tidymodels and scikit learn'
 author: ~
-date: '2020-06-18'
+date: '2020-06-30'
 categories: []
-tags: []
+tags: ['sklearn', 'tidymodels']
 description:
 draft: true
 output:
   blogdown::html_page:
     toc: true
-    highlight: pygments
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
-<script src="/rmarkdown-libs/accessible-code-block/empty-anchor.js"></script>
-<style type="text/css">
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-    color: #aaaaaa;
-  }
-pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
-code span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code span.at { color: #7d9029; } /* Attribute */
-code span.bn { color: #40a070; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code span.ch { color: #4070a0; } /* Char */
-code span.cn { color: #880000; } /* Constant */
-code span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code span.dt { color: #902000; } /* DataType */
-code span.dv { color: #40a070; } /* DecVal */
-code span.er { color: #ff0000; font-weight: bold; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #40a070; } /* Float */
-code span.fu { color: #06287e; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-code span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code span.op { color: #666666; } /* Operator */
-code span.ot { color: #007020; } /* Other */
-code span.pp { color: #bc7a00; } /* Preprocessor */
-code span.sc { color: #4070a0; } /* SpecialChar */
-code span.ss { color: #bb6688; } /* SpecialString */
-code span.st { color: #4070a0; } /* String */
-code span.va { color: #19177c; } /* Variable */
-code span.vs { color: #4070a0; } /* VerbatimString */
-code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-</style>
 
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#testing-columns">Testing columns</a></li>
+<li><a href="#tidymodels-and-sklearn">tidymodels and sklearn</a></li>
 </ul>
 </div>
 
@@ -91,27 +25,6 @@ body {
   max-width: 1000px;
 }
 </style>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb1-3"><a href="#cb1-3"></a></span>
-<span id="cb1-4"><a href="#cb1-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
-<pre><code>## # A tibble: 53,940 x 10
-##    carat cut       color clarity depth table price     x     y     z
-##    &lt;dbl&gt; &lt;ord&gt;     &lt;ord&gt; &lt;ord&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-##  1 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
-##  2 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
-##  3 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
-##  4 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
-##  5 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
-##  6 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
-##  7 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
-##  8 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
-##  9 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
-## 10 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
-## # … with 53,930 more rows</code></pre>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="cf">while</span> (<span class="ot">FALSE</span>) {</span>
-<span id="cb3-2"><a href="#cb3-2"></a></span>
-<span id="cb3-3"><a href="#cb3-3"></a>}</span></code></pre></div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p><a href="https://www.tidymodels.org/">tidymodels</a> is the new framework from
@@ -134,75 +47,276 @@ model tranining and cross-validation, as well as evaluation and comparison.</p>
 there are many conceptual similarities that have helped me understand both
 frameworks better.</p>
 </div>
-<div id="testing-columns" class="section level2">
-<h2>Testing columns</h2>
-<p>Lorem ipsum.</p>
+<div id="tidymodels-and-sklearn" class="section level2">
+<h2>tidymodels and sklearn</h2>
+<p>We’ll go through this tidymodels example:
+<a href="https://www.tidymodels.org/start/tuning/">4 Tune Model Parameters</a>
+side-by-sideline with sklearn.</p>
+<p>Notebook saved here: <a href="https://github.com/tmastny/sageprocess/blob/master/vignettes/sklearn-tidymodels-example1.ipynb" class="uri">https://github.com/tmastny/sageprocess/blob/master/vignettes/sklearn-tidymodels-example1.ipynb</a></p>
+</div>
+<div class="row">
+<div id="tidymodels" class="section level2 col-md-6">
+<h2>tidymodels</h2>
+<pre class="r"><code>library(tidymodels)
+library(modeldata)
+library(vip)
+library(readr)
+
+cells &lt;- read_csv(&quot;cells.csv&quot;)</code></pre>
+</div>
+<div id="sklearn" class="section level2 col-md-6">
+<h2>sklearn</h2>
+<pre class="python"><code>import pandas as pd
+import numpy as np
+
+np.random.seed(753)
+cells = pd.read_csv(&quot;cells.csv&quot;)</code></pre>
+</div>
+</div>
 <div class="row">
 <div class="col-md-6">
-<h2>
-R sagemaker
-</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb4-3"><a href="#cb4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4"></a>ggplot2<span class="op">::</span>diamonds</span></code></pre></div>
-<pre><code>## # A tibble: 53,940 x 10
-##    carat cut       color clarity depth table price     x     y     z
-##    &lt;dbl&gt; &lt;ord&gt;     &lt;ord&gt; &lt;ord&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-##  1 0.23  Ideal     E     SI2      61.5    55   326  3.95  3.98  2.43
-##  2 0.21  Premium   E     SI1      59.8    61   326  3.89  3.84  2.31
-##  3 0.23  Good      E     VS1      56.9    65   327  4.05  4.07  2.31
-##  4 0.290 Premium   I     VS2      62.4    58   334  4.2   4.23  2.63
-##  5 0.31  Good      J     SI2      63.3    58   335  4.34  4.35  2.75
-##  6 0.24  Very Good J     VVS2     62.8    57   336  3.94  3.96  2.48
-##  7 0.24  Very Good I     VVS1     62.3    57   336  3.95  3.98  2.47
-##  8 0.26  Very Good H     SI1      61.9    55   337  4.07  4.11  2.53
-##  9 0.22  Fair      E     VS2      65.1    61   337  3.87  3.78  2.49
-## 10 0.23  Very Good H     VS1      59.4    61   338  4     4.05  2.39
-## # … with 53,930 more rows</code></pre>
+<pre class="r"><code>cell_split &lt;- initial_split(
+  cells,
+  strata = class
+)
+
+cell_train &lt;- training(cell_split)
+cell_test &lt;- testing(cell_split)</code></pre>
 </div>
 <div class="col-md-6">
-<h2>
-AWS Sagemaker
-</h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb6-3"><a href="#cb6-3"></a></span>
-<span id="cb6-4"><a href="#cb6-4"></a>input_data <span class="op">=</span> <span class="st">&#39;s3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv&#39;</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a>df <span class="op">=</span> pd.read_csv(input_data, nrows<span class="op">=</span><span class="dv">1000</span>)</span>
-<span id="cb6-6"><a href="#cb6-6"></a>df.head()</span></code></pre></div>
+<pre class="python"><code>from sklearn.model_selection import train_test_split
+
+features = cells.drop(&#39;class&#39;, axis=1)
+outcome = cells[&#39;class&#39;]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    features, 
+    outcome, 
+    test_size=0.25, 
+    stratify=outcome
+)</code></pre>
 </div>
 </div>
-<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">def</span> model_stats(model, X_test, y_test):</span>
-<span id="cb7-2"><a href="#cb7-2"></a>    prob <span class="op">=</span> model.predict_proba(X_test)[:,<span class="dv">1</span>]</span>
-<span id="cb7-3"><a href="#cb7-3"></a>    pred <span class="op">=</span> model.predict(X_test)</span>
-<span id="cb7-4"><a href="#cb7-4"></a></span>
-<span id="cb7-5"><a href="#cb7-5"></a>    <span class="bu">print</span>(<span class="st">&quot;roc: </span><span class="sc">{:.2f}</span><span class="st">&quot;</span>.<span class="bu">format</span>(roc_auc_score(y_test, prob)))</span>
-<span id="cb7-6"><a href="#cb7-6"></a>    <span class="bu">print</span>(<span class="st">&quot;prc: </span><span class="sc">{:.2f}</span><span class="st">&quot;</span>.<span class="bu">format</span>(average_precision_score(y_test, prob, pos_label<span class="op">=</span><span class="st">&#39; 50000+.&#39;</span>)))</span>
-<span id="cb7-7"><a href="#cb7-7"></a>    <span class="bu">print</span>()</span>
-<span id="cb7-8"><a href="#cb7-8"></a>    <span class="bu">print</span>(classification_report(y_test, pred))</span>
-<span id="cb7-9"><a href="#cb7-9"></a></span>
-<span id="cb7-10"><a href="#cb7-10"></a></span>
-<span id="cb7-11"><a href="#cb7-11"></a>model_stats(model, X_test, y_test)</span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb8-2"><a href="#cb8-2"></a></span>
-<span id="cb8-3"><a href="#cb8-3"></a>urchins &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://tidymodels.org/start/models/urchins.csv&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4"></a><span class="st">  </span><span class="kw">setNames</span>(<span class="kw">c</span>(<span class="st">&quot;food_regime&quot;</span>, <span class="st">&quot;initial_volume&quot;</span>, <span class="st">&quot;width&quot;</span>)) <span class="op">%&gt;%</span></span>
-<span id="cb8-5"><a href="#cb8-5"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">food_regime =</span> <span class="kw">factor</span>(food_regime, <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;Init&quot;</span>, <span class="st">&quot;Low&quot;</span>, <span class="st">&quot;High&quot;</span>)))</span>
-<span id="cb8-6"><a href="#cb8-6"></a></span>
-<span id="cb8-7"><a href="#cb8-7"></a>urchins <span class="op">%&gt;%</span></span>
-<span id="cb8-8"><a href="#cb8-8"></a><span class="st">  </span><span class="kw">group_by</span>(food_regime) <span class="op">%&gt;%</span></span>
-<span id="cb8-9"><a href="#cb8-9"></a><span class="st">  </span><span class="kw">summarise</span>(</span>
-<span id="cb8-10"><a href="#cb8-10"></a>    <span class="kw">across</span>(<span class="kw">everything</span>(), mean), <span class="dt">n =</span> <span class="kw">n</span>()</span>
-<span id="cb8-11"><a href="#cb8-11"></a>  )</span>
-<span id="cb8-12"><a href="#cb8-12"></a></span>
-<span id="cb8-13"><a href="#cb8-13"></a><span class="kw">mean</span>(urchins<span class="op">$</span>width)</span>
-<span id="cb8-14"><a href="#cb8-14"></a>ggplot2<span class="op">::</span><span class="kw">cut_interval</span>(urchins<span class="op">$</span>initial_volume)</span>
-<span id="cb8-15"><a href="#cb8-15"></a></span>
-<span id="cb8-16"><a href="#cb8-16"></a><span class="kw">lm</span>(width <span class="op">~</span><span class="st"> </span>initial_volume <span class="op">*</span><span class="st"> </span>food_regime, <span class="dt">data =</span> urchins)</span>
-<span id="cb8-17"><a href="#cb8-17"></a></span>
-<span id="cb8-18"><a href="#cb8-18"></a><span class="cf">while</span> (<span class="ot">FALSE</span>) {</span>
-<span id="cb8-19"><a href="#cb8-19"></a>}</span>
-<span id="cb8-20"><a href="#cb8-20"></a></span>
-<span id="cb8-21"><a href="#cb8-21"></a><span class="dv">18423</span> <span class="op">*</span><span class="st"> </span><span class="dv">4</span></span></code></pre></div>
+<p>We have to do a little preprocessing. All the features are numeric,
+but the outcome is binary. R expects categorical outcomes as factors.
+Python automatically changes outcome strings with <code>LabelBinarizer</code>.
+We also use the identity transformation <code>FunctionTransformer()</code> to remove
+the <code>case</code> column by dropping it from selected columns.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>tree_rec &lt;- recipe(class ~ ., data = cells) %&gt;%
+  step_rm(case) %&gt;%
+  step_string2factor(all_outcomes())</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>from sklearn.preprocessing import FunctionTransformer
+from sklearn.compose import make_column_transformer
+
+tree_preprocess = make_column_transformer(
+    (FunctionTransformer(), features.drop(&#39;case&#39;, axis=1).columns)
+)</code></pre>
+</div>
+</div>
+<p>With R, we chose the implementation using <code>set_engine</code> and <code>set_mode</code>.
+For sklearn, if we wanted a different implementation we would import
+a different module that implemented the sklearn interface.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>tree_model &lt;- decision_tree(
+  cost_complexity = tune(),
+  tree_depth = tune()
+) %&gt;%
+  set_engine(&quot;rpart&quot;) %&gt;%
+  set_mode(&quot;classification&quot;)</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>from sklearn.tree import DecisionTreeClassifier</code></pre>
+</div>
+</div>
+<p>Both frameworks have a way to combine all the components of the model.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>set.seed(345)
+
+tree_wf &lt;- workflow() %&gt;%
+  add_model(tree_model) %&gt;%
+  add_recipe(tree_rec)</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>from sklearn.pipeline import make_pipeline
+
+tree_pipeline = make_pipeline(
+    tree_preprocess,
+    DecisionTreeClassifier()
+)</code></pre>
+</div>
+</div>
+<p>Next, we can come up with tuning grids. tidymodels has sensible defaults
+for all parameters. With sklearn, you typically have to come up with them
+yourself.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>tree_grid &lt;- grid_regular(
+  cost_complexity(),
+  tree_depth(),
+  levels = 5
+)
+
+tree_grid</code></pre>
+<pre><code>## # A tibble: 25 x 2
+##    cost_complexity tree_depth
+##              &lt;dbl&gt;      &lt;int&gt;
+##  1    0.0000000001          1
+##  2    0.0000000178          1
+##  3    0.00000316            1
+##  4    0.000562              1
+##  5    0.1                   1
+##  6    0.0000000001          4
+##  7    0.0000000178          4
+##  8    0.00000316            4
+##  9    0.000562              4
+## 10    0.1                   4
+## # … with 15 more rows</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>param_grid = {
+    &#39;decisiontreeclassifier__max_depth&#39;: [1, 4, 8, 11, 15],
+    &#39;decisiontreeclassifier__ccp_alpha&#39;: [
+        0.0000000001, 0.0000000178, 0.00000316, 0.000562, 0.1
+    ] 
+}</code></pre>
+</div>
+</div>
+<p>Next, we construct and run cross-validation. By default, tidymodels calculates
+both accuracy and area under the ROC curve. We’ll need to add those manually
+to sklearn’s metrics.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>set.seed(234)
+cell_folds &lt;- vfold_cv(cell_train, v = 5)
+
+tree_res &lt;- tree_wf %&gt;% 
+  tune_grid(
+    resamples = cell_folds,
+    grid = tree_grid
+  )</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
+
+tree_scorer = {
+    &#39;roc_auc&#39;: make_scorer(roc_auc_score, needs_proba=True),
+    &#39;accuray&#39;: make_scorer(accuracy_score)
+}
+
+tree_tuner = GridSearchCV(
+    tree_pipeline, param_grid, cv=5, 
+    scoring=tree_scorer,
+    refit=&#39;roc_auc&#39;
+)
+
+tree_res = tree_tuner.fit(X_train, y_train)</code></pre>
+</div>
+</div>
+<p>List training metrics and hyperparamterics.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>best_param &lt;- tree_res %&gt;%
+  select_best(&quot;roc_auc&quot;)
+
+best_param</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   cost_complexity tree_depth
+##             &lt;dbl&gt;      &lt;int&gt;
+## 1    0.0000000001          4</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>tree_res.best_params_</code></pre>
+<pre><code>## {&#39;decisiontreeclassifier__ccp_alpha&#39;: 1.78e-08, &#39;decisiontreeclassifier__max_depth&#39;: 4}</code></pre>
+</div>
+</div>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>tree_res %&gt;%
+  show_best(&quot;roc_auc&quot;)</code></pre>
+<pre><code>## # A tibble: 5 x 7
+##   cost_complexity tree_depth .metric .estimator  mean     n std_err
+##             &lt;dbl&gt;      &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
+## 1    0.0000000001          4 roc_auc binary     0.844     5 0.0137 
+## 2    0.0000000178          4 roc_auc binary     0.844     5 0.0137 
+## 3    0.00000316            4 roc_auc binary     0.844     5 0.0137 
+## 4    0.000562              4 roc_auc binary     0.844     5 0.0137 
+## 5    0.0000000001          8 roc_auc binary     0.837     5 0.00811</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>pd.DataFrame(tree_res.cv_results_) \
+    .sort_values(&#39;mean_test_roc_auc&#39;, ascending=False) \
+    .rename(columns={
+        &#39;param_decisiontreeclassifier__ccp_alpha&#39;: &#39;cost&#39;,
+        &#39;param_decisiontreeclassifier__max_depth&#39;: &#39;max_depth&#39;
+    }) \
+    [[
+        &#39;cost&#39;, &#39;max_depth&#39;,
+        &#39;mean_test_accuray&#39;, &#39;mean_test_roc_auc&#39;
+    ]] \
+    .head(5)</code></pre>
+<pre><code>##         cost max_depth  mean_test_accuray  mean_test_roc_auc
+## 6   1.78e-08         4           0.797240           0.839899
+## 1      1e-10         4           0.796584           0.839053
+## 11  3.16e-06         4           0.795257           0.837103
+## 16  0.000562         4           0.795917           0.837055
+## 0      1e-10         1           0.738461           0.779942</code></pre>
+</div>
+</div>
+<p>Variable importance. This is where sklearn becomes significantly more difficult.
+Column name metadata is not saved in the final output, so we have to
+manually add column names back to an ordered list of feature importances.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>best_tree &lt;- tree_wf %&gt;%
+  finalize_workflow(best_param) %&gt;%
+  fit(data = cell_train)
+
+best_tree %&gt;%
+  pull_workflow_fit() %&gt;%
+  vip()</code></pre>
+<p><img src="/blog/2020-06-18-tidymodels-sklearn/index_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>best_tree = tree_res.best_estimator_.named_steps[&#39;decisiontreeclassifier&#39;]
+ct = tree_res.best_estimator_.named_steps[&#39;columntransformer&#39;]
+
+feature_importances = pd.DataFrame({&#39;name&#39;: ct.transformers_[0][2]}) \
+    .assign(importance = best_tree.feature_importances_) \
+    .sort_values(&#39;importance&#39;, ascending=False)
+    
+import seaborn as sns
+sns.barplot(x=&#39;importance&#39;, y=&#39;name&#39;, data=feature_importances.head(10))</code></pre>
+<p><img src="/blog/2020-06-18-tidymodels-sklearn/index_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+</div>
+</div>
+<p>Final validation</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="r"><code>best_tree %&gt;%
+  last_fit(cell_split) %&gt;%
+  collect_metrics()</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.778
+## 2 roc_auc  binary         0.827</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>pd.DataFrame.from_records([
+    (name, scorer(tree_res.best_estimator_, X_test, y_test)) 
+    for name, scorer in tree_scorer.items()
+], columns=[&#39;metric&#39;, &#39;score&#39;])</code></pre>
+<pre><code>##     metric     score
+## 0  roc_auc  0.824385
+## 1  accuray  0.776238</code></pre>
+</div>
 </div>

@@ -1,0 +1,159 @@
+---
+title: Why you should use siuba, the dplyr of Python
+author: ~
+date: '2020-08-06'
+slug: why-you-should-use-siuba-dplyr-for-python
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, warning=FALSE, message=FALSE,
+  results='hide', cache=FALSE, autodep=FALSE, error = TRUE
+)
+```
+
+```{css, echo=FALSE}
+body {
+  max-width: 1000px;
+}
+```
+
+## Introduction
+
+If you find yourself doing data analysis in Python, you should check out 
+[siuba](https://github.com/machow/siuba). 
+siuba is a port of the R package [dplyr](https://github.com/tidyverse/dplyr),
+but you don't need to know any R to get started.
+
+siuba implements a domain specific language for querying data. You can use siuba
+to query both local Python data frames and remote 
+[SQL](https://github.com/machow/siuba#using-with-a-sql-database) databases.
+
+Why a new "language" and not the pandas API?
+
+1. concise lambdas and tab-completion
+
+2. consistent output for common operations
+
+3. unified API for grouped and ungrouped data frames
+
+
+
+All of these advantages and more are described by Michael Chow in his list of
+[key features](https://siuba.readthedocs.io/en/latest/key_features.html).
+
+Let's walk through each case with some [example data](https://github.com/rfordatascience/tidytuesday/tree/master/data/2018/2018-11-27).
+
+
+```{python}
+from siuba import *
+from siuba.data import mtcars
+
+import pandas as pd
+bridges = pd.read_csv("maryland_bridges.csv")
+```
+
+## Concise lambdas with tab-complete
+
+siuba introduces the symbol `_`. You can think of `_` as a placeholder or pronoun
+for the actual name of the data. 
+So instead of writing `bridges.yr_built` you can write `_.yr_built` in any
+data frame or siuba function.
+
+In many ways, `_` behaves like a concise `lambda`:
+
+<div class="row">
+<div class="col-md-6">
+```{python}
+bridges[_.yr_built > 1990]
+```
+</div>
+<div class="col-md-6">
+```{python}
+bridges[lambda _: _.yr_built > 1990]
+```
+</div>
+</div>
+
+And this new "lambda" doesn't just save a few characters: 
+it also supports tab-completion in IPython and Jupyter Notebooks,
+suggesting column names and pandas data frame and series methods:
+
+![](/blog/siuba-and-ipython-tab-complete/ipython-mtcars.gif)
+
+This was my [small contribution](/blog/siuba-and-ipython-tab-complete) to Siuba, 
+with lots of help from Michael Chow.
+
+
+## Consistent output for common operations
+
+Calculating the size of groups is a very common operation. 
+siuba makes this, and many other queries straightforward by providing
+[helpers](https://siuba.readthedocs.io/en/latest/api_index.html) like
+`count` and `distinct` and by
+simplifying the API to [5 common actions](https://github.com/machow/siuba#siuba).
+
+Additionally, siuba output is always *consistent*. siuba never returns 
+[MultiIndex](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.MultiIndex.html)
+data frames, which has its own API and idiosyncrasies. 
+
+
+<div class="row">
+<div class="col-md-6">
+```{python, results='show'}
+(bridges >>
+    count(decade=10 * (_.yr_built // 10), sort=True) >>
+    head())
+```
+</div>
+<div class="col-md-6">
+```{python, results='show'}
+(
+  bridges
+  .assign(decade=lambda _: 10 * (_.yr_built // 10))
+  .groupby("decade")
+  .agg(n = ("decade", "size"))
+  .reset_index()
+  .sort_values("n", ascending=False)
+  .head()
+)
+```
+</div>
+</div>
+
+## Unified group API
+
+When working with groups in pandas, you often have to juggle both the grouped
+and ungrouped data frame. Additionally, panda's grouped API has some subtle 
+differences, such as the `transform` method shown below.
+
+All of siuba's [core actions](https://siuba.readthedocs.io/en/latest/api_index.html#module-siuba.dply.verbs)
+have consistent behavior in grouped and ungrouped data frames.
+
+<div class="row">
+<div class="col-md-6">
+```{python}
+(mtcars >>
+    group_by(_.cyl) >>
+    mutate(hp=_.hp - _.hp.mean()) >>
+    ungroup())
+```
+</div>
+<div class="col-md-6">
+```{python}
+mtcars_cyl = mtcars.groupby("cyl")
+(
+  mtcars
+  .assign(hp=mtcars_cyl.obj.hp - mtcars_cyl.hp.transform("mean"))
+)
+```
+</div>
+</div>
+
+

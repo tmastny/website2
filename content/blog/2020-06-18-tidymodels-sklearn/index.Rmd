@@ -1,15 +1,14 @@
 ---
 title: 'Tuning and Cross-validation with tidymodels and scikit learn'
 author: ~
-date: '2020-06-18'
+date: '2020-06-30'
 categories: []
-tags: []
+tags: ['sklearn', 'tidymodels']
 description:
 draft: true
 output:
   blogdown::html_page:
     toc: true
-    highlight: pygments
 ---
 
 ```{r setup, include=FALSE}
@@ -20,17 +19,6 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 ```{css, echo=FALSE}
 body {
   max-width: 1000px;
-}
-```
-
-```{r}
-#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12
-library(tidyverse)
-
-ggplot2::diamonds
-
-while (FALSE) {
-
 }
 ```
 
@@ -60,67 +48,304 @@ I think you'll find that while both frameworks have their own unique advantages,
 there are many conceptual similarities that have helped me understand both
 frameworks better.
 
-## Testing columns
 
-Lorem ipsum.
+## tidymodels and sklearn
+
+We'll go through this tidymodels example: 
+[4 Tune Model Parameters](https://www.tidymodels.org/start/tuning/) 
+side-by-sideline with sklearn.
+
+Notebook saved here: https://github.com/tmastny/sageprocess/blob/master/vignettes/sklearn-tidymodels-example1.ipynb
 
 <div class="row">
-<div class="col-md-6"><h2>R sagemaker</h2>
+<div class="col-md-6">## tidymodels
 ```{r}
-#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#1234567890#12
-library(tidyverse)
+library(tidymodels)
+library(modeldata)
+library(vip)
+library(readr)
 
-ggplot2::diamonds
+cells <- read_csv("cells.csv")
 ```
 </div>
-<div class="col-md-6"><h2>AWS Sagemaker</h2>
-```{python, eval=FALSE}
+<div class="col-md-6">## sklearn
+```{python}
 import pandas as pd
 import numpy as np
 
-input_data = 's3://sagemaker-sample-data-us-east-2/processing/census/census-income.csv'
-df = pd.read_csv(input_data, nrows=1000)
-df.head()
+np.random.seed(753)
+cells = pd.read_csv("cells.csv")
 ```
 </div>
 </div>
 
-```{python, eval=FALSE}
-def model_stats(model, X_test, y_test):
-    prob = model.predict_proba(X_test)[:,1]
-    pred = model.predict(X_test)
+<div class="row">
+<div class="col-md-6">
+```{r}
+cell_split <- initial_split(
+  cells,
+  strata = class
+)
 
-    print("roc: {:.2f}".format(roc_auc_score(y_test, prob)))
-    print("prc: {:.2f}".format(average_precision_score(y_test, prob, pos_label=' 50000+.')))
-    print()
-    print(classification_report(y_test, pred))
-
-
-model_stats(model, X_test, y_test)
+cell_train <- training(cell_split)
+cell_test <- testing(cell_split)
 ```
+</div>
+<div class="col-md-6">
+```{python}
+from sklearn.model_selection import train_test_split
 
-```{r eval=FALSE}
-library(tidyverse)
+features = cells.drop('class', axis=1)
+outcome = cells['class']
 
-urchins <- read_csv("https://tidymodels.org/start/models/urchins.csv") %>%
-  setNames(c("food_regime", "initial_volume", "width")) %>%
-  mutate(food_regime = factor(food_regime, levels = c("Init", "Low", "High")))
+X_train, X_test, y_train, y_test = train_test_split(
+    features, 
+    outcome, 
+    test_size=0.25, 
+    stratify=outcome
+)
+```
+</div>
+</div>
 
-urchins %>%
-  group_by(food_regime) %>%
-  summarise(
-    across(everything(), mean), n = n()
+
+We have to do a little preprocessing. All the features are numeric,
+but the outcome is binary. R expects categorical outcomes as factors. 
+Python automatically changes outcome strings with `LabelBinarizer`. 
+We also use the identity transformation `FunctionTransformer()` to remove
+the `case` column by dropping it from selected columns.
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_rec <- recipe(class ~ ., data = cells) %>%
+  step_rm(case) %>%
+  step_string2factor(all_outcomes())
+```
+</div>
+<div class="col-md-6">
+```{python}
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.compose import make_column_transformer
+
+tree_preprocess = make_column_transformer(
+    (FunctionTransformer(), features.drop('case', axis=1).columns)
+)
+```
+</div>
+</div>
+
+With R, we chose the implementation using `set_engine` and `set_mode`. 
+For sklearn, if we wanted a different implementation we would import
+a different module that implemented the sklearn interface. 
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_model <- decision_tree(
+  cost_complexity = tune(),
+  tree_depth = tune()
+) %>%
+  set_engine("rpart") %>%
+  set_mode("classification")
+```
+</div>
+<div class="col-md-6">
+```{python}
+from sklearn.tree import DecisionTreeClassifier
+```
+</div>
+</div>
+
+
+
+Both frameworks have a way to combine all the components of the model. 
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+set.seed(345)
+
+tree_wf <- workflow() %>%
+  add_model(tree_model) %>%
+  add_recipe(tree_rec)
+```
+</div>
+<div class="col-md-6">
+```{python}
+from sklearn.pipeline import make_pipeline
+
+tree_pipeline = make_pipeline(
+    tree_preprocess,
+    DecisionTreeClassifier()
+)
+```
+</div>
+</div>
+
+
+Next, we can come up with tuning grids. tidymodels has sensible defaults
+for all parameters. With sklearn, you typically have to come up with them 
+yourself.
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_grid <- grid_regular(
+  cost_complexity(),
+  tree_depth(),
+  levels = 5
+)
+
+tree_grid
+```
+</div>
+<div class="col-md-6">
+```{python}
+param_grid = {
+    'decisiontreeclassifier__max_depth': [1, 4, 8, 11, 15],
+    'decisiontreeclassifier__ccp_alpha': [
+        0.0000000001, 0.0000000178, 0.00000316, 0.000562, 0.1
+    ] 
+}
+```
+</div>
+</div>
+
+Next, we construct and run cross-validation. By default, tidymodels calculates
+both accuracy and area under the ROC curve. We'll need to add those manually
+to sklearn's metrics.
+
+<div class="row">
+<div class="col-md-6">
+```{r cache=TRUE}
+set.seed(234)
+cell_folds <- vfold_cv(cell_train, v = 5)
+
+tree_res <- tree_wf %>% 
+  tune_grid(
+    resamples = cell_folds,
+    grid = tree_grid
   )
+```
+</div>
+<div class="col-md-6">
+```{python}
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_auc_score
 
-mean(urchins$width)
-ggplot2::cut_interval(urchins$initial_volume)
-
-lm(width ~ initial_volume * food_regime, data = urchins)
-
-while (FALSE) {
+tree_scorer = {
+    'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
+    'accuray': make_scorer(accuracy_score)
 }
 
-18423 * 4
+tree_tuner = GridSearchCV(
+    tree_pipeline, param_grid, cv=5, 
+    scoring=tree_scorer,
+    refit='roc_auc'
+)
+
+tree_res = tree_tuner.fit(X_train, y_train)
+```
+</div>
+</div>
+
+
+List training metrics and hyperparamterics.
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+best_param <- tree_res %>%
+  select_best("roc_auc")
+
+best_param
+```
+</div>
+<div class="col-md-6">
+```{python}
+tree_res.best_params_
+```
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+tree_res %>%
+  show_best("roc_auc")
+```
+</div>
+<div class="col-md-6">
+```{python}
+pd.DataFrame(tree_res.cv_results_) \
+    .sort_values('mean_test_roc_auc', ascending=False) \
+    .rename(columns={
+        'param_decisiontreeclassifier__ccp_alpha': 'cost',
+        'param_decisiontreeclassifier__max_depth': 'max_depth'
+    }) \
+    [[
+        'cost', 'max_depth',
+        'mean_test_accuray', 'mean_test_roc_auc'
+    ]] \
+    .head(5)
+```
+</div>
+</div>
+
+
+Variable importance. This is where sklearn becomes significantly more difficult.
+Column name metadata is not saved in the final output, so we have to
+manually add column names back to an ordered list of feature importances.
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+best_tree <- tree_wf %>%
+  finalize_workflow(best_param) %>%
+  fit(data = cell_train)
+
+best_tree %>%
+  pull_workflow_fit() %>%
+  vip()
 ```
 
+</div>
+<div class="col-md-6">
+```{python}
+best_tree = tree_res.best_estimator_.named_steps['decisiontreeclassifier']
+ct = tree_res.best_estimator_.named_steps['columntransformer']
 
+feature_importances = pd.DataFrame({'name': ct.transformers_[0][2]}) \
+    .assign(importance = best_tree.feature_importances_) \
+    .sort_values('importance', ascending=False)
+    
+import seaborn as sns
+sns.barplot(x='importance', y='name', data=feature_importances.head(10))
+```
+</div>
+</div>
+
+
+Final validation
+
+<div class="row">
+<div class="col-md-6">
+```{r}
+best_tree %>%
+  last_fit(cell_split) %>%
+  collect_metrics()
+```
+
+</div>
+<div class="col-md-6">
+```{python}
+pd.DataFrame.from_records([
+    (name, scorer(tree_res.best_estimator_, X_test, y_test)) 
+    for name, scorer in tree_scorer.items()
+], columns=['metric', 'score'])
+```
+</div>
+</div>

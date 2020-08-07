@@ -1,0 +1,138 @@
+---
+title: Why you should use siuba, the dplyr of Python
+author: ~
+date: '2020-08-06'
+slug: why-you-should-use-siuba-dplyr-for-python
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#concise-lambdas-with-tab-complete">Concise lambdas with tab-complete</a></li>
+<li><a href="#consistent-output-for-common-operations">Consistent output for common operations</a></li>
+<li><a href="#unified-group-api">Unified group API</a></li>
+</ul>
+</div>
+
+<style type="text/css">
+body {
+  max-width: 1000px;
+}
+</style>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>If you find yourself doing data analysis in Python, you should check out
+<a href="https://github.com/machow/siuba">siuba</a>.
+siuba is a port of the R package <a href="https://github.com/tidyverse/dplyr">dplyr</a>,
+but you don’t need to know any R to get started.</p>
+<p>siuba implements a domain specific language for querying data. You can use siuba
+to query both local Python data frames and remote
+<a href="https://github.com/machow/siuba#using-with-a-sql-database">SQL</a> databases.</p>
+<p>Why a new “language” and not the pandas API?</p>
+<ol style="list-style-type: decimal">
+<li><p>concise lambdas and tab-completion</p></li>
+<li><p>consistent output for common operations</p></li>
+<li><p>unified API for grouped and ungrouped data frames</p></li>
+</ol>
+<p>All of these advantages and more are described by Michael Chow in his list of
+<a href="https://siuba.readthedocs.io/en/latest/key_features.html">key features</a>.</p>
+<p>Let’s walk through each case with some <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2018/2018-11-27">example data</a>.</p>
+<pre class="python"><code>from siuba import *
+from siuba.data import mtcars
+
+import pandas as pd
+bridges = pd.read_csv(&quot;maryland_bridges.csv&quot;)</code></pre>
+</div>
+<div id="concise-lambdas-with-tab-complete" class="section level2">
+<h2>Concise lambdas with tab-complete</h2>
+<p>siuba introduces the symbol <code>_</code>. You can think of <code>_</code> as a placeholder or pronoun
+for the actual name of the data.
+So instead of writing <code>bridges.yr_built</code> you can write <code>_.yr_built</code> in any
+data frame or siuba function.</p>
+<p>In many ways, <code>_</code> behaves like a concise <code>lambda</code>:</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="python"><code>bridges[_.yr_built &gt; 1990]</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>bridges[lambda _: _.yr_built &gt; 1990]</code></pre>
+</div>
+</div>
+<p>And this new “lambda” doesn’t just save a few characters:
+it also supports tab-completion in IPython and Jupyter Notebooks,
+suggesting column names and pandas data frame and series methods:</p>
+<p><img src="/blog/siuba-and-ipython-tab-complete/ipython-mtcars.gif" /></p>
+<p>This was my <a href="/blog/siuba-and-ipython-tab-complete">small contribution</a> to Siuba,
+with lots of help from Michael Chow.</p>
+</div>
+<div id="consistent-output-for-common-operations" class="section level2">
+<h2>Consistent output for common operations</h2>
+<p>Calculating the size of groups is a very common operation.
+siuba makes this, and many other queries straightforward by providing
+<a href="https://siuba.readthedocs.io/en/latest/api_index.html">helpers</a> like
+<code>count</code> and <code>distinct</code> and by
+simplifying the API to <a href="https://github.com/machow/siuba#siuba">5 common actions</a>.</p>
+<p>Additionally, siuba output is always <em>consistent</em>. siuba never returns
+<a href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.MultiIndex.html">MultiIndex</a>
+data frames, which has its own API and idiosyncrasies.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="python"><code>(bridges &gt;&gt;
+    count(decade=10 * (_.yr_built // 10), sort=True) &gt;&gt;
+    head())</code></pre>
+<pre><code>##    decade    n
+## 0    1970  404
+## 1    1960  319
+## 2    1980  304
+## 3    1990  279
+## 4    1950  261</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>(
+  bridges
+  .assign(decade=lambda _: 10 * (_.yr_built // 10))
+  .groupby(&quot;decade&quot;)
+  .agg(n = (&quot;decade&quot;, &quot;size&quot;))
+  .reset_index()
+  .sort_values(&quot;n&quot;, ascending=False)
+  .head()
+)</code></pre>
+<pre><code>##     decade    n
+## 12    1970  404
+## 11    1960  319
+## 13    1980  304
+## 14    1990  279
+## 10    1950  261</code></pre>
+</div>
+</div>
+</div>
+<div id="unified-group-api" class="section level2">
+<h2>Unified group API</h2>
+<p>When working with groups in pandas, you often have to juggle both the grouped
+and ungrouped data frame. Additionally, panda’s grouped API has some subtle
+differences, such as the <code>transform</code> method shown below.</p>
+<p>All of siuba’s <a href="https://siuba.readthedocs.io/en/latest/api_index.html#module-siuba.dply.verbs">core actions</a>
+have consistent behavior in grouped and ungrouped data frames.</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="python"><code>(mtcars &gt;&gt;
+    group_by(_.cyl) &gt;&gt;
+    mutate(hp=_.hp - _.hp.mean()) &gt;&gt;
+    ungroup())</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="python"><code>mtcars_cyl = mtcars.groupby(&quot;cyl&quot;)
+(
+  mtcars
+  .assign(hp=mtcars_cyl.obj.hp - mtcars_cyl.hp.transform(&quot;mean&quot;))
+)</code></pre>
+</div>
+</div>
+</div>
