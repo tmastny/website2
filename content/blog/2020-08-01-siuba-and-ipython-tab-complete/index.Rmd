@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 # Introduction
 
 [Siuba](https://github.com/machow/siuba)
-is an amazing port of dplyr to the python ecosystem. 
+is an amazing port of [dplyr](https://dplyr.tidyverse.org/) to the python ecosystem. 
 Like dplyr, siuba defines an domain specific querying language: 
 you can use it query [pandas](https://pandas.pydata.org/pandas-docs/stable/index.html)
 data frames, as well as SQL and Spark 
