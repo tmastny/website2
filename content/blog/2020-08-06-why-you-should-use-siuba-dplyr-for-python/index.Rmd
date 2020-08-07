@@ -82,8 +82,8 @@ bridges[lambda _: _.yr_built > 1990]
 </div>
 
 And this new "lambda" doesn't just save a few characters: 
-it also supports tab-completion in IPython and Jupyter Notebbooks
-of column names and pandas data frame and series methods:
+it also supports tab-completion in IPython and Jupyter Notebooks,
+suggesting column names and pandas data frame and series methods:
 
 ![](/blog/siuba-and-ipython-tab-complete/ipython-mtcars.gif)
 
