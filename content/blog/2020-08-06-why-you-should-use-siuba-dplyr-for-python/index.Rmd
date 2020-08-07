@@ -54,6 +54,7 @@ Let's walk through each case with some [example data](https://github.com/rfordat
 ```{python}
 from siuba import *
 from siuba.data import mtcars
+import siuba.experimental.completer
 
 import pandas as pd
 bridges = pd.read_csv("maryland_bridges.csv")

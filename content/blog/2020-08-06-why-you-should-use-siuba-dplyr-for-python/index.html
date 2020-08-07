@@ -46,8 +46,12 @@ to query both local Python data frames and remote
 <p>Let’s walk through each case with some <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2018/2018-11-27">example data</a>.</p>
 <pre class="python"><code>from siuba import *
 from siuba.data import mtcars
-
-import pandas as pd
+import siuba.experimental.completer</code></pre>
+<pre><code>## Error in py_call_impl(callable, dots$args, dots$keywords): ModuleNotFoundError: No module named &#39;siuba.experimental.completer&#39;
+## 
+## Detailed traceback: 
+##   File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</code></pre>
+<pre class="python"><code>import pandas as pd
 bridges = pd.read_csv(&quot;maryland_bridges.csv&quot;)</code></pre>
 </div>
 <div id="concise-lambdas-with-tab-complete" class="section level2">
