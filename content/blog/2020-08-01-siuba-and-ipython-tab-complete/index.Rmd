@@ -47,6 +47,8 @@ I worked on a small PR with Michael Chow
 the creator of Siuba to make this a reality!
 
 I'm excited to share what I learned about IPython and Siuba in the progress.
+For a more technical overview, check out Michael's 
+[architecture decision record](https://github.com/machow/siuba/pull/258#issue-464841665).
 
 # Completion
 
