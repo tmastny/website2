@@ -1,0 +1,21 @@
+---
+title: Discrete Cosine Transform on Time Series
+author: Tim Mastny
+date: '2020-08-10'
+slug: discrete-cosine-transform-on-time-series
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, warning=FALSE, message=FALSE,
+  results='show', cache=FALSE, autodep=FALSE, error = TRUE
+)
+```
+
+```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/discrete-cosine-transform_child.Rmd"}
+```
