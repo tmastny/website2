@@ -17,5 +17,12 @@ knitr::opts_chunk$set(
 )
 ```
 
+> Note: This is the beginning of a series of articles for my [tsrecipes](https://github.com/tmastny/tsrecipes)
+  package. The package is under development and subject to change.
+  
+
+---
+
+
 ```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/discrete-cosine-transform_child.Rmd"}
 ```
