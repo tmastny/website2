@@ -1,8 +1,8 @@
 ---
-title: Discrete Cosine Transform and Time Series Dimensionality Reduction
+title: Applying the Discrete Cosine Transform to Time Series
 author: Tim Mastny
-date: '2020-08-10'
-slug: discrete-cosine-transform-on-time-series
+date: '2020-08-14'
+slug: applying-the-discrete-cosine-transform-to-time-series
 categories: []
 tags: []
 output:
@@ -12,7 +12,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE, warning=FALSE, message=FALSE,
+  echo = FALSE, warning=FALSE, message=FALSE,
   results='show', cache=FALSE, autodep=FALSE, error = TRUE
 )
 ```
@@ -23,6 +23,5 @@ knitr::opts_chunk$set(
 ---
 
 
-```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/discrete-cosine-transform_child.Rmd"}
+```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/dct-explanation_child.Rmd"}
 ```
-

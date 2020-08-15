@@ -1,8 +1,8 @@
 ---
-title: Discrete Cosine Transform and Time Series Dimensionality Reduction
+title: Dynamic Time Warping Time Series Clustering
 author: Tim Mastny
-date: '2020-08-10'
-slug: discrete-cosine-transform-on-time-series
+date: '2020-08-13'
+slug: dynamic-time-warping-time-series-clustering
 categories: []
 tags: []
 output:
@@ -15,14 +15,18 @@ knitr::opts_chunk$set(
   echo = TRUE, warning=FALSE, message=FALSE,
   results='show', cache=FALSE, autodep=FALSE, error = TRUE
 )
+fs::file_copy(
+  "../../../blogdown/submodules/tsrecipes/vignettes/283px-Manhattan_distance.svg.png", 
+  ".", 
+  overwrite = TRUE
+)
 ```
 
 > Note: This is the beginning of a series of articles for my [tsrecipes](https://github.com/tmastny/tsrecipes)
   package. The package is under development and subject to change.
+  
 
 ---
 
-
-```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/discrete-cosine-transform_child.Rmd"}
+```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/dtw2_child.Rmd"}
 ```
-

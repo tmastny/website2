@@ -1,0 +1,204 @@
+---
+title: Applying the Discrete Cosine Transform to Time Series
+author: Tim Mastny
+date: '2020-08-14'
+slug: applying-the-discrete-cosine-transform-to-time-series
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#time-series-as-combinations-of-components">Time series as combinations of components</a></li>
+<li><a href="#discrete-cosine-transform-cosine-combinations">Discrete cosine transform: cosine combinations</a></li>
+<li><a href="#time-series-dimensionality-reduction">Time series dimensionality reduction</a>
+<ul>
+<li><a href="#how-much-reduction-is-possible">How much reduction is possible?</a></li>
+<li><a href="#dimensionality-reduction-for-time-series-classification">Dimensionality reduction for time series classification</a></li>
+</ul></li>
+<li><a href="#data-compression">Data compression</a></li>
+</ul>
+</div>
+
+<blockquote>
+<p>Note: This is the beginning of a series of articles for my <a href="https://github.com/tmastny/tsrecipes">tsrecipes</a>
+package. The package is under development and subject to change.</p>
+</blockquote>
+<hr />
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The discrete cosine transform (DCT) can provide significant dimensionality
+reduction
+for time series, improving accuracy in time series classification and clustering.
+That’s the topic my previous <a href="">post</a>.</p>
+<p>Besides being a useful tool, DCT is fascinating in it’s own right.
+It is a <a href="https://en.wikipedia.org/wiki/Transform_coding#:~:text=Transform%20coding%20is%20a%20type,audio%20signals%20or%20photographic%20images.">perfectly reversible</a> transform that provides a principled way to remove irrelevant information.</p>
+<p>How is this possible, and why does it work so well for time series?
+I’ll try to answer this by</p>
+<ol style="list-style-type: decimal">
+<li>representing time series as combinations of different
+time series</li>
+<li>explaining how the discrete cosine transform is a combination of cosine waves
+of varying strength and frequency</li>
+<li>demonstrating that the <em>strength</em> and <em>frequency</em> of cosine waves are
+effective dimensionality reduction criteria</li>
+</ol>
+<p>Lastly, I’ll share some resources on data compression: the field of study
+where DCT originated, and why it has fundamental connections to
+machine learning.</p>
+</div>
+<div id="time-series-as-combinations-of-components" class="section level2">
+<h2>Time series as combinations of components</h2>
+<p>A common tool in time series analysis is
+<a href="https://otexts.com/fpp3/decomposition.html">time series decomposition</a>,
+where a series is decomposed into the trend, seasonal, and random components.
+These components can be added or multiplied together to reconstruct the original
+time series, depending on the model.</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>Another way to think about decomposition is by frequency.
+Think of frequency as the waves and wiggles in the time series. Both the
+sharp, quick wiggles (high frequency) and wide, slow ones (low frequency).</p>
+<p>For example:</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>the original time series (in red) is decomposed into a low-frequency series (blue)
+and a high-frequency series (green). And like in classical time series
+decomposition, we can add the components back together to exactly reconstruct
+the series.</p>
+<p>You can also think of the low-frequency component as time series
+smoothing, like the trend in classical decomposition (or a simple moving average).
+It’s not as useful as other smoothing techniques, in general,
+because it a little too wavy. Note the blue waves that randomly appear in
+the flat section from 0 to 500.</p>
+<p>The discrete cosine feature is what makes all this possible. In the next section,
+I’ll explain how it really works.</p>
+</div>
+<div id="discrete-cosine-transform-cosine-combinations" class="section level2">
+<h2>Discrete cosine transform: cosine combinations</h2>
+<p>To accomplish the frequency decomposition, we need basic units of frequency,
+like the recurring units of time (week, month, year) in seasonal decomposition.</p>
+<p>For the discrete cosine transform, this is a sequence, the same length
+as the time series, of cosine waves
+that uniformly increase in frequency.</p>
+<p>It’s easier to imagine by way of examples. Below are 6 low-frequency waves
+part of the 1751 cosine waves needed to represent the
+red time series (of length 1751) in the previous section.</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Frequency is only one component: we also need the <em>strength</em> (or amplitude)
+of the wave. The strength of a cosine wave is typically called the DCT coefficient.
+Calculating the coefficients is the real essence of the discrete cosine transform.
+For any time series of length 1751, the fundamental cosine wave units are the
+same; what changes are the coefficients.</p>
+<p>Below are the cosine waves for the red time series.</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Let’s think about the how the strength might change with frequency.
+With this small sample of waves, it’s hard to get a sense of the changes,
+so let’s look back at the decomposition.</p>
+<p>The blue, low-frequency component ranges
+from -1 to 2, while the high frequency red component oscillates mostly
+around zero, with the largest wave measuring about 1 from peak to trough.</p>
+<p>Plotting the strength of the wave versus the frequency, the strength
+appears to decrease towards zero as the frequency increases.</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>If the strength of some of these waves are so small, do we really need them
+to reconstruct the time series?</p>
+</div>
+<div id="time-series-dimensionality-reduction" class="section level2">
+<h2>Time series dimensionality reduction</h2>
+<p>Since the high-frequency waves have around zero strength, let’s get rid of them.
+I’ll set the terms equal to zero, and attempt to reconstruct the red time series:</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>That’s a pretty decent reconstruction. How many terms did I set to zero?
+<em>1711</em>. I’ve encoded a huge amount of the information in only <strong>40</strong> dimensions!</p>
+<p>This is the real power of the discrete cosine transform.</p>
+<p>But so far we’ve only reduced dimensions by the frequency. We can also
+cut dimensions based on the strength of the coefficients.
+In the following example, I set all the coefficients below <code>abs(15)</code> to 0.
+The result is <em>33</em> dimensions.</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Overall, still pretty good, but 0-500 and &gt;1500 look a little too wiggly.
+Both reconstructions have pretty similar mean squared error to the original red
+time series.</p>
+<pre><code>##              ts     ts_33
+## ts_33 2.3629005          
+## ts_40 2.2792833 0.6230297</code></pre>
+<div id="how-much-reduction-is-possible" class="section level3">
+<h3>How much reduction is possible?</h3>
+<p>In the last example, the reconstruction was reasonably accurate using only 2%
+of the original dimensions! How much can you expect to reduce in general?
+And which frequencies should you remove?</p>
+<p>Unfortunately, there’s no way to now ahead of time.
+In data compression,
+our understanding of human
+<a href="http://www.svcl.ucsd.edu/courses/ece161c/handouts/DCT.pdf">visual</a> and auditory perception determines which
+features have little impact on the reconstruction quality.
+For example, the average human ear hears sound in the
+<a href="https://en.wikipedia.org/wiki/Psychoacoustics">20 Hz to 20 kHz</a>
+frequency ranges, so we can safely remove those waves no matter what.</p>
+<p>With the last time series, we first excluded the high-frequency
+components, but in some time series high-frequencies are the most
+important features.</p>
+<p><img src="/blog/2020-08-14-why-the-discrete-cosine-transforms-works-on-time-series/index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>In this time series of length 60, I chose the top 30 low frequency and high
+frequency coefficients. The blue, low frequency reconstruction doesn’t
+capture enough of the variation. As we’ll see below the high-frequency
+reconstruct has much lower mean squared error.</p>
+<p>Another option is the top 30 largest coefficients, which cuts the error
+by half!</p>
+<pre><code>##              ts    ts_hf    ts_lf
+## ts_hf  6.413039                  
+## ts_lf  7.437955 9.820909         
+## ts_str 3.663415 6.389416 7.458258</code></pre>
+<p>And in general, it is typically better to chose the largest coefficients,
+rather than low or high frequency ones. Even this isn’t a silver bullet:
+you still have to decide how many of the largest coefficients you want to include.</p>
+<p>Arbitrary times series have no guidelines like the ones sensory perception provides
+in data compression. You have to either use your
+judgment, or decide using some selection procedure.</p>
+</div>
+<div id="dimensionality-reduction-for-time-series-classification" class="section level3">
+<h3>Dimensionality reduction for time series classification</h3>
+<p>All of the previous material has been on dimensionality reduction for a single
+time series<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<p>While I think it’s useful in understanding what the discrete cosine is and does,
+doing dimensionality reduction on a <em>set</em> of time series you want to cluster
+or classify requires a whole new approach.</p>
+<p>That explanation will be part of an upcoming blog post.</p>
+</div>
+</div>
+<div id="data-compression" class="section level2">
+<h2>Data compression</h2>
+<p>Data compression is a fascinating discipline with
+<a href="https://cs.fit.edu/~mmahoney/compression/rationale.html">surprising connections</a>
+to machine learning.</p>
+<p>The field can be described as</p>
+<blockquote>
+<p>the art or science of representing information in a more compact form.
+- <em>Sayood, K. Introduction to Data Compression</em></p>
+</blockquote>
+<p>Compact forms have natural utility in machine learning by way of
+dimensionality reduction. Principle Component Analysis (PCA) can
+be thought of as a <a href="http://www.statistics4u.info/fundstat_eng/cc_pca_compress.html">data compression</a>
+algorithm, as well as a reduction technique.</p>
+<p>Both fields also seek correlations<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.
+In data compression, correlation implies redundant information,
+and the goal is to reduce the data to the minimum set of uncorrelated data.</p>
+<p>This approach is extremely relevant in machine learning, where highly
+correlated features are much difficult to work with and may even harm
+accuracy.</p>
+<p>I hope this gets you interested in data compression!</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The material is also applicable to a single <em>multivariate</em>
+time series.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p><em>Introduction to Data Compression</em>
+example 13.2.1 is a fun look at linear regression as a compression technique.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

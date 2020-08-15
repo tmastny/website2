@@ -1,5 +1,5 @@
 ---
-title: Discrete Cosine Transform on Time Series
+title: Discrete Cosine Transform and Time Series Dimensionality Reduction
 author: Tim Mastny
 date: '2020-08-10'
 slug: discrete-cosine-transform-on-time-series
@@ -14,6 +14,8 @@ output:
 
 <div id="TOC">
 <ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#data-compression">Data compression</a></li>
 <li><a href="#what-is-the-discrete-cosine-transform">What is the discrete cosine transform?</a>
 <ul>
 <li><a href="#time-series-as-wiggles">Time series as wiggles</a></li>
@@ -28,6 +30,31 @@ output:
 package. The package is under development and subject to change.</p>
 </blockquote>
 <hr />
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The discrete cosine transform (DCT) is a technique from data compression you can
+use for time series dimensionality reduction.</p>
+<p>I’ll share a time series with 1751 observations,
+that can be reduced to 40 uncorrelated features. These features also
+give much better results when doing time series classification and clustering.</p>
+<p>My next post will cover what the discrete cosine transform actually is,
+and how it provides such a high degree of dimensionality reduction.</p>
+<p>I’ll share how to use the discrete cosine transform on time series for
+dimensionality reduction,
+to aid in time series classification and clustering.</p>
+<p>Then I’ll explore how</p>
+<p>I’ll talk about two concepts:</p>
+<ul>
+<li>time series smoothing to identify the
+<a href="https://otexts.com/fpp3/tspatterns.html">time series trend</a></li>
+<li>dimensionality reduction and feature engineering for time series
+cluster and classification</li>
+</ul>
+<p>Both of these are possible because DCT is
+<a href="https://en.wikipedia.org/wiki/Transform_coding#:~:text=Transform%20coding%20is%20a%20type,audio%20signals%20or%20photographic%20images.">perfectly reverible</a></p>
+</div>
+<div id="data-compression" class="section level2">
+<h2>Data compression</h2>
 <pre class="r"><code>library(tsrecipes)
 library(tidyverse)</code></pre>
 <p>The primary application of the discrete cosine transform is in data compression:</p>
@@ -48,9 +75,11 @@ to machine learning, where highly correlated features, such values in a time
 series, may harm accuracy.</p>
 <p>Therefore, the discrete cosine transform offers</p>
 <ul>
+<li>time series smoothing</li>
 <li>uncorrelated features</li>
 <li>unsupervised dimensionality reduction</li>
 </ul>
+</div>
 <div id="what-is-the-discrete-cosine-transform" class="section level2">
 <h2>What is the discrete cosine transform?</h2>
 <p>Sid Shanker provides an intuitive <a href="https://squidarth.com/rc/math/2018/06/24/fourier.html">introduction</a>
