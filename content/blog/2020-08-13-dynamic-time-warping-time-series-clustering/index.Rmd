@@ -12,9 +12,10 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE, warning=FALSE, message=FALSE,
+  echo = FALSE, warning=FALSE, message=FALSE,
   results='show', cache=FALSE, autodep=FALSE, error = TRUE
 )
+
 fs::file_copy(
   "../../../blogdown/submodules/tsrecipes/vignettes/283px-Manhattan_distance.svg.png", 
   ".", 
@@ -30,3 +31,4 @@ fs::file_copy(
 
 ```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/dtw2_child.Rmd"}
 ```
+

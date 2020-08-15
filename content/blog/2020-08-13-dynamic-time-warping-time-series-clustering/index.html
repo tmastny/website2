@@ -14,6 +14,8 @@ output:
 
 <div id="TOC">
 <ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#distance-metrics">Distance Metrics</a></li>
 <li><a href="#time-series-distance">Time Series Distance</a></li>
 <li><a href="#dynamic-time-warping">Dynamic Time Warping</a></li>
 <li><a href="#clustering-time-series">Clustering Time Series</a></li>
@@ -25,10 +27,16 @@ output:
 package. The package is under development and subject to change.</p>
 </blockquote>
 <hr />
-<pre class="r"><code>library(tsrecipes)
-library(tidyverse)
-library(dtwclust)
-library(patchwork)</code></pre>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<ol style="list-style-type: decimal">
+<li><p>how standard methods mislead time series clustering</p></li>
+<li><p>dynamic time warping distance as a method for intutitive similarity</p></li>
+<li><p>clustering similar time series</p></li>
+</ol>
+</div>
+<div id="distance-metrics" class="section level2">
+<h2>Distance Metrics</h2>
 <p>To cluster, we need to measure the distance between every member of the group.
 Typically we think of <a href="https://en.wikipedia.org/wiki/Euclidean_distance#:~:text=In%20mathematics%2C%20the%20Euclidean%20distance,metric%20as%20the%20Pythagorean%20metric.">Euclidean distance</a>:
 the length of a straight line between to points.</p>
@@ -46,44 +54,14 @@ Figure 1: The distance between the forecast and the actual model is calculated b
 <p>A straight line between two points isn’t always the possible.
 In a city grid, we are constrained by the blocks, so the distance
 between two points is called the <a href="https://en.wikipedia.org/wiki/Taxicab_geometry">Manhattan distance</a>.</p>
-<pre class="r"><code>knitr::include_graphics(&quot;283px-Manhattan_distance.svg.png&quot;)</code></pre>
 <p><img src="283px-Manhattan_distance.svg.png" width="142" /></p>
-<p>As I’ll demonstrate in the next section that time series also
+<p>As I’ll demonstrate in the next section, time series also
 need a special distance metric. The most common is called Dynamic Time Warping.</p>
+</div>
 <div id="time-series-distance" class="section level2">
 <h2>Time Series Distance</h2>
 <p>Plotted below are three time series. I’ve plotted blue and green to both
 overlap red. Which do you think is “closer” in distance, intuitively?</p>
-<pre class="r"><code>eth_sample &lt;- ethanol %&gt;%
-  filter(id %in% c(1, 2, 53))
-
-eth_sample_unnested_trunc &lt;- eth_sample %&gt;%
-  mutate(n = list(1:1751)) %&gt;%
-  unnest(c(ts, n)) %&gt;%
-  filter(between(n, 500, 1500))
-
-eth_sample_trunc &lt;- eth_sample_unnested_trunc %&gt;%
-  select(-n) %&gt;%
-  group_by(id, class) %&gt;%
-  summarise(ts = list(ts), .groups = &quot;drop&quot;)</code></pre>
-<pre class="r"><code>plot_overlap &lt;- function(ids, x) {
-  group_colors &lt;- c(`1` = &quot;#F8766D&quot;, `2` = &quot;#619CFF&quot;)
-  if (any(ids != c(1, 2))) {
-    group_colors &lt;- c(`1` = &quot;#F8766D&quot;, `53` = &quot;#00BA38&quot;)
-  }
-  
-  x %&gt;%
-    filter(id %in% ids) %&gt;%
-    ggplot(aes(n, ts, color = as.factor(id), group = id)) +
-    geom_line(show.legend = FALSE) +
-    scale_color_manual(values = group_colors) +
-    labs(x = NULL, y = NULL)
-}
-
-plots &lt;- list(c(1, 2), c(1, 53)) %&gt;%
-  map(plot_overlap, eth_sample_unnested_trunc)
-
-plots[[1]] / plots[[2]]</code></pre>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <p>I think it’s blue: blue and red both has an early dip after 750.
 Around 1000 they both have a slim, deep trough. The major difference is that
@@ -93,10 +71,6 @@ And the dip after 1000 is wider and shallower.</p>
 <p>The Euclidean distance tells a different story.
 Red is actually closer to green, because it has a smaller distance metric
 (9.78 vs 9.83).</p>
-<pre class="r"><code>eth_sample$ts %&gt;% 
-  set_names(c(&quot;red&quot;, &quot;blue&quot;, &quot;green&quot;)) %&gt;%
-  simplify2array() %&gt;% t() %&gt;%
-  dist()</code></pre>
 <pre><code>##           red    blue
 ## blue  9.83149        
 ## green 9.78531 9.82103</code></pre>
@@ -111,24 +85,12 @@ is really similar. We need <em>time warping</em>!</p>
 <p>In the visualizations below<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>,
 you can see how dynamic time warping stretches
 (warps) time to match up nearby points.</p>
-<pre class="r"><code>dtw::dtw(eth_sample_trunc$ts[[1]], eth_sample_trunc$ts[[2]]) %&gt;%
-  dtw::dtwPlotTwoWay(
-    xts = eth_sample_trunc$ts[[1]], yts = eth_sample_trunc$ts[[2]]
-  )</code></pre>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <p>When comparing red to green, there is a lot more warping going on to match up
 points (as measured by the light gray concentric lines between the series).</p>
-<pre class="r"><code>dtw::dtw(eth_sample_trunc$ts[[1]], eth_sample_trunc$ts[[3]]) %&gt;%
-  dtw::dtwPlotTwoWay(
-    xts = eth_sample_trunc$ts[[1]], yts = eth_sample_trunc$ts[[3]]
-  )</code></pre>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>The dissimilarity between red and green is reflected when we
 calculate the dynamic time warping distance.</p>
-<pre class="r"><code>eth_sample$ts %&gt;% 
-  set_names(c(&quot;red&quot;, &quot;blue&quot;, &quot;green&quot;)) %&gt;%
-  simplify2array() %&gt;% t() %&gt;%
-  dist(method = &quot;DTW&quot;)</code></pre>
 <pre><code>##            red     blue
 ## blue  28.26073         
 ## green 33.82476 31.50148</code></pre>
