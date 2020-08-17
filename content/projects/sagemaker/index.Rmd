@@ -1,13 +1,25 @@
 ---
-title: "sagemaker R package"
+title: "sagemaker and R"
 slug: sagemaker
 tags: [rpackage]
 ---
 
 <a><img src="/projects/sagemaker/sagemaker.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
-`sagemaker`: R Interface to AWS Sagemaker
+[`sagemaker`](https://github.com/tmastny/sagemaker) R Interface
 
-  - [Github](https://github.com/tmastny/sagemaker),
-[Documentation](https://tmastny.github.io/sagemaker/index.html)
+[`sagemaker-tidymodels`](https://github.com/tmastny/sagemaker-tidymodels): 
+framework for [tidymodels](https://www.tidymodels.org/)
+ 
 
 <!--more-->
+
+The [`sagemaker`](https://github.com/tmastny/sagemaker) R package
+provides a simplified interface to the [AWS Sagemaker](https://aws.amazon.com/sagemaker/)
+API. See the [documentation](https://tmastny.github.io/sagemaker/index.html)
+to get started.
+
+[`sagemaker-tidymodels`](https://github.com/tmastny/sagemaker-tidymodels) is
+a Python package and Docker container that creates an AWS Sagemaker framework
+for training and deploying machine learning models created by
+[tidymodels](https://www.tidymodels.org/)
+in the cloud.
