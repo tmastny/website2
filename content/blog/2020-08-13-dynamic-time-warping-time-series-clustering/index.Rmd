@@ -1,5 +1,5 @@
 ---
-title: Dynamic Time Warping Time Series Clustering
+title: Dynamic Time Warping and Time Series Clustering
 author: Tim Mastny
 date: '2020-08-13'
 slug: dynamic-time-warping-time-series-clustering
@@ -31,4 +31,3 @@ fs::file_copy(
 
 ```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/dtw2_child.Rmd"}
 ```
-

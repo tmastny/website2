@@ -1,5 +1,5 @@
 ---
-title: Dynamic Time Warping Time Series Clustering
+title: Dynamic Time Warping and Time Series Clustering
 author: Tim Mastny
 date: '2020-08-13'
 slug: dynamic-time-warping-time-series-clustering
@@ -15,8 +15,10 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#distance-metrics">Distance Metrics</a></li>
+<li><a href="#distance-metrics">Distance Metrics</a>
+<ul>
 <li><a href="#time-series-distance">Time Series Distance</a></li>
+</ul></li>
 <li><a href="#dynamic-time-warping">Dynamic Time Warping</a></li>
 <li><a href="#clustering-time-series">Clustering Time Series</a></li>
 </ul>
@@ -29,39 +31,51 @@ package. The package is under development and subject to change.</p>
 <hr />
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
+<p>Working with a <em>set</em> of time series measuring related observations
+requires a different set of tools compared to analyzing or forecasting
+a single time series.</p>
+<p>If you want to cluster time series into groups with similar behaviors,
+one option is feature extraction: statistical summaries that
+characterize some feature of the time series, such as min, max, or
+spectral density. The <a href="https://feasts.tidyverts.org/index.html">feasts</a> R package
+and the Python package <a href="https://github.com/blue-yonder/tsfresh">tsfresh</a>
+provide tools to make this easier.</p>
+<p>Why not cluster on the time series directly? Standard methods don’t work
+as well, and can produce clusters that miss structure you can visually
+identify as “similar”.</p>
+<p>Dynamic time warping is method that aligns with intuitive notions of
+time series similarity. To show how it works, I’ll walk through</p>
 <ol style="list-style-type: decimal">
-<li><p>how standard methods mislead time series clustering</p></li>
-<li><p>dynamic time warping distance as a method for intutitive similarity</p></li>
+<li><p>how standard distance metrics fail to create useful time series clusters</p></li>
+<li><p>dynamic time warping distance as a method for similarity</p></li>
 <li><p>clustering similar time series</p></li>
 </ol>
 </div>
 <div id="distance-metrics" class="section level2">
 <h2>Distance Metrics</h2>
-<p>To cluster, we need to measure the distance between every member of the group.
+<p>To cluster, we need to measure the distance between every member of the group.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
 Typically we think of <a href="https://en.wikipedia.org/wiki/Euclidean_distance#:~:text=In%20mathematics%2C%20the%20Euclidean%20distance,metric%20as%20the%20Pythagorean%20metric.">Euclidean distance</a>:
-the length of a straight line between to points.</p>
+the length of a straight line between two points.</p>
 <p>This distance pops up all the time in data science,
-usually called Mean Squared Error (MSE) or
+usually in Mean Squared Error (MSE) or
 it’s counterpart Root Mean Squared Error (RMSE).
 It’s used to measure regression error in machine learning,
 and assess the accuracy of a <a href="https://otexts.com/fpp3/accuracy.html">time series forecast</a>.</p>
-<div class="figure"><span id="fig:unnamed-chunk-3"></span>
-<img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-3-1.png" alt="The distance between the forecast and the actual model is calculated by the Euclidean distance between corresponding points in the time series and the forecasts. Evaluation of time series models is typically calculated using Euclidean distance " width="672" />
-<p class="caption">
-Figure 1: The distance between the forecast and the actual model is calculated by the Euclidean distance between corresponding points in the time series and the forecasts. Evaluation of time series models is typically calculated using Euclidean distance
-</p>
-</div>
+<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>To evaluate the fit of the forecast to the actual data,
+you can calculate the Euclidean distance between the corresponding points
+in the time series and the forecasts. The smaller the distance,
+the better the forecast: the more <em>similar</em> the two series are.</p>
 <p>A straight line between two points isn’t always the possible.
-In a city grid, we are constrained by the blocks, so the distance
+In a city grid, we are constrained by the blocks. In this situation, the distance
 between two points is called the <a href="https://en.wikipedia.org/wiki/Taxicab_geometry">Manhattan distance</a>.</p>
 <p><img src="283px-Manhattan_distance.svg.png" width="142" /></p>
-<p>As I’ll demonstrate in the next section, time series also
+<p>Time series also
 need a special distance metric. The most common is called Dynamic Time Warping.</p>
-</div>
-<div id="time-series-distance" class="section level2">
-<h2>Time Series Distance</h2>
+<div id="time-series-distance" class="section level3">
+<h3>Time Series Distance</h3>
 <p>Plotted below are three time series. I’ve plotted blue and green to both
-overlap red. Which do you think is “closer” in distance, intuitively?</p>
+overlap red. Is blue or green more similar to red?</p>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <p>I think it’s blue: blue and red both has an early dip after 750.
 Around 1000 they both have a slim, deep trough. The major difference is that
@@ -75,19 +89,22 @@ Red is actually closer to green, because it has a smaller distance metric
 ## blue  9.83149        
 ## green 9.78531 9.82103</code></pre>
 </div>
+</div>
 <div id="dynamic-time-warping" class="section level2">
 <h2>Dynamic Time Warping</h2>
 <p>To capture our intuition about the similarity of red and blue,
 we need a new metric. This metric can’t simply measure the point-to-point
 distance between the series.
-As we saw, blue is shifted to the left, even though the shape
-is really similar. We need <em>time warping</em>!</p>
-<p>In the visualizations below<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>,
+As we saw, blue is shifted to the left of red, even though the shape
+is really similar. We need to <em>warp time</em> to account for this shift!</p>
+<p>In the visualizations below<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>,
 you can see how dynamic time warping stretches
 (warps) time to match up nearby points.</p>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<p>When comparing red to green, there is a lot more warping going on to match up
-points (as measured by the light gray concentric lines between the series).</p>
+<p>When comparing red to green below,
+there is a lot more warping going on to match up
+points (as measured by the light gray concentric lines between the series),
+so the time series are more dissimilar.</p>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>The dissimilarity between red and green is reflected when we
 calculate the dynamic time warping distance.</p>
@@ -97,12 +114,88 @@ calculate the dynamic time warping distance.</p>
 </div>
 <div id="clustering-time-series" class="section level2">
 <h2>Clustering Time Series</h2>
-<p>Here’s a good introudction to clustering.
-<a href="https://uc-r.github.io/hc_clustering" class="uri">https://uc-r.github.io/hc_clustering</a></p>
+<p>Equipped with a measure of similarity, we can now attempt to cluster
+the time series. The time series studied in previous examples are part of a set of
+504 time series, belonging to four classes.</p>
+<p>I’ll use <code>step_dtw</code> from my tsrecipes package to cluster using the dynamic time
+warping similarity metric. <code>step_dtw</code> uses the excellent
+<a href="https://github.com/asardaes/dtwclust">dtwclust</a> package behind the scenes.</p>
+<p>With clustering, I think it’s important to evaluate the clusters using
+<em>objective</em> and <em>subjective</em> criteria.</p>
+<p>Subjective criteria include</p>
+<ul>
+<li><p>visualizing is the “shape” of time series within clusters to see if there is a
+pattern. If the shape isn’t obvious, you can try alternative methods or
+increase the number of clusters. Visualizations of noisy, high-frequency
+time series may not be useful. In this case, you may want to visualize
+smoothed trends of the cluster, rather than raw time series.</p></li>
+<li><p>inspecting clusters for clutter: elements within the cluster that don’t seem
+to belong. This may indicate you need to increase the number of clusters.</p></li>
+</ul>
+<p>Objective criteria include</p>
+<ul>
+<li><p>checking the number of elements per cluster.
+Especially with hierarchical clustering, occasionally a cluster will have
+90% of the data, which isn’t very useful.</p></li>
+<li><p>evaluation against known classes. If working with unlabeled data, sometimes
+there may be a small portion of labeled data to evaluate against.</p></li>
+<li><p>calculating cluster <a href="https://uc-r.github.io/hc_clustering#optimal">statistics</a>.</p></li>
+</ul>
+<p>Four classes are known ahead of time, so it seems reasonable to start with
+four clusters.</p>
+<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre><code>## # weights:  20 (12 variable)
+## initial  value 698.692358 
+## iter  10 value 687.319518
+## final  value 687.085208 
+## converged</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   pred_correct     n percent
+##   &lt;lgl&gt;        &lt;int&gt;   &lt;dbl&gt;
+## 1 FALSE          344   0.683
+## 2 TRUE           160   0.317</code></pre>
+<pre><code>## # weights:  36 (24 variable)
+## initial  value 698.692358 
+## iter  10 value 673.785513
+## iter  20 value 670.536846
+## final  value 670.457844 
+## converged</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   pred_correct     n percent
+##   &lt;lgl&gt;        &lt;int&gt;   &lt;dbl&gt;
+## 1 FALSE          330   0.655
+## 2 TRUE           174   0.345</code></pre>
+<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>Finding useful clusters requires setting enough distinct clusters.</p>
+<p>But finding these clusters is also sensitive to the many options
+you are select in <code>dtwclust::tsclust</code>.</p>
+<p>Theoretically, you could tune across the number of clusters,
+as well as cluster (and distance methods).</p>
+<p>It’s worth checking out <code>dtwclust::compare_clusterings</code> if you are
+interested in doing this.
+Right now it’s not supported in <code>step_dtw</code>. Clustering with <code>tsclust</code>
+takes a long time, and finding useful clusters can also be subjective.</p>
+<p>I’d strongly recommend plotting clusters as a part of exploratory data analysis,
+rather than tuning blindly. Whether you doing a single clustering, or
+evaluating clusters objectively (scoring against classes) or subjectively
+(looking at the shape of clusters), you need to limit your explorations
+to the train set.</p>
+<p>Just make sure you are still only using your
+training data, not your test data, when subjectively evaluating your clusters
+to avoid information leakage.</p>
+<p>Be careful here: preprocessing, and even exploration on the training set
+can create <a href="http://www.feat.engineering/resampling.html">information leakage</a>,
+make your model appear more effective than it actually is.</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a href="https://www.r-bloggers.com/time-series-matching-with-dynamic-time-warping/" class="uri">https://www.r-bloggers.com/time-series-matching-with-dynamic-time-warping/</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>
+The UC Business Analytics
+<a href="https://uc-r.github.io/hc_clustering">R Programming Guide</a> has an excellent
+series on clustering, covering dissimilarity measures to the final clustering
+algorithms.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://www.r-bloggers.com/time-series-matching-with-dynamic-time-warping/" class="uri">https://www.r-bloggers.com/time-series-matching-with-dynamic-time-warping/</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
