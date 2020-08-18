@@ -1,0 +1,12 @@
+---
+title: "Hudl's Greatest Comebacks"
+slug: hudl-greatest-comebacks
+tags: []
+summary: >
+  ![](/projects/hudl-greatest-comebacks/hudl-greatest-comebacks.png)
+---
+
+[![](hudl-greatest-comebacks.png)](https://www.hudl.com/video/5ef26c24ab93fb1a10868c39)
+
+Part of the data cleaning and statistics team for Hudl's [Greatest Comebacks](https://www.hudl.com/video/5ef26c24ab93fb1a10868c39)
+series.
