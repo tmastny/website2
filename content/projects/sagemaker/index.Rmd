@@ -1,15 +1,16 @@
 ---
 title: "sagemaker and R"
 slug: sagemaker
+date: 2020-08-20
 tags: [rpackage]
 ---
 
 <a><img src="/projects/sagemaker/sagemaker.svg" align="left" height=85 style="background-color: white; padding-right: 40px;"/></a>
 [`sagemaker`](https://github.com/tmastny/sagemaker) R Interface
 
-[`sagemaker-tidymodels`](https://github.com/tmastny/sagemaker-tidymodels): 
+[`sagemaker-tidymodels`](https://github.com/tmastny/sagemaker-tidymodels):
 framework for [tidymodels](https://www.tidymodels.org/)
- 
+
 
 <!--more-->
 
