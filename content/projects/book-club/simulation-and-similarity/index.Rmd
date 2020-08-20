@@ -2,9 +2,23 @@
 title: "Simulation and Similarity"
 slug: simulation-and-similarity
 tags: []
+summary: >
+  Notes from Alex Hayes's ([website](https://www.alexpghayes.com/), 
+  [Twitter](https://twitter.com/alexpghayes)) philosophy of stats book club. 
+  Follow along at 
+  [#philstatbookclub](https://twitter.com/search?q=%23philstatbookclub&src=typed_query).
 ---
 
 ![](sim-sim.jpg)
+
+[Simulation and Similiarity](https://www.amazon.com/Simulation-Similarity-Understand-Studies-Philosophy/dp/0190265124)
+
+Notes from Alex Hayes's ([website](https://www.alexpghayes.com/),
+[Twitter](https://twitter.com/alexpghayes)) philosophy of stats book club.
+All my notes are written with [notion.so](https://www.notion.so/) so please
+leave a comment!
+
+Follow along at [#philstatbookclub](https://twitter.com/search?q=%23philstatbookclub&src=typed_query).
 
 ## Week 1
 
