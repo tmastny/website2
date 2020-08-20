@@ -2,3 +2,10 @@
 title: "Book Club"
 type: "book-club"
 ---
+
+`r emo::ji("books")` Notes on various books.
+
+<!--more-->
+
+
+# Books `r emo::ji("books")`
