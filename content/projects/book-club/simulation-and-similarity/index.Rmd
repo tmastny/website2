@@ -1,0 +1,11 @@
+---
+title: "Simulation and Similarity"
+slug: simulation-and-similarity
+tags: []
+---
+
+![](sim-sim.jpg)
+
+## Week 1
+
+* Chapters 1 and 2 [notes](https://www.notion.so/Simulation-and-Similarity-2525272efbf14bfca6b480b69e907116)
