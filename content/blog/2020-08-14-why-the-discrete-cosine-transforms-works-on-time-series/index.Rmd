@@ -1,6 +1,6 @@
 ---
-title: Applying the Discrete Cosine Transform to Time Series
-author: Tim Mastny
+title: Discrete Cosine Transform and Time Series Classification
+author: ~
 date: '2020-08-14'
 slug: applying-the-discrete-cosine-transform-to-time-series
 categories: []
