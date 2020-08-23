@@ -7,9 +7,6 @@
 [submodule "themes/hugo-xmin"]
 	path = themes/hugo-xmin
 	url = https://github.com/tmastny/hugo-xmin.git
-[submodule "content/blog/external_data/tsrecipes"]
-	path = content/blog/external_data/tsrecipes
-	url = https://github.com/tmastny/tsrecipes.git
 [submodule "blogdown/submodules/tsrecipes"]
 	path = blogdown/submodules/tsrecipes
 	url = https://github.com/tmastny/tsrecipes.git

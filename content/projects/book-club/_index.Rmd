@@ -1,0 +1,12 @@
+---
+title: "Book Club"
+type: "book-club"
+date: 2020-05-20
+---
+
+`r emo::ji("books")` Notes on various books.
+
+<!--more-->
+
+
+# Books `r emo::ji("books")`
