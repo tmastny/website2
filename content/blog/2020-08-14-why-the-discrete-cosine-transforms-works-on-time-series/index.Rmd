@@ -2,7 +2,7 @@
 title: Discrete Cosine Transform and Time Series Classification
 author: ~
 date: '2020-08-14'
-slug: applying-the-discrete-cosine-transform-to-time-series
+slug: discrete-cosine-transform-time-series-classification
 categories: []
 tags: []
 output:
