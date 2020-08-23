@@ -20,17 +20,16 @@ output:
 <li><a href="#time-series-distance">Time Series Distance</a></li>
 </ul></li>
 <li><a href="#dynamic-time-warping">Dynamic Time Warping</a></li>
-<li><a href="#clustering-time-series">Clustering Time Series</a></li>
-<li><a href="#todo">TODO</a>
-<ul>
-<li><a href="#additional-clusters">Additional Clusters</a></li>
-</ul></li>
 </ul>
 </div>
 
 <blockquote>
-<p>Note: This is the beginning of a series of articles for my <a href="https://github.com/tmastny/tsrecipes">tsrecipes</a>
-package. The package is under development and subject to change.</p>
+<p>Note: This is a
+part of a series of articles for my package tsrecipes
+(<a href="https://github.com/tmastny/tsrecipes">Github</a>,
+<a href="https://tmastny.github.io/tsrecipes/">website</a>).
+The full article, including the code, can be found
+<a href="https://tmastny.github.io/tsrecipes/articles/dtw.html">here</a>.</p>
 </blockquote>
 <hr />
 <div id="introduction" class="section level2">
@@ -45,14 +44,13 @@ spectral density. The <a href="https://feasts.tidyverts.org/index.html">feasts</
 and the Python package <a href="https://github.com/blue-yonder/tsfresh">tsfresh</a>
 provide tools to make this easier.</p>
 <p>Why not cluster on the time series directly? Standard methods don’t work
-as well, and can produce clusters that miss structure you can visually
-identify as “similar”.</p>
+as well, and can produce clusters that fail to capture visual similarities
+in shape and size.</p>
 <p>Dynamic time warping is method that aligns with intuitive notions of
 time series similarity. To show how it works, I’ll walk through</p>
 <ol style="list-style-type: decimal">
 <li><p>how standard distance metrics fail to create useful time series clusters</p></li>
 <li><p>dynamic time warping distance as a method for similarity</p></li>
-<li><p>clustering similar time series</p></li>
 </ol>
 </div>
 <div id="distance-metrics" class="section level2">
@@ -63,7 +61,7 @@ the length of a straight line between two points.</p>
 <p>This distance pops up all the time in data science,
 usually in Mean Squared Error (MSE) or
 it’s counterpart Root Mean Squared Error (RMSE).
-It’s used to measure regression error in machine learning,
+These metrics are used to measure regression error in machine learning
 and assess the accuracy of a <a href="https://otexts.com/fpp3/accuracy.html">time series forecast</a>.</p>
 <p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>To evaluate the fit of the forecast to the actual data,
@@ -116,129 +114,6 @@ calculate the dynamic time warping distance.</p>
 ## blue  28.26073         
 ## green 33.82476 31.50148</code></pre>
 </div>
-<div id="clustering-time-series" class="section level2">
-<h2>Clustering Time Series</h2>
-<p>Equipped with a measure of similarity, we can now attempt to cluster
-the time series. The time series studied in previous examples are part of a set of
-504 time series, belonging to four classes.</p>
-<p>I’ll use <code>step_dtw</code> from my tsrecipes package to cluster using the dynamic time
-warping similarity metric. <code>step_dtw</code> uses the excellent
-<a href="https://github.com/asardaes/dtwclust">dtwclust</a> package behind the scenes.</p>
-<p>With clustering, I think it’s important to evaluate the clusters using
-<em>objective</em> and <em>subjective</em> criteria.</p>
-<p>Subjective criteria include</p>
-<ul>
-<li><p>visualizing the “shape” of time series within clusters to see if there is a
-pattern. If the shape isn’t obvious, you can try alternative methods or
-increase the number of clusters. Visualizations of noisy, high-frequency
-time series may not be useful. In this case, you may want to visualize
-smoothed trends of the cluster, rather than raw time series.</p></li>
-<li><p>inspecting clusters for clutter: elements within the cluster that don’t seem
-to belong. This may indicate you need to increase the number of clusters.</p></li>
-</ul>
-<p>Objective criteria include</p>
-<ul>
-<li><p>checking the number of elements per cluster.
-Especially with hierarchical clustering, occasionally a cluster will have
-90% of the data, which isn’t very useful.</p></li>
-<li><p>evaluation against known classes. If working with unlabeled data, sometimes
-there may be a small portion of labeled data to evaluate against.</p></li>
-<li><p>calculating cluster <a href="https://uc-r.github.io/hc_clustering#optimal">statistics</a>.</p></li>
-</ul>
-<p>Four classes are known ahead of time, so it seems reasonable to start with
-four clusters.</p>
-<p>I always start with visualizing the time series within each cluster.</p>
-<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<p>Visually, there are distinct shapes within each cluster. Clusters 2 and 3
-both have a clear middle dip. Cluster 1 has very few wiggles on the right, and
-cluster 4 is almost its mirror image, with few wiggles on the left.</p>
-<p>All clusters seem a little clutter: especially 1 and 4 with all the wiggles
-on the left and right respectively.</p>
-<p>Comparing the “shape” of the clusters to the shape of the individual classes,
-there doesn’t seem to be a lot of obvious similarity.</p>
-<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
-<p>The actual classes of the time series do not visually group into distinct
-shapes, indicating to me there is a lot of variation within each class.</p>
-<pre><code>## # weights:  20 (12 variable)
-## initial  value 698.692358 
-## iter  10 value 687.319518
-## final  value 687.085208 
-## converged</code></pre>
-<p>Predicting the class based on the cluster is only 31% accurate. Better than
-random chance (25%), but still not great.</p>
-<pre><code>## # A tibble: 2 x 3
-##   pred_correct     n percent
-##   &lt;lgl&gt;        &lt;int&gt;   &lt;dbl&gt;
-## 1 FALSE          344   0.683
-## 2 TRUE           160   0.317</code></pre>
-<p>Based on this analysis, I bet the clustering will be more useful if there are
-more clusters. While each cluster has a unique shape, there is still a lot of
-clutter. Moreover, we see a large amount of variation within each class.
-There will need to be more clusters to capture that variation.</p>
-</div>
-<div id="todo" class="section level2">
-<h2>TODO</h2>
-<p>One of the most expensive parts of <code>tsclust</code> is calculating the distance matrix.
-If we could presupply the distance matrix as an option to step_dtw
-(or another step entirely), then we could significantly speed up the process.</p>
-<p>what about <code>step_proxy</code> and use different clustering methods against that?</p>
-<pre><code>## # weights:  36 (24 variable)
-## initial  value 698.692358 
-## iter  10 value 673.785513
-## iter  20 value 670.536846
-## final  value 670.457844 
-## converged</code></pre>
-<p>With 8 clusters, there are more definition to the shapes, and a lot less clutter.</p>
-<p><img src="/blog/2020-08-13-dynamic-time-warping-time-series-clustering/index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
-<pre><code>## # A tibble: 2 x 3
-##   pred_correct     n percent
-##   &lt;lgl&gt;        &lt;int&gt;   &lt;dbl&gt;
-## 1 FALSE          330   0.655
-## 2 TRUE           174   0.345</code></pre>
-<p>Additionally, there is a 3% increase in accuracy.</p>
-<div id="additional-clusters" class="section level3">
-<h3>Additional Clusters</h3>
-<p>You may have noticed that running <code>step_dtw</code> takes a long time.
-The bottleneck is calculating the dynamic time warping distance.
-Most implementations
-have a computational complexity of <span class="math inline">\(O(N^2)\)</span><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>
-to calculate the distance between two time series,
-and that calculation must happen between <em>every pair</em> of time series
-in the dataset to cluster.</p>
-<p>Fortunately, the <code>dtwclust</code> interface lets you precompute the the similarity
-matrix and supply that to the cluster algorithms. Care must be taken here
-to avoid data leakage (see the section below).</p>
-<pre><code>## [1] &quot;/Users/Tim/website2/blogdown/submodules/tsrecipes/vignettes&quot;</code></pre>
-<pre><code>## # A tibble: 5 x 2
-##       k  mean
-##   &lt;dbl&gt; &lt;dbl&gt;
-## 1     4 0.315
-## 2     8 0.327
-## 3    16 0.371
-## 4    32 0.411
-## 5    64 0.476</code></pre>
-<p>Finding useful clusters requires setting enough distinct clusters.</p>
-<p>But finding these clusters is also sensitive to the many options
-available in <code>dtwclust::tsclust</code>.</p>
-<p>Theoretically, you could tune across the number of clusters,
-as well as cluster (and distance methods).</p>
-<p>It’s worth checking out <code>dtwclust::compare_clusterings</code> if you are
-interested in doing this.
-Right now it’s not supported in <code>step_dtw</code>. Clustering with <code>tsclust</code>
-takes a long time, and finding useful clusters can also be subjective.</p>
-<p>I’d strongly recommend plotting clusters as a part of exploratory data analysis,
-rather than tuning blindly. Whether you doing a single clustering, or
-evaluating clusters objectively (scoring against classes) or subjectively
-(looking at the shape of clusters), you need to limit your explorations
-to the train set.</p>
-<p>Just make sure you are still only using your
-training data, not your test data, when subjectively evaluating your clusters
-to avoid information leakage.</p>
-<p>Be careful here: preprocessing, and even exploration on the training set
-can create <a href="http://www.feat.engineering/resampling.html">information leakage</a>,
-make your model appear more effective than it actually is.</p>
-</div>
-</div>
 <div class="footnotes">
 <hr />
 <ol>
@@ -248,11 +123,5 @@ The UC Business Analytics
 series on clustering, covering dissimilarity measures to the final clustering
 algorithms.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p><a href="https://www.r-bloggers.com/time-series-matching-with-dynamic-time-warping/" class="uri">https://www.r-bloggers.com/time-series-matching-with-dynamic-time-warping/</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-<li id="fn3"><p>
-Some improvements can be made. <code>dtwclust</code> offers <code>dtw_basic</code> by default,
-which is significantly faster, with fewer features.
-And the <a href="https://dl.acm.org/doi/10.1145/3230734">theoretical</a>
-computational complexity is <span class="math inline">\(O(n^2/\log\log(n))\)</span>, although I don’t know
-if this has been implemented anywhere, or if its technically feasible to do so.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

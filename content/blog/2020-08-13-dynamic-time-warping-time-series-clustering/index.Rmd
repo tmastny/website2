@@ -23,12 +23,14 @@ fs::file_copy(
 )
 ```
 
-> Note: This is the beginning of a series of articles for my [tsrecipes](https://github.com/tmastny/tsrecipes)
-  package. The package is under development and subject to change.
-  
+> Note: This is a 
+  part of a series of articles for my package tsrecipes
+  ([Github](https://github.com/tmastny/tsrecipes), 
+  [website](https://tmastny.github.io/tsrecipes/)).
+  The full article, including the code, can be found
+  [here](https://tmastny.github.io/tsrecipes/articles/dtw.html). 
 
 ---
 
-```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/dtw2_child.Rmd"}
+```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/_dtw.Rmd"}
 ```
-
