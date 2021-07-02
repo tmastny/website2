@@ -1,8 +1,8 @@
 ---
-title: Algorithmic Complexity in Hardware
+title: Algorithmic Complexity of Adding Integers
 author: ~
 date: '2021-07-02'
-slug: algorithmic-complexity-hardware
+slug: algorithmic-complexity-adding-integers
 categories: []
 tags: []
 output:
@@ -12,22 +12,91 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE, warning=FALSE, message=FALSE,
-  results='show', cache=FALSE, autodep=FALSE, error = TRUE
+  echo = FALSE, warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
 )
 ```
 
-> Note: This is a 
-  part of a series of articles for my package tsrecipes
-  ([Github](https://github.com/tmastny/tsrecipes), 
-  [website](https://tmastny.github.io/tsrecipes/)).
-  The full article, including the code, can be found
-  [here](https://tmastny.github.io/tsrecipes/articles/dct.html). 
-
----
-
-algorithmic-complexity-of-carry-lookahead-adders
 ## Introduction
+
+It surprised me to discover that the time complexity to add
+two `n`-bit numbers is `O(log n)`.
+
+That lead me to study hardware vs. software complexity
+analysis.
+
+
+## Elementary School Adding Algorithm
+
+The addition algorithm for binary numbers is the same as the
+one learned in elementary school^[Example: https://en.wikipedia.org/wiki/Binary_number#Addition]:
+
+```
+  1 1 1 1 1    (carried digits)
+    0 1 1 0 1
++   1 0 1 1 1
+-------------
+= 1 0 0 1 0 0 = 36
+```
+
+The proof of this algorithm relies on the fact that the sum of any
+3 single-digit numbers is at most two digits.
+
+This algorithm is sequential: we need to result of the previous
+iteration before we can correctly compute the
+sum of the current iteration.
+
+This seems like `O(n)` must be the faster possible time complexity
+for adding two numbers.
+
+When implemented in a circuit, this is called the ripple carry adder.
+
+## Hardware Parallelism
+
+Each bit of an `n`-bit number is stored on a lead. A lead is a wire
+that can connect to another circuit. A lead can be in two states, `0`
+or `1`.
+
+We could take the bitwise `AND` of two `n`-bit numbers `a` and `b`
+by each of their leads to an `AND` gate:
+
+![](bitwise-and.JPG)
+
+This offers a different model of computational complexity: bitwise
+`AND` can be done in `O(1)` constant time, but requires `O(n)` space.
+
+In circuits, space analogous to memory complexity, but can also
+be thought of as the number of gates, cost, or physical space required
+on a circuit board.
+
+### Hardware Adder
+
+If we implement the elementary school adder in hardware,
+the time complexity is still `O(n)`. The parallelism doesn't
+help, because each circuit has to the wait for the previous
+carry digit:
+
+![](circuit-adder.JPG)
+
+
+https://www.ece.uvic.ca/~fayez/courses/ceng465/lab_465/project1/adders.pdf
+
+
+## Carry-lookahead
+
+We can improve this algorithm by investigating when the circuit produces a carry.
+
+
+
+
+
+
+
+
+
+
+
+
 
 Problem: how do we take to the logical `AND` of `n` bits?
 - sequential: O(n)
@@ -36,27 +105,27 @@ Problem: how do we take to the logical `AND` of `n` bits?
 What does this look like in hardware?
 
 In the algorithmic analysis of software, we are concerned with
-time and memory complexity. 
+time and memory complexity.
 
 Hardware introduces a new component: space (or cost) complexity.
 
-Could build an array of `AND` gates with a height of O(log n). 
-But the number of gates would be O(2^n). 
+Could build an array of `AND` gates with a height of O(log n).
+But the number of gates would be O(2^n).
 
 
 
 Why would we ever want to build a gate like that? Isn't there a way
-we can reuse gates like in software? There is, but this does have 
+we can reuse gates like in software? There is, but this does have
 an application in carry-lookahead adders.
 
 Before we explain, what is the time complexity of adding two `n`-bit numbers?
-In sequential software, we can only look at one bit at a time and we have to 
+In sequential software, we can only look at one bit at a time and we have to
 look at each one to add the number.
 
 Hardware on the other hand has some inherent parallelism. Each bit is stored
-on a lead, and those leads can be connected to a logic gate. 
-But to implement adding, we have to calculate the carry bit. 
-That's a sequential operation. 
+on a lead, and those leads can be connected to a logic gate.
+But to implement adding, we have to calculate the carry bit.
+That's a sequential operation.
 
 But it's only sequential if our space complexity is O(n). If we increase,
 the space used, we can add two numbers much faster.
@@ -66,10 +135,10 @@ Example how carry-ahead works.
 
 
 Now we return to our parallel `AND` circuit. Because the height is O(log n),
-that's also the time complexity of of adding two `n`-bit numbers. 
+that's also the time complexity of of adding two `n`-bit numbers.
 But the trade-off is O(2^n) space, which is unmanageably large relatively small
 `n`.
 
 Therefore, carry-lookahead adders are usually implemented on 4-bits, and
 are chained together in such a way that the time complexity is still O(n),
-but with a constant factor speedup. 
+but with a constant factor speedup.

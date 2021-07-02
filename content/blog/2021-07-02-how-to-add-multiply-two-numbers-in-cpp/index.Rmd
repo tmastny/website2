@@ -19,11 +19,9 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Overview of addition and multiplication algorithms. 
+Overview of addition and multiplication algorithms.
 
 How to implement large numbers as bit arrays in C++.
 - how to hand over multiplication to assembly
 
 Applications: RSA.
-
-
