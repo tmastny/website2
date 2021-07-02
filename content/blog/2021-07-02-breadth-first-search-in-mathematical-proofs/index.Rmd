@@ -25,3 +25,7 @@ It occasionally appears in mathematical proofs:
 - the number of rational numbers is countable infinite
 
 Ask mathematics.stackexchange for more examples
+
+
+Picture: https://math.stackexchange.com/questions/659302/how-to-prove-that-mathbbq-the-rationals-is-a-countable-set
+https://www.homeschoolmath.net/teaching/rational-numbers-countable.php
