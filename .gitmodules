@@ -8,5 +8,5 @@
 	path = themes/hugo-xmin
 	url = https://github.com/tmastny/hugo-xmin.git
 [submodule "blogdown/submodules/tsrecipes"]
-  path = blogdown/submodules/tsrecipes
-  url = https://github.com/tmastny/tsrecipes.git
+	path = blogdown/submodules/tsrecipes
+	url = https://github.com/tmastny/tsrecipes.git

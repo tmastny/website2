@@ -1,0 +1,31 @@
+---
+title: Discrete Cosine Transform and Time Series Classification
+author: ~
+date: '2020-08-14'
+slug: discrete-cosine-transform-time-series-classification
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning=FALSE, message=FALSE,
+  results='show', cache=FALSE, autodep=FALSE, error = TRUE
+)
+```
+
+> Note: This is a 
+  part of a series of articles for my package tsrecipes
+  ([Github](https://github.com/tmastny/tsrecipes), 
+  [website](https://tmastny.github.io/tsrecipes/)).
+  The full article, including the code, can be found
+  [here](https://tmastny.github.io/tsrecipes/articles/dct.html). 
+
+---
+
+
+```{r, child="../../../blogdown/submodules/tsrecipes/vignettes/_dct.Rmd"}
+```
