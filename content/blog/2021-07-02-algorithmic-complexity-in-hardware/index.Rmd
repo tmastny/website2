@@ -85,60 +85,73 @@ https://www.ece.uvic.ca/~fayez/courses/ceng465/lab_465/project1/adders.pdf
 ## Carry-lookahead
 
 We can improve this algorithm by investigating when the circuit produces a carry.
+If `a AND b`, then there will be a carry. If `a OR b` and there is a carry from
+the last iteration, then there will be a new carry. These are called
+generating and propagating carries, respectively. We can summarize this
+with symbols as follows:
+
+$$
+\begin{align*}
+c_{i + 1} &= a_i b_i + (a_i + b_i) c_i \\
+c_{i + 1} &= g_i + p_i c_i
+\end{align*}
+$$
+
+Let's work out the 4-bit carries:
+
+$$
+\begin{align*}
+c_{1} &= g_0 + p_0 c_0 \\
+c_{2} &= g_1 + p_1 c_1 \\ 
+c_{3} &= g_2 + p_2 c_2 \\
+c_{4} &= g_3 + p_3 c_3 \\
+\end{align*}
+$$
+
+At first, this doesn't seem like an improvement, because each
+carry depends on the previous carry. But let's substitute
+carries into $c_4$:
+
+$$
+\begin{align*}
+c_{4} &= g_3 + p_3(g_2 + p_2 (g_1 + p_1 (g_0 + p_0 c_0))) \\
+c_{4} &= g_3 + p_3g_2 + p_3 p_2 g_1 + p_3 p_2 p_1 g_0 + p_3 p_2 p_1 p_0 c_0
+\end{align*}
+$$
 
 
+The dominating term is $p_3 p_2 p_1 p_0 c_0$,
+with length proportional to `n`. Calculating this with
+successive `AND` operations is still `O(n)`. But we can
+divide-and-conquer to calculate this in `O(log n)`:
 
 
+The time from the input to the output is the height of the tree.
+Since this is a binary tree, that gives `O(log n)` time complexity.
 
+Since $p_3 p_2 p_1 p_0 c_0$ is the dominating, the time complexity
+of that operation is the time complexity of adding all the bits. 
+So the time complexity of adding two numbers is `O(log n)`!
 
+## Space Complexity
 
+The problem is the space complexity. This algorithm relied
+on creating a binary tree for each of it's inputs. While
+the height of that tree is `O(log n)`, the number of nodes of the tree
+(or the number of `AND` gates) is `O(2^n)`.
 
+This is very expensive in terms of hardware. Each `AND` gate costs 
+money, and the each gate takes up physical space on a circuit board.
+This algorithm is not feasible for even relatively small `n`.
 
+## Real-world Implementation
 
+Because of the cost and physical space, carry-lookahead adders
+are not implemented for standard `2^32` bit integers. 
 
+The standard algorithm would require gates proportion to 32, while
+carry-lookahead would require 2^32 = 4,294,967,296.
 
-
-Problem: how do we take to the logical `AND` of `n` bits?
-- sequential: O(n)
-- divide and conquer: O(log n)
-
-What does this look like in hardware?
-
-In the algorithmic analysis of software, we are concerned with
-time and memory complexity.
-
-Hardware introduces a new component: space (or cost) complexity.
-
-Could build an array of `AND` gates with a height of O(log n).
-But the number of gates would be O(2^n).
-
-
-
-Why would we ever want to build a gate like that? Isn't there a way
-we can reuse gates like in software? There is, but this does have
-an application in carry-lookahead adders.
-
-Before we explain, what is the time complexity of adding two `n`-bit numbers?
-In sequential software, we can only look at one bit at a time and we have to
-look at each one to add the number.
-
-Hardware on the other hand has some inherent parallelism. Each bit is stored
-on a lead, and those leads can be connected to a logic gate.
-But to implement adding, we have to calculate the carry bit.
-That's a sequential operation.
-
-But it's only sequential if our space complexity is O(n). If we increase,
-the space used, we can add two numbers much faster.
-
-
-Example how carry-ahead works.
-
-
-Now we return to our parallel `AND` circuit. Because the height is O(log n),
-that's also the time complexity of of adding two `n`-bit numbers.
-But the trade-off is O(2^n) space, which is unmanageably large relatively small
-`n`.
-
-Therefore, carry-lookahead adders are usually implemented on 4-bits, and
-are chained together in such a way that the time complexity is still O(n),
+Instead, carry-lookahead adders are implemented using 4-bit sections
+and chained together that time complexity is still O(n),
 but with a constant factor speedup.
