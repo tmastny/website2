@@ -46,24 +46,23 @@ Hardware provides an altnerative model with natural parallelism.
 
 The value of each bit in an `n`-bit number is stored on a wire.
 Wires connect to circuits gates which transform the input to
-zero or one.
+zero or one. All wires are transformed simulaentously,
+not one at a time.
 
-For example, we can compute the bitwise `AND` of two `n`-bit numbers `a` and `b`
+For example, let's compute the bitwise `AND` of two `n`-bit numbers `a` and `b`
 by connecting their bit-wires to an `AND` gate:
 
 ![](bitwise-and.JPG)
 
-This offers a different model of computational complexity.
-Rather than computing sequential operations like the software modle,
-you look at the height of the circuit diagram to calculate the time
-complexity.
-
-In this case, the height is independent of `n`, the number of bits.
+To calculate the time complexity of this operation, we look at the
+height of the circuit diagram. In this case, the height is
+independent of `n`, the number of bits.
 Therefore, bit-wise `AND` can be calculated in `O(1)` constant time.
 
 The trade-off is the space complexity, analogous to memory complexity
-in the software model. The time is constant, but as `n` increases,
-we need more `AND` gates. Thus the space complexity is `O(n)`.
+in the software model. The space complexity is proportional to the
+number of gates used. For each bit, we need an `AND` gate, so
+the space complexity is `O(n)`.
 
 ### Hardware Adder
 
@@ -75,15 +74,12 @@ carry digit:
 ![](circuit-adder.JPG)
 
 You can also think about it in terms of height like the last
-example, where the top is the first to bits $a_0$ and $b_0$
+example, where the top is the first bits $a_0$ and $b_0$
 and the bottom is $s_3$. The height grows at `O(n)`.
-
-https://www.ece.uvic.ca/~fayez/courses/ceng465/lab_465/project1/adders.pdf
-
 
 ## Carry-lookahead
 
-We can improve the algorithm by looking at the states that produces a carry.
+We can improve the algorithm by looking at the states that produce a carry.
 If `a AND b`, then there will be a carry. If `a OR b` *and* there is a carry from
 the last iteration, then there will be a new carry. These are called
 generating and propagating carries respectively. We can summarize this
@@ -137,7 +133,7 @@ So the time complexity of adding two numbers is `O(log n)`!
 
 The new algorithm creates a binary tree for each bit. While
 the height of that tree is `O(log n)`, the number of nodes of the tree
-(or the number of `AND` gates) is `O(2^n)`.
+(the number of `AND` gates) is `O(2^n)`.
 
 This is very expensive in terms of hardware. Each `AND` gate costs
 money and takes physical space on a circuit board.
