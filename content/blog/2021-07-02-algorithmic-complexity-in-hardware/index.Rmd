@@ -133,15 +133,14 @@ Since $p_3 p_2 p_1 p_0 c_0$ is the dominating term, the time complexity
 of that operation is the time complexity of adding all the bits.
 So the time complexity of adding two numbers is `O(log n)`!
 
-## Space Complexity
+### Space Complexity
 
-The problem is space complexity. This algorithm relied
-on creating a binary tree for each of it's inputs. While
+The new algorithm creates a binary tree for each bit. While
 the height of that tree is `O(log n)`, the number of nodes of the tree
 (or the number of `AND` gates) is `O(2^n)`.
 
 This is very expensive in terms of hardware. Each `AND` gate costs
-money, and the each gate takes up physical space on a circuit board.
+money and takes physical space on a circuit board.
 This algorithm is not feasible for even relatively small `n`.
 
 ## Real-world Implementation
@@ -153,5 +152,5 @@ The standard algorithm would require gates proportion to 32, while
 carry-lookahead would require 2^32 = 4,294,967,296.
 
 Instead, carry-lookahead adders are implemented using 4-bit sections
-and chained together that time complexity is still O(n),
+and chained together. The time complexity is still `O(n)`,
 but with a constant factor speedup.
