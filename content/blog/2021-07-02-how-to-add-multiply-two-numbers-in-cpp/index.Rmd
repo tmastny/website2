@@ -5,6 +5,7 @@ date: '2021-07-02'
 slug: how-to-add-multiply-two-numbers-in-cpp
 categories: []
 tags: []
+draft: true
 output:
   blogdown::html_page:
     toc: true

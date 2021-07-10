@@ -5,6 +5,7 @@ date: '2021-07-02'
 slug: bread-first-search-mathematical-proofs
 categories: []
 tags: []
+draft: true
 output:
   blogdown::html_page:
     toc: true
