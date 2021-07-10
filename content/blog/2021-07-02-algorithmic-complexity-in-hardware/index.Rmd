@@ -2,7 +2,7 @@
 title: Adding Integers in Logarithmic Time
 author: ~
 date: '2021-07-02'
-slug: algorithmic-complexity-adding-integers
+slug: adding-integers-logarithmic-time
 categories: []
 tags: []
 output:
