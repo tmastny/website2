@@ -1,5 +1,5 @@
 ---
-title: Algorithmic Complexity of Adding Integers
+title: Adding Integers in Logarithmic Time
 author: ~
 date: '2021-07-02'
 slug: algorithmic-complexity-adding-integers
@@ -17,14 +17,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Introduction
-
-It surprised me to discover that the time complexity to add
-two `n`-bit numbers is `O(log n)`.
-
-That lead me to study hardware vs. software complexity
-analysis.
-
 
 ## Elementary School Adding Algorithm
 
@@ -39,35 +31,39 @@ one learned in elementary school^[Example: https://en.wikipedia.org/wiki/Binary_
 = 1 0 0 1 0 0 = 36
 ```
 
-The proof of this algorithm relies on the fact that the sum of any
+This works in binary (or any base) because the sum of any
 3 single-digit numbers is at most two digits.
 
-This algorithm is sequential: we need to result of the previous
+The time complexity is `O(n)`: we need to result of the previous
 iteration before we can correctly compute the
-sum of the current iteration.
-
-This seems like `O(n)` must be the faster possible time complexity
-for adding two numbers.
-
-When implemented in a circuit, this is called the ripple carry adder.
+sum of the current iteration^[Also known as the ripple carry adder.].
 
 ## Hardware Parallelism
 
-Each bit of an `n`-bit number is stored on a lead. A lead is a wire
-that can connect to another circuit. A lead can be in two states, `0`
-or `1`.
+In a software-based model of computation, adding can never
+be faster than `O(n)` because we need to read each pair of bits.
+Hardware provides an altnerative model with natural parallelism.
 
-We could take the bitwise `AND` of two `n`-bit numbers `a` and `b`
-by each of their leads to an `AND` gate:
+The value of each bit in an `n`-bit number is stored on a wire.
+Wires connect to circuits gates which transform the input to
+zero or one.
+
+For example, we can compute the bitwise `AND` of two `n`-bit numbers `a` and `b`
+by connecting their bit-wires to an `AND` gate:
 
 ![](bitwise-and.JPG)
 
-This offers a different model of computational complexity: bitwise
-`AND` can be done in `O(1)` constant time, but requires `O(n)` space.
+This offers a different model of computational complexity.
+Rather than computing sequential operations like the software modle,
+you look at the height of the circuit diagram to calculate the time
+complexity.
 
-In circuits, space analogous to memory complexity, but can also
-be thought of as the number of gates, cost, or physical space required
-on a circuit board.
+In this case, the height is independent of `n`, the number of bits.
+Therefore, bit-wise `AND` can be calculated in `O(1)` constant time.
+
+The trade-off is the space complexity, analogous to memory complexity
+in the software model. The time is constant, but as `n` increases,
+we need more `AND` gates. Thus the space complexity is `O(n)`.
 
 ### Hardware Adder
 
@@ -78,16 +74,19 @@ carry digit:
 
 ![](circuit-adder.JPG)
 
+You can also think about it in terms of height like the last
+example, where the top is the first to bits $a_0$ and $b_0$
+and the bottom is $s_3$. The height grows at `O(n)`.
 
 https://www.ece.uvic.ca/~fayez/courses/ceng465/lab_465/project1/adders.pdf
 
 
 ## Carry-lookahead
 
-We can improve this algorithm by investigating when the circuit produces a carry.
-If `a AND b`, then there will be a carry. If `a OR b` and there is a carry from
+We can improve the algorithm by looking at the states that produces a carry.
+If `a AND b`, then there will be a carry. If `a OR b` *and* there is a carry from
 the last iteration, then there will be a new carry. These are called
-generating and propagating carries, respectively. We can summarize this
+generating and propagating carries respectively. We can summarize this
 with symbols as follows:
 
 $$
@@ -126,16 +125,17 @@ successive `AND` operations is still `O(n)`. But we can
 divide-and-conquer to calculate this in `O(log n)`:
 
 
-The time from the input to the output is the height of the tree.
-Since this is a binary tree, that gives `O(log n)` time complexity.
+Recall that the height of the circuit is the time complexity.
+This circuit forms a binary tree (upside down),
+which is known to have height `O(log n)`.
 
-Since $p_3 p_2 p_1 p_0 c_0$ is the dominating, the time complexity
+Since $p_3 p_2 p_1 p_0 c_0$ is the dominating term, the time complexity
 of that operation is the time complexity of adding all the bits.
 So the time complexity of adding two numbers is `O(log n)`!
 
 ## Space Complexity
 
-The problem is the space complexity. This algorithm relied
+The problem is space complexity. This algorithm relied
 on creating a binary tree for each of it's inputs. While
 the height of that tree is `O(log n)`, the number of nodes of the tree
 (or the number of `AND` gates) is `O(2^n)`.
