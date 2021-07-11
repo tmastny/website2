@@ -18,10 +18,10 @@ knitr::opts_chunk$set(
 ```
 
 
-## Elementary School Adding Algorithm
+## Elementary School Addition Algorithm
 
-The addition algorithm for binary numbers is the same as the
-one learned in elementary school^[Example: https://en.wikipedia.org/wiki/Binary_number#Addition]:
+The elementary school addition algorithm works for binary numbers
+^[Example: https://en.wikipedia.org/wiki/Binary_number#Addition]:
 
 ```
   1 1 1 1 1    (carried digits)
@@ -31,22 +31,23 @@ one learned in elementary school^[Example: https://en.wikipedia.org/wiki/Binary_
 = 1 0 0 1 0 0 = 36
 ```
 
-This works in binary (or any base) because the sum of any
+It works in binary (or any base) because the sum of any
 3 single-digit numbers is at most two digits.
 
 The time complexity is `O(n)`: we need to result of the previous
 iteration before we can correctly compute the
 sum of the current iteration^[Also known as the ripple carry adder.].
 
-## Hardware Parallelism
+## Hardware Complexity
 
-In a software-based model of computation, adding can never
-be faster than `O(n)` because we need to read each pair of bits.
-Hardware provides an altnerative model with natural parallelism.
+In certain software-based model of computation, adding can never
+be faster than `O(n)` because we need to read each pair of bits
+sequentially.
+Hardware provides an alternative model with natural parallelism.
 
 The value of each bit in an `n`-bit number is stored on a wire.
 Wires connect to circuits gates which transform the input to
-zero or one. All wires are transformed simulaentously,
+zero or one. All wires are transformed simultaneously,
 not one at a time.
 
 For example, let's compute the bitwise `AND` of two `n`-bit numbers `a` and `b`
@@ -61,10 +62,10 @@ Therefore, bit-wise `AND` can be calculated in `O(1)` constant time.
 
 The trade-off is the space complexity, analogous to memory complexity
 in the software model. The space complexity is proportional to the
-number of gates used. For each bit, we need an `AND` gate, so
+number of gates used. We need an `AND` gate for each bit, so
 the space complexity is `O(n)`.
 
-### Hardware Adder
+### Elementary School Adder
 
 If we implement the elementary school adder in hardware,
 the time complexity is still `O(n)`. The parallelism doesn't
@@ -77,7 +78,7 @@ You can also think about it in terms of height like the last
 example, where the top is the first bits $a_0$ and $b_0$
 and the bottom is $s_3$. The height grows at `O(n)`.
 
-## Carry-lookahead
+## Carry-lookahead Adder
 
 We can improve the algorithm by looking at the states that produce a carry.
 If `a AND b`, then there will be a carry. If `a OR b` *and* there is a carry from
@@ -118,8 +119,9 @@ $$
 The dominating term is $p_3 p_2 p_1 p_0 c_0$,
 with length proportional to `n`. Calculating this with
 successive `AND` operations is still `O(n)`. But we can
-divide-and-conquer to calculate this in `O(log n)`:
+divide-and-conquer to calculate this in `O(log n)`. For example:
 
+![](binary-and.JPG)
 
 Recall that the height of the circuit is the time complexity.
 This circuit forms a binary tree (upside down),
@@ -131,8 +133,7 @@ So the time complexity of adding two numbers is `O(log n)`!
 
 ### Space Complexity
 
-The new algorithm creates a binary tree for each bit. While
-the height of that tree is `O(log n)`, the number of nodes of the tree
+The height a binary tree is `O(log n)` and the number of nodes
 (the number of `AND` gates) is `O(2^n)`.
 
 This is very expensive in terms of hardware. Each `AND` gate costs
@@ -142,7 +143,7 @@ This algorithm is not feasible for even relatively small `n`.
 ## Real-world Implementation
 
 Because of the cost and physical space, carry-lookahead adders
-are not implemented for standard `2^32` bit integers.
+are not implemented for standard 32-bit integers.
 
 The standard algorithm would require gates proportion to 32, while
 carry-lookahead would require 2^32 = 4,294,967,296.
