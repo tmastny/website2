@@ -1,0 +1,28 @@
+---
+title: How to Add and Multiply Integers in C++
+author: ~
+date: '2021-07-02'
+slug: how-to-add-multiply-two-numbers-in-cpp
+categories: []
+tags: []
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+## Introduction
+
+Overview of addition and multiplication algorithms.
+
+How to implement large numbers as bit arrays in C++.
+- how to hand over multiplication to assembly
+
+Applications: RSA.

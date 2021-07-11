@@ -1,0 +1,145 @@
+---
+title: Adding Integers in Logarithmic Time
+author: ~
+date: '2021-07-02'
+slug: adding-integers-logarithmic-time
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#elementary-school-addition-algorithm">Elementary School Addition Algorithm</a></li>
+<li><a href="#hardware-complexity">Hardware Complexity</a>
+<ul>
+<li><a href="#elementary-school-adder">Elementary School Adder</a></li>
+</ul></li>
+<li><a href="#carry-lookahead-adder">Carry-lookahead Adder</a>
+<ul>
+<li><a href="#space-complexity">Space Complexity</a></li>
+</ul></li>
+<li><a href="#real-world-implementation">Real-world Implementation</a></li>
+</ul>
+</div>
+
+<div id="elementary-school-addition-algorithm" class="section level2">
+<h2>Elementary School Addition Algorithm</h2>
+<p>The elementary school addition algorithm works for binary numbers
+<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:</p>
+<pre><code>  1 1 1 1 1    (carried digits)
+    0 1 1 0 1
++   1 0 1 1 1
+-------------
+= 1 0 0 1 0 0 = 36</code></pre>
+<p>It works in binary (or any base) because the sum of any
+3 single-digit numbers is at most two digits.</p>
+<p>The time complexity is <code>O(n)</code>: we need to result of the previous
+iteration before we can correctly compute the
+sum of the current iteration<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+</div>
+<div id="hardware-complexity" class="section level2">
+<h2>Hardware Complexity</h2>
+<p>In certain software-based model of computation, adding can never
+be faster than <code>O(n)</code> because we need to read each pair of bits
+sequentially.
+Hardware provides an alternative model with natural parallelism.</p>
+<p>The value of each bit in an <code>n</code>-bit number is stored on a wire.
+Wires connect to circuits gates which transform the input to
+zero or one. All wires are transformed simultaneously,
+not one at a time.</p>
+<p>For example, let’s compute the bitwise <code>AND</code> of two <code>n</code>-bit numbers <code>a</code> and <code>b</code>
+by connecting their bit-wires to an <code>AND</code> gate:</p>
+<p><img src="bitwise-and.JPG" /></p>
+<p>To calculate the time complexity of this operation, we look at the
+height of the circuit diagram. In this case, the height is
+independent of <code>n</code>, the number of bits.
+Therefore, bit-wise <code>AND</code> can be calculated in <code>O(1)</code> constant time.</p>
+<p>The trade-off is the space complexity, analogous to memory complexity
+in the software model. The space complexity is proportional to the
+number of gates used. We need an <code>AND</code> gate for each bit, so
+the space complexity is <code>O(n)</code>.</p>
+<div id="elementary-school-adder" class="section level3">
+<h3>Elementary School Adder</h3>
+<p>If we implement the elementary school adder in hardware,
+the time complexity is still <code>O(n)</code>. The parallelism doesn’t
+help, because each circuit has to the wait for the previous
+carry digit:</p>
+<p><img src="circuit-adder.JPG" /></p>
+<p>You can also think about it in terms of height like the last
+example, where the top is the first bits <span class="math inline">\(a_0\)</span> and <span class="math inline">\(b_0\)</span>
+and the bottom is <span class="math inline">\(s_3\)</span>. The height grows at <code>O(n)</code>.</p>
+</div>
+</div>
+<div id="carry-lookahead-adder" class="section level2">
+<h2>Carry-lookahead Adder</h2>
+<p>We can improve the algorithm by looking at the states that produce a carry.
+If <code>a AND b</code>, then there will be a carry. If <code>a OR b</code> <em>and</em> there is a carry from
+the last iteration, then there will be a new carry. These are called
+generating and propagating carries respectively. We can summarize this
+with symbols as follows:</p>
+<p><span class="math display">\[
+\begin{align*}
+c_{i + 1} &amp;= a_i b_i + (a_i + b_i) c_i \\
+c_{i + 1} &amp;= g_i + p_i c_i
+\end{align*}
+\]</span></p>
+<p>Let’s work out the 4-bit carries:</p>
+<p><span class="math display">\[
+\begin{align*}
+c_{1} &amp;= g_0 + p_0 c_0 \\
+c_{2} &amp;= g_1 + p_1 c_1 \\
+c_{3} &amp;= g_2 + p_2 c_2 \\
+c_{4} &amp;= g_3 + p_3 c_3 \\
+\end{align*}
+\]</span></p>
+<p>At first, this doesn’t seem like an improvement, because each
+carry depends on the previous carry. But let’s substitute
+carries into <span class="math inline">\(c_4\)</span>:</p>
+<p><span class="math display">\[
+\begin{align*}
+c_{4} &amp;= g_3 + p_3(g_2 + p_2 (g_1 + p_1 (g_0 + p_0 c_0))) \\
+c_{4} &amp;= g_3 + p_3g_2 + p_3 p_2 g_1 + p_3 p_2 p_1 g_0 + p_3 p_2 p_1 p_0 c_0
+\end{align*}
+\]</span></p>
+<p>The dominating term is <span class="math inline">\(p_3 p_2 p_1 p_0 c_0\)</span>,
+with length proportional to <code>n</code>. Calculating this with
+successive <code>AND</code> operations is still <code>O(n)</code>. But we can
+divide-and-conquer to calculate this in <code>O(log n)</code>. For example:</p>
+<p><img src="binary-and.JPG" /></p>
+<p>Recall that the height of the circuit is the time complexity.
+This circuit forms a binary tree (upside down),
+which is known to have height <code>O(log n)</code>.</p>
+<p>Since <span class="math inline">\(p_3 p_2 p_1 p_0 c_0\)</span> is the dominating term, the time complexity
+of that operation is the time complexity of adding all the bits.
+So the time complexity of adding two numbers is <code>O(log n)</code>!</p>
+<div id="space-complexity" class="section level3">
+<h3>Space Complexity</h3>
+<p>The height a binary tree is <code>O(log n)</code> and the number of nodes
+(the number of <code>AND</code> gates) is <code>O(2^n)</code>.</p>
+<p>This is very expensive in terms of hardware. Each <code>AND</code> gate costs
+money and takes physical space on a circuit board.
+This algorithm is not feasible for even relatively small <code>n</code>.</p>
+</div>
+</div>
+<div id="real-world-implementation" class="section level2">
+<h2>Real-world Implementation</h2>
+<p>Because of the cost and physical space, carry-lookahead adders
+are not implemented for standard 32-bit integers.</p>
+<p>The standard algorithm would require gates proportion to 32, while
+carry-lookahead would require 2^32 = 4,294,967,296.</p>
+<p>Instead, carry-lookahead adders are implemented using 4-bit sections
+and chained together. The time complexity is still <code>O(n)</code>,
+but with a constant factor speedup.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Example: <a href="https://en.wikipedia.org/wiki/Binary_number#Addition" class="uri">https://en.wikipedia.org/wiki/Binary_number#Addition</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Also known as the ripple carry adder.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
