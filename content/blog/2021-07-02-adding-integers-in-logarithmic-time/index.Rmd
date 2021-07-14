@@ -44,7 +44,7 @@ In certain software-based model of computation, adding can never
 be faster than `O(n)` because we need to read each pair of bits
 sequentially.
 Hardware provides an alternative model with natural parallelism.^[
-For more on computational models: https://en.wikipedia.org/wiki/Model_of_computation]
+https://en.wikipedia.org/wiki/Model_of_computation]
 
 The value of each bit in an `n`-bit number is stored on a wire.
 Wires connect to circuits gates which transform the input to
