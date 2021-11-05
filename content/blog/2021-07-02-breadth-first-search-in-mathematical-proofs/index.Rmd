@@ -32,7 +32,34 @@ and mechanical dice-based role-playing systems such as [D&D 5e](https://roll20.n
 
 Deduction elements provide mystery, logical puzzles, and a sense of progress by collecting clues.
 The role-playing systems offer gaming mechanics such as random chance, resource management, and abilities
-used to resolve conflict (and provide role-playing constraints).
+These mechanics resolve conflict and provide role-playing constraints.
+
+My campaign, [The Curse on Moonlight Bay](https://docs.google.com/document/d/15MvkKUkErnCAqWb7d8IaEQ8uJMS_XocKlCmDPT_sZzE/edit?usp=sharing),
+is a good example about what I am trying to achieve with an investigative role-playing system.
+
+Each campaign starts with a hook or premise. In The Curse on Moonlight Bay, there are 3:
+- an exocrist has gone missing
+- prohibition gangsters are smuggling liquor
+- the hospital claims they have a cure for mass hysteria
+
+The players create a character movitated to investigate the hook.
+I populate the world with internally consistent clues. And the *players* decipher the
+clues to unravel the mysteries.
+
+> Sidebar: the characters collect the clues, but the players have to connect the dots.
+Players can't roll to make me to explain the clues for them. So the Dungeon Master
+has to put in a lot of work ahead of time to sure the players can solve the mystery.
+To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+article. For Dungeon Masters, Justin Alexander wrote the
+[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach) on investigation campaigns.
+
+
+
+
+
+
+
+For the deduction to be rewarding, the clues must be internally consistent and lead to a logical conclusion.
 
 
 
