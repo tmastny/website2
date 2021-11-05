@@ -26,8 +26,34 @@ investigative role-playing.
 
 ## Investigative Role-Playing
 
+Here's how I like to run investigative role-playing games. I begin with a hook or premise.
+The players create a character movitated to investigate the hook.
+I populate the world with clues. And the *players* decipher the
+clues to unravel the mysteries.
+
+The characters collect the clues, but the players have to connect the dots.
+Similar to deduction games like [Sherlock Holms Consultin Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder).
+Players can't roll to make me to explain the clues for them. So I ensure the clues
+are internally consistent, lead to a conclusion, *and* that the players can figure it out.
+To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+article. For Dungeon Masters, Justin Alexander wrote the
+[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
+on running investigations.
+
+Finally, I include a role-playing system used to resolve conflicts and provide constraints.
+In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
+like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
+
+## Tension-Resolution Framework
+
+
+
+
+
+
+
 Investigative role-playing is a combination of two genres.
-Deduction games, such as [Sherlock Holms Consultin Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder),
+Deduction games, such as ,
 and mechanical dice-based role-playing systems such as [D&D 5e](https://roll20.net/compendium/dnd5e/BookIndex).
 
 Deduction elements provide mystery, logical puzzles, and a sense of progress by collecting clues.
