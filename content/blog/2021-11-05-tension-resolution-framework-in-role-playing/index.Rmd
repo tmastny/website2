@@ -1,0 +1,67 @@
+---
+title: Breadth First Search in Mathematical Proofs
+author: ~
+date: '2021-07-02'
+slug: bread-first-search-mathematical-proofs
+categories: []
+tags: []
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+## Introduction
+
+Breadth first search is a standard technique on tree and graph data structures.
+
+It occasionally appears in mathematical proofs:
+- the number of rational numbers is countable infinite
+
+Ask mathematics.stackexchange for more examples
+
+
+Picture: https://math.stackexchange.com/questions/659302/how-to-prove-that-mathbbq-the-rationals-is-a-countable-set
+https://www.homeschoolmath.net/teaching/rational-numbers-countable.php
+
+```{python}
+from collections import deque
+
+matrix = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+]
+
+rows = len(matrix)
+cols = len(matrix[0])
+
+queue = deque([(0, 0)])
+
+i = 1
+while queue:
+    r, c = queue.pop()
+    if not matrix[r][c]:
+        matrix[r][c] = i
+        i += 1
+
+    for nr, nc in [(r + 1, c), (r, c + 1)]:
+        if 0 <= nr < rows and 0 <= nc < cols:
+            queue.appendleft((nr, nc))
+
+
+for row in matrix:
+    for col in row:
+        print(f"{col:>2}", end=" ")
+
+    print()
+```

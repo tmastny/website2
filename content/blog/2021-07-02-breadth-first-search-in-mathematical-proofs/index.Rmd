@@ -1,8 +1,8 @@
 ---
-title: Breadth First Search in Mathematical Proofs
+title: Tension Resolution Framework in Investigative Role Playing
 author: ~
-date: '2021-07-02'
-slug: bread-first-search-mathematical-proofs
+date: '2021-11-05'
+slug: tension-resolution-framework-in-role-playing
 categories: []
 tags: []
 draft: true
@@ -20,48 +20,21 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Breadth first search is a standard technique on tree and graph data structures.
+In this article, I propose a tension-resolution framework for role-playing games.
+Furthermore, I will show that we can use the framework to improve mechanics for
+investigative role-playing.
 
-It occasionally appears in mathematical proofs:
-- the number of rational numbers is countable infinite
+## Investigative Role-Playing
 
-Ask mathematics.stackexchange for more examples
+Investigative role-playing is a combination of two genres.
+Deduction games, such as [Sherlock Holms Consultin Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder),
+and mechanical dice-based role-playing systems such as [D&D 5e](https://roll20.net/compendium/dnd5e/BookIndex).
 
-
-Picture: https://math.stackexchange.com/questions/659302/how-to-prove-that-mathbbq-the-rationals-is-a-countable-set
-https://www.homeschoolmath.net/teaching/rational-numbers-countable.php
-
-```{python}
-from collections import deque
-
-matrix = [
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-]
-
-rows = len(matrix)
-cols = len(matrix[0])
-
-queue = deque([(0, 0)])
-
-i = 1
-while queue:
-    r, c = queue.pop()
-    if not matrix[r][c]:
-        matrix[r][c] = i
-        i += 1
-
-    for nr, nc in [(r + 1, c), (r, c + 1)]:
-        if 0 <= nr < rows and 0 <= nc < cols:
-            queue.appendleft((nr, nc))
+Deduction elements provide mystery, logical puzzles, and a sense of progress by collecting clues.
+The role-playing systems offer gaming mechanics such as random chance, resource management, and abilities
+used to resolve conflict (and provide role-playing constraints).
 
 
-for row in matrix:
-    for col in row:
-        print(f"{col:>2}", end=" ")
 
-    print()
-```
+Mechnical elements need to be simplified enough that the don't overwhelm and render
+the deduction elements useless.
