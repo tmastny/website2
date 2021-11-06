@@ -17,8 +17,13 @@ knitr::opts_chunk$set(
   results = "show", cache = FALSE, autodep = FALSE, error = TRUE
 )
 ```
-##
+
+*How game mechanics create and resolve tension*
 *How to create and resolve tension in role-playing games*
+
+## Introduction
+
+
 
 
 Here's how my role-playing games work.
@@ -27,6 +32,29 @@ A player role-plays a character and uses the character's skills and abilities
 to solve challenges in that world. A role-playing system determines if and how the challenge was resolved.
 
 
+
+## Encounter Model
+
+*Circumstance, Decision, Outcome* is a three-stage encounter model.
+
+The circumstance is the situation described to the player.
+For example:
+> The guards walk into the shop and see you with the jewels.
+
+The decision is the choice the player makes in that moment.
+> I attempt to jump through the window and flee.
+
+The outcome is what happens after the decision. It is the new circumstance.
+> You jump through the open window and land gracefully in front of a squard of guards.
+
+Each stage effects the tension. The narrative controls the tension
+found in the circumstance and outcome. For example, here is a list of circumstances
+with increasing tension:
+- investigating a crime scene
+- investigating a serial killer's lair
+- fleeing a bad guy
+- confronting the villian
+The outcome resolves the tension of the current encounter and sets the tension for the next one.
 
 
 
