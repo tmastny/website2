@@ -1,10 +1,11 @@
 ---
-title: Tension Resolution Framework in Investigative Role Playing
+title: Breadth First Search in Mathematical Proofs
 author: ~
-date: '2021-11-05'
-slug: tension-resolution-framework-in-role-playing
+date: '2021-07-02'
+slug: bread-first-search-mathematical-proofs
 categories: []
 tags: []
+draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -17,149 +18,50 @@ knitr::opts_chunk$set(
 )
 ```
 
-*How game mechanics create and resolve tension*
-*How to create and resolve tension in role-playing games*
-
 ## Introduction
 
+Breadth first search is a standard technique on tree and graph data structures.
+
+It occasionally appears in mathematical proofs:
+- the number of rational numbers is countable infinite
+
+Ask mathematics.stackexchange for more examples
 
 
+Picture: https://math.stackexchange.com/questions/659302/how-to-prove-that-mathbbq-the-rationals-is-a-countable-set
+https://www.homeschoolmath.net/teaching/rational-numbers-countable.php
 
-Here's how my role-playing games work.
-I design a world with a set of challenges.
-A player role-plays a character and uses the character's skills and abilities
-to solve challenges in that world. A role-playing system determines if and how the challenge was resolved.
+```{python}
+from collections import deque
 
+matrix = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+]
 
+rows = len(matrix)
+cols = len(matrix[0])
 
-## Encounter Model
+queue = deque([(0, 0)])
 
-*Circumstance, Decision, Outcome* is a three-stage encounter model.
+i = 1
+while queue:
+    r, c = queue.pop()
+    if not matrix[r][c]:
+        matrix[r][c] = i
+        i += 1
 
-The circumstance is the situation described to the player.
-For example:
-> The guards walk into the shop and see you with the jewels.
-
-The decision is the choice the player makes in that moment.
-> I attempt to jump through the window and flee.
-
-The outcome is what happens after the decision. It is the new circumstance.
-> You jump through the open window and land gracefully in front of a squard of guards.
-
-Each stage effects the tension. The narrative controls the tension
-found in the circumstance and outcome. For example, here is a list of circumstances
-with increasing tension:
-- investigating a crime scene
-- investigating a serial killer's lair
-- fleeing a bad guy
-- confronting the villian
-The outcome resolves the tension of the current encounter and sets the tension for the next circumstance.
-System mechanics govern tension in the decision stage.
-
-## Decision Tension
+    for nr, nc in [(r + 1, c), (r, c + 1)]:
+        if 0 <= nr < rows and 0 <= nc < cols:
+            queue.appendleft((nr, nc))
 
 
+for row in matrix:
+    for col in row:
+        print(f"{col:>2}", end=" ")
 
-
-
-
-
-
-Throughout this article, I'll refer to three systems:
-- [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
-- [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
-- [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
-
-
-
-
-Role-playing systems are rules used to
-
-
-
-
-
-I design campaigns so players can solve challenges with their skills.
-
-As a Dungeon Master (DM), I want characters to solve challenges with their personality and skills.
-I design campaigns with this in mind.
-
-
-
-## Introduction
-
-In this article, I propose a tension-resolution framework for role-playing games.
-Furthermore, I will show that we can use the framework to improve mechanics for
-investigative role-playing.
-
-## Investigative Role-Playing
-
-Here's how I like to run investigative role-playing games. I begin with a hook or premise.
-The players create a character movitated to investigate the hook.
-I populate the world with clues. And the *players* decipher the
-clues to unravel the mysteries.
-
-The characters collect the clues, but the players have to connect the dots.
-Similar to deduction games like [Sherlock Holms Consultin Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder).
-Players can't roll to make me to explain the clues for them. So I ensure the clues
-are internally consistent, lead to a conclusion, *and* that the players can figure it out.
-To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-article. For Dungeon Masters, Justin Alexander wrote the
-[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
-on running investigations.
-
-Finally, I include a role-playing system used to resolve conflicts and provide constraints.
-In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
-like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
-
-I'm want to use a system that maximizes tension and minimizing complexity.
-
-
-
-## Tension-Resolution Framework
-
-
-
-
-
-
-
-Investigative role-playing is a combination of two genres.
-Deduction games, such as ,
-and mechanical dice-based role-playing systems such as [D&D 5e](https://roll20.net/compendium/dnd5e/BookIndex).
-
-Deduction elements provide mystery, logical puzzles, and a sense of progress by collecting clues.
-The role-playing systems offer gaming mechanics such as random chance, resource management, and abilities
-These mechanics resolve conflict and provide role-playing constraints.
-
-My campaign, [The Curse on Moonlight Bay](https://docs.google.com/document/d/15MvkKUkErnCAqWb7d8IaEQ8uJMS_XocKlCmDPT_sZzE/edit?usp=sharing),
-is a good example about what I am trying to achieve with an investigative role-playing system.
-
-Each campaign starts with a hook or premise. In The Curse on Moonlight Bay, there are 3:
-- an exocrist has gone missing
-- prohibition gangsters are smuggling liquor
-- the hospital claims they have a cure for mass hysteria
-
-The players create a character movitated to investigate the hook.
-I populate the world with internally consistent clues. And the *players* decipher the
-clues to unravel the mysteries.
-
-> Sidebar: the characters collect the clues, but the players have to connect the dots.
-Players can't roll to make me to explain the clues for them. So the Dungeon Master
-has to put in a lot of work ahead of time to sure the players can solve the mystery.
-To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-article. For Dungeon Masters, Justin Alexander wrote the
-[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach) on investigation campaigns.
-
-Gaming mechanics
-
-
-
-
-
-For the deduction to be rewarding, the clues must be internally consistent and lead to a logical conclusion.
-
-
-
-Mechnical elements need to be simplified enough that the don't overwhelm and render
-the deduction elements useless.
+    print()
+```
