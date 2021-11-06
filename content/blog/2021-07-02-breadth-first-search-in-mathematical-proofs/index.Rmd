@@ -5,7 +5,6 @@ date: '2021-11-05'
 slug: tension-resolution-framework-in-role-playing
 categories: []
 tags: []
-draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -54,8 +53,10 @@ with increasing tension:
 - investigating a serial killer's lair
 - fleeing a bad guy
 - confronting the villian
-The outcome resolves the tension of the current encounter and sets the tension for the next one.
+The outcome resolves the tension of the current encounter and sets the tension for the next circumstance.
+System mechanics govern tension in the decision stage.
 
+## Decision Tension
 
 
 
