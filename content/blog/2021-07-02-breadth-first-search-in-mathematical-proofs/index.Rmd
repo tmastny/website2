@@ -63,6 +63,7 @@ The outcome resolves the tension of the current encounter and sets the tension f
 
 
 
+
 Throughout this article, I'll refer to three systems:
 - [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
 - [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
