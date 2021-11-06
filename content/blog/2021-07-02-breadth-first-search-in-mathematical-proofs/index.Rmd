@@ -17,6 +17,44 @@ knitr::opts_chunk$set(
   results = "show", cache = FALSE, autodep = FALSE, error = TRUE
 )
 ```
+##
+*How to create and resolve tension in role-playing games*
+
+
+Here's how my role-playing games work.
+I design a world with a set of challenges.
+A player role-plays a character and uses the character's skills and abilities
+to solve challenges in that world. A role-playing system determines if and how the challenge was resolved.
+
+
+
+
+
+
+
+
+
+
+Throughout this article, I'll refer to three systems:
+- [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
+- [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
+- [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
+
+
+
+
+Role-playing systems are rules used to
+
+
+
+
+
+I design campaigns so players can solve challenges with their skills.
+
+As a Dungeon Master (DM), I want characters to solve challenges with their personality and skills.
+I design campaigns with this in mind.
+
+
 
 ## Introduction
 
@@ -43,6 +81,10 @@ on running investigations.
 Finally, I include a role-playing system used to resolve conflicts and provide constraints.
 In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
 like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
+
+I'm want to use a system that maximizes tension and minimizing complexity.
+
+
 
 ## Tension-Resolution Framework
 
