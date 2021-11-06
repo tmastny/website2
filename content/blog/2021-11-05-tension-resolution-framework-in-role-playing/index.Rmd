@@ -51,17 +51,20 @@ found in the circumstance and outcome. For example, here is a list of circumstan
 with increasing tension:
 - investigating a crime scene
 - investigating a serial killer's lair
-- fleeing a bad guy
+- fleeing from a henchman
 - confronting the villian
 The outcome resolves the tension of the current encounter and sets the tension for the next circumstance.
 System mechanics govern tension in the decision stage.
 
 ## Decision Tension
 
-The system rules create tension in three ways:
-1. Available options
-2. Risk of failure
-3. Cost
+The system rules
+Decisions are The system rules create tension in two ways:
+1. Risk
+2. Cost
+
+
+
 
 
 
