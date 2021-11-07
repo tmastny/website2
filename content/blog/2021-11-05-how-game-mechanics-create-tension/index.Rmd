@@ -26,15 +26,12 @@ uses their abilities to spectacular effect when the stakes are high.
 I recall 3 back-to-back criticals on the big bad right when the party was about the perish.
 Or when the wizard wove a wall of stone through the battlefield, turning the tide of war.
 These situations often happen when the narrative is tense. Game mechanics
-and rules magnify the tension, whether by dice rolls or exceptional tactics.
+and rules magnify that tension, whether by dice rolls or exceptional tactics.
 
 In this post, I propose an encounter model to show how the rules and mechanics
 of a game can influence the tension a player feels when they make a decision.
-This model can be used choose role-playing systems suitable for the campaign.
-For example, [in another post]() I use this model to show why I think Gumshoe
-is the best system for investigative role-playing games.
-Dungeon Masters can also use this model to create new systems or modify
-existing ones.
+Dungeon Masters can use this model to choose role-playing systems suitable for the party and campaign.
+They can also use it to create new systems or modify existing ones.
 
 My goal is to provide a tool Dungeon Masters can use to make better
 campaigns and encounters, like Justin Alexander's [Node-Based Scenario Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
@@ -46,22 +43,36 @@ did for investigative role-playing games.
 
 *Circumstance, Decision, Outcome* is a three-stage encounter model.
 
-The circumstance is the situation described to the player.
-For example:
 
-> The guards walk into the shop and see you with the jewels.
+> *Circumstance:* The guard walks into the shop and sees you with the jewels.
+
+The circumstance is the situation described to the player.
+It controls the degree of tension:
+confronting the villian to save the world is more tense
+than sneaking past a guard to steal gold.
+
+
+> *Decision:* I attempt to jump through the window and flee.
 
 The decision is the choice the player makes in that moment.
+The responsibility to make a good choice adds to the tension
+set in the circumstance.
 
-> I attempt to jump through the window and flee.
 
-The outcome is what happens after the decision. It is the new circumstance.
+> *Outcome:* You jump through the open window and land gracefully in front of a squard of guards.
 
-> You jump through the open window and land gracefully in front of a squard of guards.
+The outcome is what happens after the decision.
+If the outcome is good and the tension was high, players feel victorious.
+If the outcome is bad, players feel defeated.
+Most Dungeon Masters avoid [defeating the players](https://theangrygm.com/death-sucks/).
+You want them to feel as if they could lose, but you don't want them to actually lose.
 
-Although each stage effects tension, circumstance and outcome control the degree of tension.
-Confronting the villian to save the world is more tense
-than sneaking past a guard to steal gold.
+So instead of resolving the tension with overt failure, the tension is *delayed* or increased.
+The outcome creates a new circumstance for the players. For example, the players
+stormed the villian's lair and failed. The outcome is they are locked in the dungeons.
+The new circumstance is that they must escape the dungeons.
+
+
 
 ## Decision Tension
 
@@ -111,110 +122,3 @@ By identifying the rules that increase tension,
 I can more easily chose and describe systems that are a good fit for my party and campagin.
 The next post in this series will use the encounter model to show why
 Gumshoe is a great system for investigative role-playing games.
-
-
-
-
-
-
-
-
-
-Throughout this article, I'll refer to three systems:
-- [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
-- [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
-- [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
-
-
-
-
-Role-playing systems are rules used to
-
-
-
-
-
-I design campaigns so players can solve challenges with their skills.
-
-As a Dungeon Master (DM), I want characters to solve challenges with their personality and skills.
-I design campaigns with this in mind.
-
-
-
-## Introduction
-
-In this article, I propose a tension-resolution framework for role-playing games.
-Furthermore, I will show that we can use the framework to improve mechanics for
-investigative role-playing.
-
-## Investigative Role-Playing
-
-Here's how I like to run investigative role-playing games. I begin with a hook or premise.
-The players create a character movitated to investigate the hook.
-I populate the world with clues. And the *players* decipher the
-clues to unravel the mysteries.
-
-The characters collect the clues, but the players have to connect the dots.
-Similar to deduction games like [Sherlock Holms Consultin Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder).
-Players can't roll to make me to explain the clues for them. So I ensure the clues
-are internally consistent, lead to a conclusion, *and* that the players can figure it out.
-To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-article. For Dungeon Masters, Justin Alexander wrote the
-[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
-on running investigations.
-
-Finally, I include a role-playing system used to resolve conflicts and provide constraints.
-In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
-like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
-
-I'm want to use a system that maximizes tension and minimizing complexity.
-
-
-
-## Tension-Resolution Framework
-
-
-
-
-
-
-
-Investigative role-playing is a combination of two genres.
-Deduction games, such as ,
-and mechanical dice-based role-playing systems such as [D&D 5e](https://roll20.net/compendium/dnd5e/BookIndex).
-
-Deduction elements provide mystery, logical puzzles, and a sense of progress by collecting clues.
-The role-playing systems offer gaming mechanics such as random chance, resource management, and abilities
-These mechanics resolve conflict and provide role-playing constraints.
-
-My campaign, [The Curse on Moonlight Bay](https://docs.google.com/document/d/15MvkKUkErnCAqWb7d8IaEQ8uJMS_XocKlCmDPT_sZzE/edit?usp=sharing),
-is a good example about what I am trying to achieve with an investigative role-playing system.
-
-Each campaign starts with a hook or premise. In The Curse on Moonlight Bay, there are 3:
-- an exocrist has gone missing
-- prohibition gangsters are smuggling liquor
-- the hospital claims they have a cure for mass hysteria
-
-The players create a character movitated to investigate the hook.
-I populate the world with internally consistent clues. And the *players* decipher the
-clues to unravel the mysteries.
-
-> Sidebar: the characters collect the clues, but the players have to connect the dots.
-Players can't roll to make me to explain the clues for them. So the Dungeon Master
-has to put in a lot of work ahead of time to sure the players can solve the mystery.
-To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-article. For Dungeon Masters, Justin Alexander wrote the
-[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach) on investigation campaigns.
-
-Gaming mechanics
-
-
-
-
-
-For the deduction to be rewarding, the clues must be internally consistent and lead to a logical conclusion.
-
-
-
-Mechnical elements need to be simplified enough that the don't overwhelm and render
-the deduction elements useless.
