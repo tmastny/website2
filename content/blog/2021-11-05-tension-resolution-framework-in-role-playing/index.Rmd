@@ -56,42 +56,40 @@ If the narrative sets the tension in the circumstance, then player choice
 amplifies tension in the decision. The rules govern what choices a player may make.
 Each choice comes with risks and costs that create tension.
 
-Risk is inherent to decision making, but the rules also influence risk.
-Dice rolls cause risk by adding a random chance of failure.
-Even pure random chance is tense--think Russian roulette.
-This kind of tension comes from being out of control.
-This, however, is tension of *circumstance*,
-not decision. For the decision stage to generate tension,
-the player must decide the amount of risk they want to take.
+### Risk
 
+Risk is inherent to decision making, but there are two ways
+rules influence risk: by adding a random chance for failure,
+and increasing the likelihood of mistakes via game complexity.
 
+A pure random chance of failure is tense--think Russian roulette.
+This kind of tension happens when players have no control and they wish they did.
+This, however, is tension of *circumstance*, not decision.
+For the decision stage to increase tension,
+the player willingly chooses the risky option.
 
+The fear of making mistakes also increases tension. Mistakes occur
+when the situation is complex and the wrong decision could lead to failure.
+When players opt for a complicated tactic or have to choose the right
+spell out of dozens there is a risk they made a mistake.
+Players think "I hope this works!"
 
-Game complexity also creates risk. Even in games without chance like chess,
-there choices have risk. Rather than an random chance the failure, the risk
-is that you made a mistake analyzing the game.
+Most role-playing systems combine
+randomness and complexity to heighten the tension.
 
+### Costs
 
+A decision has a cost if it depletes a resource managed by the game rules.
+Players may fear that spending this resource was a mistake, increasing the tension
+as I described above.
+The difference is that rules prevent the same decision from being made in the future.
+Whereas if the decision didn't have a cost,
+the choice can be made again if the circumstance allows.^[Another way to think about it: mistakes without mechanical costs are only [opportunity costs](https://en.wikipedia.org/wiki/Opportunity_cost).]
 
-Risk is the chance that your decision will produce a poor outcome. Dice rolls
-add a random chance of failure. I love the tension when you have to roll a 20 to
-kill the boss or the party will die. There is also the risk of mistake, especially
-common
-
-There is no chance in chess, but there is a risk that you overlooked a response from your opponent.
-
-
-Costs are consumed by your decision. Every decision has an [opportunity cost](https://en.wikipedia.org/wiki/Opportunity_cost).
-But the decision may also spend resources such as spell slots, items, or charges.
-Cost is a fun, because it makes the player decide if
-
-
-
-Players worry about mistakes when the number of possible outcomes is large like a game of chess,
-or when they many options like choosing a spell for a wizard in DnD.
-The higher the stakes, the more risk creates tension.
-
-Cost creates a different kind of tension. Spending resources resolves this encounter, but raises tension in future ones.
+Costs increase tension now and in the future.
+For example, if a player spends a 9th level spell slot they pray for a good outcome--they
+won't get the chance again. Likewise, the loss raises tension in future encounters,
+because they may wish they had that resource--tension from regret.
 
 
 
