@@ -63,8 +63,8 @@ rules influence risk: by adding a random chance for failure,
 and increasing the likelihood of mistakes via game complexity.
 
 A pure random chance of failure is tense--think Russian roulette.
-This kind of tension happens when players have no control and they wish they did.
-This, however, is tension of *circumstance*, not decision.
+This kind of tension happens when players have no control and wish they did.
+This, however, is tension of *circumstance* not decision.
 For the decision stage to increase tension,
 the player willingly chooses the risky option.
 
@@ -72,10 +72,12 @@ The fear of making mistakes also increases tension. Mistakes occur
 when the situation is complex and the wrong decision could lead to failure.
 When players opt for a complicated tactic or have to choose the right
 spell out of dozens there is a risk they made a mistake.
-Players think "I hope this works!"
+The tension here can also manifest outside the narrative: the fear of looking stupid or
+the opportunity to look smart.
 
 Most role-playing systems combine
-randomness and complexity to heighten the tension.
+randomness and complexity to heighten the tension, and these are
+the ones I like. I want my players to think "I hope this works!"
 
 ### Costs
 
