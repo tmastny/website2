@@ -1,8 +1,8 @@
 ---
-title: How Game Mechanics Create Tension
+title: Investigative Role-Playing Systems
 author: ~
 date: '2021-11-05'
-slug: how-game-mechanics-create-tension
+slug: Investigative Role-Playing Systems
 categories: []
 tags: []
 output:
