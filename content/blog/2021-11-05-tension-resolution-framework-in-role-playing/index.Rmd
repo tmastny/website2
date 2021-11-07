@@ -58,14 +58,19 @@ Each choice comes with risks and costs that create tension.
 
 Risk is inherent to decision making, but the rules also influence risk.
 Dice rolls cause risk by adding a random chance of failure.
-I love the tension when a player has to make a roll or the party will die.
+Even pure random chance is tense--think Russian roulette.
+This kind of tension comes from being out of control.
+This, however, is tension of *circumstance*,
+not decision. For the decision stage to generate tension,
+the player must decide the amount of risk they want to take.
+
+
+
+
 Game complexity also creates risk. Even in games without chance like chess,
 there choices have risk. Rather than an random chance the failure, the risk
 is that you made a mistake analyzing the game.
 
-Where the rules fall on the spectrum random to determined also influence risk.
-Purely random decisions can still be tense--think of the russian roulette.
-The tension comes from being out of control. But if the
 
 
 Risk is the chance that your decision will produce a poor outcome. Dice rolls
