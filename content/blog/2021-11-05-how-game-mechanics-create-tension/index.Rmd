@@ -42,6 +42,9 @@ did for investigative role-playing games.
 ![](encounter-model.png)
 
 *Circumstance, Decision, Outcome* is a three-stage encounter model.
+As you will see below, the model applies to micro and macro encounters.
+It's relevant when a player decides to cast fireball in a round of combat and
+when the party decides to storm a lair.
 
 
 > *Circumstance:* The guard walks into the shop and sees you with the jewels.
@@ -56,7 +59,7 @@ than sneaking past a guard to steal gold.
 
 The decision is the choice the player makes in that moment.
 The responsibility to make a good choice adds to the tension
-set in the circumstance.
+set in the circumstance. I cover this in detail in the next section.
 
 
 > *Outcome:* You jump through the open window and land gracefully in front of a squard of guards.
@@ -69,9 +72,9 @@ You want them to feel as if they could lose, but you don't want them to actually
 
 So instead of resolving the tension with overt failure, the tension is *delayed* or increased.
 And the outcome becomes the new circumstance. For example, the players
-stormed the villian's lair and failed. The outcome is that the villian summoned the demon
+stormed the villian's lair and were defeated. The outcome is that the villian summoned the demon
 and locked the party in the dungeon.
-The new circumstance is that they must escape the dungeons and defeat both the villian and the demon.
+The new circumstance is that they must escape the dungeon and defeat both the villian and the demon.
 
 
 
@@ -84,7 +87,7 @@ Each choice comes with risks and costs that create tension.
 ### Risk
 
 Risk is inherent to decision making, but there are two ways
-rules influence risk: by adding a random chance for failure,
+rules influence risk: by adding a random chance for failure
 and by increasing the likelihood of mistakes via game complexity.
 
 A pure random chance of failure is tense--think Russian roulette.
