@@ -10,12 +10,7 @@ output:
     toc: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  echo = FALSE, warning = FALSE, message = FALSE,
-  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
-)
-```
+
 
 ## Introduction
 
