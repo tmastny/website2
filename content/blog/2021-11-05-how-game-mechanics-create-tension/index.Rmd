@@ -68,9 +68,10 @@ Most Dungeon Masters avoid [defeating the players](https://theangrygm.com/death-
 You want them to feel as if they could lose, but you don't want them to actually lose.
 
 So instead of resolving the tension with overt failure, the tension is *delayed* or increased.
-The outcome creates a new circumstance for the players. For example, the players
-stormed the villian's lair and failed. The outcome is they are locked in the dungeons.
-The new circumstance is that they must escape the dungeons.
+And the outcome becomes the new circumstance. For example, the players
+stormed the villian's lair and failed. The outcome is that the villian summoned the demon
+and locked the party in the dungeon.
+The new circumstance is that they must escape the dungeons and defeat both the villian and the demon.
 
 
 
