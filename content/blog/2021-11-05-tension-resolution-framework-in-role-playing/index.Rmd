@@ -1,8 +1,8 @@
 ---
-title: Tension Resolution Framework in Investigative Role Playing
+title: How Game Mechanics Create Tension
 author: ~
 date: '2021-11-05'
-slug: tension-resolution-framework-in-role-playing
+slug: how-game-mechanics-create-tension
 categories: []
 tags: []
 output:
@@ -17,19 +17,28 @@ knitr::opts_chunk$set(
 )
 ```
 
-*How game mechanics create and resolve tension*
-*How to create and resolve tension in role-playing games*
-
 ## Introduction
 
+When I design campaigns and run encounters, I want to create longlasting memories
+my friends and I can bond over for years to come.
+One kind of moment enshired to tabletop legend is when a player
+uses their abilities to spectacular effect when the stakes are high.
+I recall 3 back-to-back criticals on the big bad right when the party was about the perish.
+Or when the wizard wove a wall of stone through the battlefield, turning the tide of war.
+These situations often happen when the narrative is tense, by game mechanics
+and rules magnify the tension, whether by dice rolls or exceptional tactics.
 
+In this post, I propose an encounter model to show how the rules and mechanics
+of a game can influence the tension a player feels when they make a decision.
+This model can be used choose role-playing systems suitable for the campaign.
+For example, [in another post]() I use this model to show why I think Gumshoe
+is the best system for investigative role-playing games.
+Dungeon Masters can also use this model to create new systems or modify
+existing ones.
 
-
-Here's how my role-playing games work.
-I design a world with a set of challenges.
-A player role-plays a character and uses the character's skills and abilities
-to solve challenges in that world. A role-playing system determines if and how the challenge was resolved.
-
+My goal is to provide a tool Dungeon Masters can use to make better
+campaigns and encounter, like Justin Alexander's [Node-Based Scenario Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
+did for investigative role-playing games.
 
 
 ## Encounter Model
