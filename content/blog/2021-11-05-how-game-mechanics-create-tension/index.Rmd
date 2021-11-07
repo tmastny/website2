@@ -20,10 +20,10 @@ knitr::opts_chunk$set(
 ## Introduction
 
 When I design campaigns and run encounters, I want to create longlasting memories
-my friends and I can bond over for years to come.
+for my friends and I to share.
 One kind of moment enshired to tabletop legend is when a player
-uses their abilities to spectacular effect when the stakes are high.
-I recall 3 back-to-back criticals on the big bad right when the party was about the perish.
+succeeds when the stakes are high.
+To this day my party talks about 3 back-to-back criticals on the big bad right when the party was about the perish.
 Or when the wizard wove a wall of stone through the battlefield, turning the tide of war.
 These situations often happen when the narrative is tense. Game mechanics
 and rules magnify that tension, whether by dice rolls or exceptional tactics.
@@ -35,7 +35,7 @@ They can also use it to create new systems or modify existing ones.
 
 My goal is to provide a tool Dungeon Masters can use to make better
 campaigns and encounters, like Justin Alexander's [Node-Based Scenario Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
-did for investigative role-playing games.
+for investigative role-playing games.
 
 ## Encounter Model
 
