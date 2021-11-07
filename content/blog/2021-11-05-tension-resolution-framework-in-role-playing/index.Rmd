@@ -46,23 +46,47 @@ The decision is the choice the player makes in that moment.
 The outcome is what happens after the decision. It is the new circumstance.
 > You jump through the open window and land gracefully in front of a squard of guards.
 
-Each stage effects the tension. The narrative controls the tension
-found in the circumstance and outcome. For example, here is a list of circumstances
-with increasing tension:
-- investigating a crime scene
-- investigating a serial killer's lair
-- fleeing from a henchman
-- confronting the villian
-The outcome resolves the tension of the current encounter and sets the tension for the next circumstance.
-System mechanics govern tension in the decision stage.
+Although each stage effects tension, circumstance and outcome control the degree of tension.
+Confronting the villian to save the world is more tense
+than sneaking past a guard to steal gold.
 
 ## Decision Tension
 
-The system rules
-Decisions are The system rules create tension in two ways:
-1. Risk
-2. Cost
+If the narrative sets the tension in the circumstance, then player choice
+amplifies tension in the decision. The rules govern what choices a player may make.
+Each choice comes with risks and costs that create tension.
 
+Risk is inherent to decision making, but the rules also influence risk.
+Dice rolls cause risk by adding a random chance of failure.
+I love the tension when a player has to make a roll or the party will die.
+Game complexity also creates risk. Even in games without chance like chess,
+there choices have risk. Rather than an random chance the failure, the risk
+is that you made a mistake analyzing the game.
+
+Where the rules fall on the spectrum random to determined also influence risk.
+Purely random decisions can still be tense--think of the russian roulette.
+The tension comes from being out of control. But if the
+
+
+Risk is the chance that your decision will produce a poor outcome. Dice rolls
+add a random chance of failure. I love the tension when you have to roll a 20 to
+kill the boss or the party will die. There is also the risk of mistake, especially
+common
+
+There is no chance in chess, but there is a risk that you overlooked a response from your opponent.
+
+
+Costs are consumed by your decision. Every decision has an [opportunity cost](https://en.wikipedia.org/wiki/Opportunity_cost).
+But the decision may also spend resources such as spell slots, items, or charges.
+Cost is a fun, because it makes the player decide if
+
+
+
+Players worry about mistakes when the number of possible outcomes is large like a game of chess,
+or when they many options like choosing a spell for a wizard in DnD.
+The higher the stakes, the more risk creates tension.
+
+Cost creates a different kind of tension. Spending resources resolves this encounter, but raises tension in future ones.
 
 
 
