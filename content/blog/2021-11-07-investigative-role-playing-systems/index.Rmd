@@ -18,6 +18,56 @@ knitr::opts_chunk$set(
 )
 ```
 
+## Introduction
+
+Investigative Role-playing is a combination of a deduction game
+and a role-playing system.
+
+Justin Alexander wrote a series of articles on designing the investigation
+elements, explaining the theory of [Node-Based Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
+and promoting the [three clue rule](https://thealexandrian.net/wordpress/1118/roleplaying-games/three-clue-rule).
+
+To supplement his guidelines on designing investigations,
+this article explains the role-playing rules and systems.
+
+
+## Goals of Investigative Role-Playing
+
+Investigative Role-playing is more than logical deductions from a set of clues,
+as is found in games like [Sherlock Holmes Consulting Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder).
+The players want to role-play a character they came up with.
+
+Why does there need to be a role-playing system that administrats the role-playing?
+Could the players just pretend to be characters in a normal deduction game?
+
+That's a valid approach, but it's limiting.
+Players want to play characters with skills they don't possess: casting spells,
+knowledge of ancient history, or handling weapons. Likewise, players and Dungeon Masters
+want typical mystery encounters like car chases, shootouts, and fist fights.
+A role-playing sysem offers fair, predictive rules to use skills and resolve encounters.
+
+
+https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game
+is also a good resource that explains Gumshoe point spend in more detail.
+
+
+I'm want to use a system that maximizes tension and minimizing complexity.
+
+
+Fail forward
+
+
+
+
+
+
+
+Finally, I include a role-playing system used to resolve conflicts and provide constraints.
+In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
+like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
+[Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+
+
 
 
 
@@ -25,97 +75,3 @@ Throughout this article, I'll refer to three systems:
 - [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
 - [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
 - [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
-
-
-
-
-Role-playing systems are rules used to
-
-
-
-
-
-I design campaigns so players can solve challenges with their skills.
-
-As a Dungeon Master (DM), I want characters to solve challenges with their personality and skills.
-I design campaigns with this in mind.
-
-
-
-## Introduction
-
-In this article, I propose a tension-resolution framework for role-playing games.
-Furthermore, I will show that we can use the framework to improve mechanics for
-investigative role-playing.
-
-## Investigative Role-Playing
-
-Here's how I like to run investigative role-playing games. I begin with a hook or premise.
-The players create a character movitated to investigate the hook.
-I populate the world with clues. And the *players* decipher the
-clues to unravel the mysteries.
-
-The characters collect the clues, but the players have to connect the dots.
-Similar to deduction games like [Sherlock Holms Consultin Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder).
-Players can't roll to make me to explain the clues for them. So I ensure the clues
-are internally consistent, lead to a conclusion, *and* that the players can figure it out.
-To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-article. For Dungeon Masters, Justin Alexander wrote the
-[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
-on running investigations.
-
-Finally, I include a role-playing system used to resolve conflicts and provide constraints.
-In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
-like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
-
-I'm want to use a system that maximizes tension and minimizing complexity.
-
-
-
-## Tension-Resolution Framework
-
-
-
-
-
-
-
-Investigative role-playing is a combination of two genres.
-Deduction games, such as ,
-and mechanical dice-based role-playing systems such as [D&D 5e](https://roll20.net/compendium/dnd5e/BookIndex).
-
-Deduction elements provide mystery, logical puzzles, and a sense of progress by collecting clues.
-The role-playing systems offer gaming mechanics such as random chance, resource management, and abilities
-These mechanics resolve conflict and provide role-playing constraints.
-
-My campaign, [The Curse on Moonlight Bay](https://docs.google.com/document/d/15MvkKUkErnCAqWb7d8IaEQ8uJMS_XocKlCmDPT_sZzE/edit?usp=sharing),
-is a good example about what I am trying to achieve with an investigative role-playing system.
-
-Each campaign starts with a hook or premise. In The Curse on Moonlight Bay, there are 3:
-- an exocrist has gone missing
-- prohibition gangsters are smuggling liquor
-- the hospital claims they have a cure for mass hysteria
-
-The players create a character movitated to investigate the hook.
-I populate the world with internally consistent clues. And the *players* decipher the
-clues to unravel the mysteries.
-
-> Sidebar: the characters collect the clues, but the players have to connect the dots.
-Players can't roll to make me to explain the clues for them. So the Dungeon Master
-has to put in a lot of work ahead of time to sure the players can solve the mystery.
-To read how this works in practice, check out this [Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-article. For Dungeon Masters, Justin Alexander wrote the
-[definitive theory](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach) on investigation campaigns.
-
-Gaming mechanics
-
-
-
-
-
-For the deduction to be rewarding, the clues must be internally consistent and lead to a logical conclusion.
-
-
-
-Mechnical elements need to be simplified enough that the don't overwhelm and render
-the deduction elements useless.
