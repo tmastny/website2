@@ -73,7 +73,7 @@ The new circumstance is that they must escape the dungeon and defeat both the vi
 When a player makes a decision, they have a desired outcome.
 Rules are designed so the outcome is not guaranteed, or
 the decision may lead to a worse outcome in the future.
-This is how game mechanics create tension: risk and cost.
+These risks and costs are how game mechanics create tension.
 
 ### Risk
 
