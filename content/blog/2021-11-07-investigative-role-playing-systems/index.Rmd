@@ -51,6 +51,7 @@ https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game
 is also a good resource that explains Gumshoe point spend in more detail.
 
 
+
 I'm want to use a system that maximizes tension and minimizing complexity.
 
 
@@ -75,3 +76,5 @@ Throughout this article, I'll refer to three systems:
 - [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
 - [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
 - [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
+
+Other systems: https://dmapprentice.wordpress.com/2017/01/24/systems-for-investigative-rpgs/
