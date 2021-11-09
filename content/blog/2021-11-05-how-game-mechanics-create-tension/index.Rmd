@@ -19,12 +19,12 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Most advice about how to create tension in role-playing games^[[Stackexchange: How can I increase tension.](https://rpg.stackexchange.com/questions/19096/how-can-i-increase-tension-during-roleplaying) [Tribality: How to create tension in your game.](https://www.tribality.com/2020/02/19/how-to-create-tension-in-your-game/)]
-is about the narrative: make things personal, raise the stakes, or create a sense of paranoia.
+Most advice about how to create tension in role-playing games
+is about the narrative: make things personal, raise the stakes, or create a sense of paranoia.^[[Stackexchange: How can I increase tension.](https://rpg.stackexchange.com/questions/19096/how-can-i-increase-tension-during-roleplaying) [Tribality: How to create tension in your game.](https://www.tribality.com/2020/02/19/how-to-create-tension-in-your-game/)]
 But the *rules* of a system also create tension. The risky dice roll to kill the boss or the
 bold tactic to turn the tide increases the tension set by the narrative.
 
-In this post, I'll show the role-playing systems use risk and cost to
+In this post, I'll show that role-playing systems use risk and cost to
 increase the tension felt by players.
 My goal is to provide a tool Dungeon Masters can use to make better
 campaigns and encounters, like Justin Alexander's [Node-Based Scenario Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
