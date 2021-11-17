@@ -20,56 +20,25 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Investigative role-playing games add role-playing systems to a game
-of deduction.
-
-[Sherlock Holmes Consulting Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder),
-[Her Story](http://www.herstorygame.com/),
-and [Contradiction](https://baggycat.com/contradiction/)
-are examples of deduction games. Players only progress deduce the meaning of
-the clues they have.
-
-With investigative role-playing, the players want to role-play a character.
-It's perfectly valid to play *Sherlock Holmes Consulting Detective* while
-pretending to be other characters, but that approach is limiting.
-Players want to play characters with skills they don't possess: casting spells,
-knowledge of ancient history, or handling weapons.
-Likewise, my player and I want to experience archetypal mystery encounters like car chases, shootouts, and fist fights.
-A role-playing system provide rules to use skills and resolve encounters.
-
-I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) is a great system
-for these type of games.
-
-## Introduction
-
-
-There are two components to investigative role-playing:
-progress is made by logical deduction from a set of clues
-and players role-play a character with skills and abilities they don't possess.
-
-In games of pure logical deduction, such as
-[Sherlock Holmes Consulting Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder),
-[Her Story](http://www.herstorygame.com/),
-and [Contradiction](https://baggycat.com/contradiction/),
-progress is only accomplished by following clues.
-But deduction is only part of a great mystery story; car chases, shootouts, and
+In a classic mystery story, the heroes follow a trail of clues
+to solve the case. But deduction is only part of the tale:
+car chases, shootouts, and
 fist fights all add to the excitment.
 
-By adding a role-playing system onto of a deduction game, the system allows players
-to role-play characters with skills and abilities they don't possess,
-and provides rules to resolve encounters.
+Investigative role-play games capture all elements of the mystery story.
+The DM creates a world with logical, consistent clues for the players to follow.
+The players role-play an investigator with unusual skills and abilities.
+And the role-playing system states how players can use their character's abilities to
+find clues and engage in encounters.
 
-In the games I lead the clues and mystery are center stage, not the gameplay encounters.
-Encounters propel the story in surprising ways and create tension and excitement.
+In the investigation games I lead, clues and mystery take center stage, not the gameplay encounters.
+Encounters propel the story forward in surprising ways, creating tension and excitement.
 But I don't want the complexity and length of the encounters to overshadow the
-narrative. Within these constraints I want the rules to maximize the tension.
+narrative. And within these constraints I want the gameplay mechanics to maximize the tension.
 
-To demonstrate how the Gumshoe system maximizes tension with simple rules,
-I'll analyze it and similar systems using the encounter-model I introduced in my [last post](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/).
-
-
-
-
+Given these requirements, I think the [Gumshoe system](https://pelgranepress.com/2018/02/14/gumshoe/)
+is great. The system's small set of rules can create tense encounters,
+rivaling complicated systems like D&D 5e.
 
 ## Why Gumshoe?
 
@@ -80,7 +49,7 @@ Investigative abilities always work; players can't miss out on a clue because of
 But my favorite feature of Gumshoe is the point spends.
 
 Before each roll, a player can choose to spend a number of points from their poll
-to add to their result. They could add 0 points, making it a coin flip, or 7 guaranteeing
+to add to their result. They could add 0 points, making it a coin toss, or 7 guaranteeing
 a success with the max DC^[Difficulty class, or the minimum number a player must roll to succeed.] of 8.
 Like spell slots in DnD 5e, the points are a limited resource and have to last
 for multiple encounters.
@@ -107,29 +76,10 @@ don't feel the tension.
 Worse, D&D 5e takes a long time to learn and combat is [notoriously slow](https://slyflourish.com/tips_to_speed_up_combat.html).
 Given these reasons, I don't like to use D&D 5e for role-playing investigations.
 
-## What is Gumshoe?
-
-For a quick overview of the system, .
-Also see Shut Up & Sit Down's
-of Trail of Cthulhu, a system based on Gumshoe.
-
-I'll assume familarity with the system in the next section.
-
-## Encounters
-
-The purpose of a role-paying system is to resolve encounters and for encounters
-to be fun and memorable they should feel tense. In [my last post](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/)
-I explored the way rules create tension. Let's see how Gumshoe is designed to generate tension.
-
-For my games of investigative role playing,
-I want to the system to be simple to learn and encounters to be quick to resolve.
-Within these constraints we want to maximize the tension.
-
-
 ## Conclusion
 
-To learn more about Gumshoe, check out Andrew Brehaut's [Gumshoe: the kernel of the game](https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game)
-for an overview of the system. Shut up and Sit Down have a [comprehensive review](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+To learn more about Gumshoe, check out Andrew Brehaut's [Gumshoe: the kernel of the game](https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game).
+Shut up and Sit Down has a [comprehensive review](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
 based on a [campaign](http://thealexandrian.net/wordpress/37078/roleplaying-games/eternal-lies-the-alexandrian-remix)
 lead by Justin Alexander.
 
