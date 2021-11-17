@@ -40,47 +40,96 @@ A role-playing system provide rules to use skills and resolve encounters.
 I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) is a great system
 for these type of games.
 
-## References
+## Introduction
 
 
-https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game
-is also a good resource that explains Gumshoe point spend in more detail.
+There are two components to investigative role-playing:
+progress is made by logical deduction from a set of clues
+and players role-play a character with skills and abilities they don't possess.
+
+In games of pure logical deduction, such as
+[Sherlock Holmes Consulting Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder),
+[Her Story](http://www.herstorygame.com/),
+and [Contradiction](https://baggycat.com/contradiction/),
+progress is only accomplished by following clues.
+But deduction is only part of a great mystery story; car chases, shootouts, and
+fist fights all add to the excitment.
+
+By adding a role-playing system onto of a deduction game, the system allows players
+to role-play characters with skills and abilities they don't possess,
+and provides rules to resolve encounters.
+
+In the games I lead the clues and mystery are center stage, not the gameplay encounters.
+Encounters propel the story in surprising ways and create tension and excitement.
+But I don't want the complexity and length of the encounters to overshadow the
+narrative. Within these constraints I want the rules to maximize the tension.
+
+To demonstrate how the Gumshoe system maximizes tension with simple rules,
+I'll analyze it and similar systems using the encounter-model I introduced in my [last post](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/).
+
+I won't be covering the design of investigative scenarios. For that, I recommend
+Justin Alexander's articles on the [Three Clue Rule](https://thealexandrian.net/wordpress/1118/roleplaying-games/three-clue-rule)
+and on [Node-Based Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach).
 
 
-Finally, I include a role-playing system used to resolve conflicts and provide constraints.
-In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
-like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
-[Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+## What is Gumshoe?
 
-Throughout this article, I'll refer to three systems:
-- [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
-- [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
-- [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
+For a quick overview of the system, check out Andrew Brehaut's [Gumshoe: the kernel of the game](https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game).
+Also see Shut Up & Sit Down's [review](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+of Trail of Cthulhu, a system based on Gumshoe.
 
-Other systems: https://dmapprentice.wordpress.com/2017/01/24/systems-for-investigative-rpgs/
+I'll assume familarity with the system in the next section.
 
+## Encounters
 
-
-## Investigation
-
-Failing to find a clue derails the campaign and isn't fun, as Justin Alexander
-writes in [Three Clue Rule](https://thealexandrian.net/wordpress/1118/roleplaying-games/three-clue-rule)
-This isn't a problem with Gumshoe, because investigation skills and abilities always succeed.
-
-Justin [Node-Based Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
-is also worth a read, if you are interested in creating or running your own investigation games.
-
-## encounters
-
-The purpose of the system is to resolve encounters.
-
-To make it fun, the encounters should feel tense--see my other post.
+The purpose of a role-paying system is to resolve encounters and for encounters
+to be fun and memorable they should feel tense. In [my last post](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/)
+I explored the way rules create tension. Let's see how Gumshoe is designed to generate tension.
 
 For my games of investigative role playing,
 I want to the system to be simple to learn and encounters to be quick to resolve.
 Within these constraints we want to maximize the tension.
 
-DnD is ill fitting: it’s complex and combat notoriously takes forever.
+## Why Gumshoe
+
+Character creation is simple (and getting simpler with modern variants).
+The rules are designed so the dice rolls are always driven by the player,
+but lead by the DM so players don’t need to know an exhaustive list of rules.
+Investigative abilities always work; players can't miss out on a clue because of a bad roll.
+But my favorite feature of Gumshoe is the point spends.
+
+Before each roll, a player can choose to spend a number of points from their poll
+to add to their result. They could add 0 points, making it a coin flip, or 7 guaranteeing
+a success with the max DC^[Difficulty class, or the number the player must meet.] of 8.
+Like spell slots in DnD 5e, the points are a limited resource and have to last
+for multiple encounters.
+
+The [cost is a palpable source of tension in the games](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/).
+Players agnoize over how much to spend, fearing future encounters or a random failure failure occuring
+despite their spend. This feature really augments the tension
+set by the narrative.
+
+The system gives the players a surprising amount of control.
+During the encounter they must decide: the ability to use, whether to spend points,
+and the number of points, and then the role.
+Each encounter feels tense because you really want to make the right decision.
+All are a significant decision that adds tension, yet is simple.
+
+
+
+The tension of cost is real, as you worry you might need them later.
+And this is combined with an additional decision point: you have to decide the number of points to spend.
+You can even spend enough points to guarantee a success, although at great cost to your pool.
+
+Gumshoe forces players to consider the cost and how much they are willing to spend in the moment.
+
+
+
+
+
+
+
+DnD 5e is ill fitting: it’s complex and [notoriously slow](https://slyflourish.com/tips_to_speed_up_combat.html).
 Lasers and Feelings is fast, but there are only two points of mechanical tension.
 The onetime decision point of setting your score and the single dice roll to resolve your encounter.
 
@@ -93,25 +142,27 @@ Gumshoe has a few mechanics designed to increase tension in encounters.
 Like most RPGs, it uses dice rolls to introduce random chance.
 
 The standout element is the point pool.
-Each ability, like firearms has a certain number of points a player
-can add your their role before the result is known.
-This heightens tension through both cost and decision complexity.
-The point pool, like spell slots in 5e, is a limited resource that can’t be restored in the middle of an encounter.
-Players also have to decide how much to spend from there poll, not simply whether to spend it,
-adding additional complexity tension to the encounter.
-
-The tension of cost is real, as you worry you might need them later.
-And this is combined with an additional decision point: you have to decide the number of points to spend.
-You can even spend enough points to guarantee a success, although at great cost to your pool.
-
-Gumshoe forces players to consider the cost and how much they are willing to spend in the moment.
-
-This system gives the players a surprising amount of control.
-During the encounter they must decide: the ability to use, whether to spend points,
-and the number of points, and then the role.
-Each encounter feels tense because you really want to make the right decision.
-All are a significant decision that adds tension, yet is simple.
 
 DND 5e, by contrast, is incredibly complex, yet often the mechanical tension is limited only to a dice roll.
-In certain classes or situations, the best a character can do is a straightforward attack each round that doesn’t even have a cost.
-The phrase “I guess I’ll attack” doesn’t bring a lot of attention.
+In certain classes or situations, the best a character can do is a basic attack.
+When I heard the phrase “I guess I’ll attack”, I know my players don't feel the tension
+or don't feel in control.
+
+## References
+
+
+https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game
+is also a good resource that explains Gumshoe point spend in more detail.
+
+
+Finally, I include a role-playing system used to resolve conflicts and provide constraints.
+In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
+like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
+
+
+Throughout this article, I'll refer to three systems:
+- [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
+- [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
+- [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
+
+Other systems: https://dmapprentice.wordpress.com/2017/01/24/systems-for-investigative-rpgs/
