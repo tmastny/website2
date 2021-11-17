@@ -5,7 +5,6 @@ date: '2021-11-07'
 slug: why-i-use-gumshoe-for-role-playing-investigations
 categories: []
 tags: []
-draft: true
 output:
   blogdown::html_page:
     toc: true
