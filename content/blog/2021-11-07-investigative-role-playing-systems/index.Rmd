@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 In a classic mystery story, the heroes follow a trail of clues
 to solve the case. But deduction is only part of the tale:
 car chases, shootouts, and
-fist fights all add to the excitment.
+fist fights all add to the excitement.
 
 Investigative role-play games capture all elements of the mystery story.
 The DM creates a world with logical, consistent clues for the players to follow.
@@ -47,28 +47,28 @@ but lead by the DM so players don’t need to know an exhaustive list of rules.
 Investigative abilities always work; players can't miss out on a clue because of a bad roll.
 But my favorite feature of Gumshoe is the point spends.
 
-Before each roll, a player can choose to spend a number of points from their poll
+Before each roll, a player can choose to spend a number of points from their pool
 to add to their result. They could add 0 points, making it a coin toss, or 7 guaranteeing
 a success with the max DC^[Difficulty class, or the minimum number a player must roll to succeed.] of 8.
 Like spell slots in DnD 5e, the points are a limited resource and have to last
 for multiple encounters.
 
 The [cost is a palpable source of tension in my games](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/).
-Players agnoize over how much to spend. They worry about how many points to save
-for future encounters and about a random failure failure occuring
+Players agonize over how much to spend. They worry about how many points to save
+for future encounters and about a random failure failure occurring
 despite their spend. This feature really augments the tension
 set by the narrative.
 
 The system also gives the players a surprising amount of control.
 During the encounter they must decide: the ability to use, whether to spend points,
 and the number of points to spend. Then they roll.
-Each decision simple and fast, but the set offers enough complexity
-to feel the weight of the choice. Moreover, the points offer a sense of power,
-giving them the option for a guaranted success.
+Each decision is simple and fast, but the set offers enough complexity
+to feel the weight of the choice. Moreover, the points pool offers a sense of power,
+giving them the option for a guaranteed success.
 
-By constrast, in D&D 5e mechanical tension is often limited to a single dice roll
+By contrast, in D&D 5e mechanical tension is often limited to a single dice roll
 with no cost or risk.
-In certain situations, the best a character can do is a basic attack.
+In certain situations, a basic attack is the best a player can do.
 The phrase “I guess I’ll attack” tells me my players don't feel in control and
 don't feel the tension.
 
