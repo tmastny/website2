@@ -1,8 +1,8 @@
 ---
-title: Investigative Role-Playing Systems
+title: Why I Use Gumshoe, not D&D, for Role-playing Investigations
 author: ~
 date: '2021-11-07'
-slug: Investigative Role-Playing Systems
+slug: why-i-use-gumshoe-for-role-playing-investigations
 categories: []
 tags: []
 draft: true
@@ -20,58 +20,69 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Investigative Role-playing is a combination of a deduction game
-and a role-playing system.
+In a classic mystery story, the heroes follow a trail of clues
+to solve the case. But deduction is only part of the tale:
+car chases, shootouts, and
+fist fights all add to the excitment.
 
-Justin Alexander wrote a series of articles on designing the investigation
-elements, explaining the theory of [Node-Based Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach)
-and promoting the [three clue rule](https://thealexandrian.net/wordpress/1118/roleplaying-games/three-clue-rule).
+Investigative role-play games capture all elements of the mystery story.
+The DM creates a world with logical, consistent clues for the players to follow.
+The players role-play an investigator with unusual skills and abilities.
+And the role-playing system states how players can use their character's abilities to
+find clues and engage in encounters.
 
-To supplement his guidelines on designing investigations,
-this article explains the role-playing rules and systems.
+In the investigation games I lead, clues and mystery take center stage, not the gameplay encounters.
+Encounters propel the story forward in surprising ways, creating tension and excitement.
+But I don't want the complexity and length of the encounters to overshadow the
+narrative. And within these constraints I want the gameplay mechanics to maximize the tension.
 
+Given these requirements, I think the [Gumshoe system](https://pelgranepress.com/2018/02/14/gumshoe/)
+is great. The system's small set of rules can create tense encounters,
+rivaling complicated systems like D&D 5e.
 
-## Goals of Investigative Role-Playing
+## Why Gumshoe?
 
-Investigative Role-playing is more than logical deductions from a set of clues,
-as is found in games like [Sherlock Holmes Consulting Detective](https://boardgamegeek.com/boardgame/2511/sherlock-holmes-consulting-detective-thames-murder).
-The players want to role-play a character they came up with.
+Character creation is simple (and getting simpler with modern variants).
+The rules are designed so the dice rolls are always driven by the player,
+but lead by the DM so players don’t need to know an exhaustive list of rules.
+Investigative abilities always work; players can't miss out on a clue because of a bad roll.
+But my favorite feature of Gumshoe is the point spends.
 
-Why does there need to be a role-playing system that administrats the role-playing?
-Could the players just pretend to be characters in a normal deduction game?
+Before each roll, a player can choose to spend a number of points from their poll
+to add to their result. They could add 0 points, making it a coin toss, or 7 guaranteeing
+a success with the max DC^[Difficulty class, or the minimum number a player must roll to succeed.] of 8.
+Like spell slots in DnD 5e, the points are a limited resource and have to last
+for multiple encounters.
 
-That's a valid approach, but it's limiting.
-Players want to play characters with skills they don't possess: casting spells,
-knowledge of ancient history, or handling weapons. Likewise, players and Dungeon Masters
-want typical mystery encounters like car chases, shootouts, and fist fights.
-A role-playing sysem offers fair, predictive rules to use skills and resolve encounters.
+The [cost is a palpable source of tension in my games](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/).
+Players agnoize over how much to spend. They worry about how many points to save
+for future encounters and about a random failure failure occuring
+despite their spend. This feature really augments the tension
+set by the narrative.
 
+The system also gives the players a surprising amount of control.
+During the encounter they must decide: the ability to use, whether to spend points,
+and the number of points to spend. Then they roll.
+Each decision simple and fast, but the set offers enough complexity
+to feel the weight of the choice. Moreover, the points offer a sense of power,
+giving them the option for a guaranted success.
 
-https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game
-is also a good resource that explains Gumshoe point spend in more detail.
+By constrast, in D&D 5e mechanical tension is often limited to a single dice roll
+with no cost or risk.
+In certain situations, the best a character can do is a basic attack.
+The phrase “I guess I’ll attack” tells me my players don't feel in control and
+don't feel the tension.
 
+Worse, D&D 5e takes a long time to learn and combat is [notoriously slow](https://slyflourish.com/tips_to_speed_up_combat.html).
+Given these reasons, I don't like to use D&D 5e for role-playing investigations.
 
-I'm want to use a system that maximizes tension and minimizing complexity.
+## Conclusion
 
+To learn more about Gumshoe, check out Andrew Brehaut's [Gumshoe: the kernel of the game](https://brehaut.net/blog/2019/gumshoe_the_kernel_of_the_game).
+Shut up and Sit Down has a [comprehensive review](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
+based on a [campaign](http://thealexandrian.net/wordpress/37078/roleplaying-games/eternal-lies-the-alexandrian-remix)
+lead by Justin Alexander.
 
-Fail forward
-
-
-
-
-
-
-
-Finally, I include a role-playing system used to resolve conflicts and provide constraints.
-In this article, I'll show why I think [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/) systems
-like [Trail of Cthulhu](https://pelgranepress.com/product/trail-of-cthulhu/) are best.
-[Shut Up & Sit Down](https://www.shutupandsitdown.com/rpg-review-trail-of-cthulhu/)
-
-
-
-
-
-Throughout this article, I'll refer to three systems:
-- [Gumshoe](https://pelgranepress.com/2018/02/14/gumshoe/)
-- [Dungeons and Dragons 5th Edition](https://roll20.net/compendium/dnd5e/BookIndex)
-- [Lasers and Feelings](http://www.onesevendesign.com/laserfeelings/)
+To learn more about designing fun investigative scenarios, read
+Justin Alexander's articles [The Three Clue Rule](https://thealexandrian.net/wordpress/1118/roleplaying-games/three-clue-rule)
+and [Node-Based Design](https://thealexandrian.net/wordpress/7949/roleplaying-games/node-based-scenario-design-part-1-the-plotted-approach).
