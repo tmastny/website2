@@ -1,5 +1,5 @@
 ---
-title: Why I Use Gumshoe for Role-playing Investigations
+title: Why I Use Gumshoe, not D&D, for Role-playing Investigations
 author: ~
 date: '2021-11-07'
 slug: why-i-use-gumshoe-for-role-playing-investigations
@@ -63,7 +63,7 @@ set by the narrative.
 The system also gives the players a surprising amount of control.
 During the encounter they must decide: the ability to use, whether to spend points,
 and the number of points to spend. Then they roll.
-Each decision simple and fast, but offer enough complexity
+Each decision simple and fast, but the set offers enough complexity
 to feel the weight of the choice. Moreover, the points offer a sense of power,
 giving them the option for a guaranted success.
 
