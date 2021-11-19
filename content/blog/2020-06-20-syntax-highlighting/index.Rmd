@@ -1,12 +1,11 @@
 ---
-title: 'R Snytax Highlighting in blogdown'
+title: 'Syntax Highlighting'
 author: ~
 date: '2020-06-27'
-slug: r-syntax-highlight-blogdown-hugo
+slug: syntax-highlighting
 categories: []
 tags: []
 description:
-draft: true
 output:
   blogdown::html_page:
     toc: true

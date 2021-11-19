@@ -1,0 +1,9 @@
+---
+title: "Book Notes"
+type: "book-notes"
+---
+
+# Book Notes `r emo::ji("books")`
+
+* [Forecasting: Principles and Practice](https://otexts.com/fpp3/), 3rd edition.
+  * complete notes on [Github](https://github.com/tmastny/timeseries/tree/master/vignettes).
