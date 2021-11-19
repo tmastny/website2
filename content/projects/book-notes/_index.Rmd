@@ -1,0 +1,15 @@
+---
+title: "Book Notes"
+type: "book-notes"
+---
+
+# Book Notes `r emo::ji("books")`
+
+* [Forecasting: Principles and Practice](https://otexts.com/fpp3/), 3rd edition.
+  * complete notes on [Github](https://github.com/tmastny/timeseries/tree/master/vignettes).\
+\
+* [Statistical Rethinking](https://xcelab.net/rm/statistical-rethinking/), first edition.
+  * almost complete notes on [Github](https://github.com/tmastny/Statistical-Rethinking-Notes).\
+\
+* [Simulation and Similiarity](https://www.amazon.com/Simulation-Similarity-Understand-Studies-Philosophy/dp/0190265124)
+  * chapter 1 and 2 note on Chapters 1 and 2 [Notion](https://www.notion.so/Simulation-and-Similarity-2525272efbf14bfca6b480b69e907116).

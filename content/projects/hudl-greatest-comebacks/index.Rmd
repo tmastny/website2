@@ -2,11 +2,12 @@
 title: "Hudl's Greatest Comebacks"
 slug: hudl-greatest-comebacks
 tags: []
-summary: >
-  ![](/projects/hudl-greatest-comebacks/hudl-greatest-comebacks.png)
 ---
 
-[![](hudl-greatest-comebacks.png)](https://www.hudl.com/video/5ef26c24ab93fb1a10868c39)
+At Hudl [Corley Bagley](https://www.linkedin.com/in/corley-bagley-55928681/) and I
+analyzed Hudl's huge database of high school American Football games.
+We used sports statistics to find games and moments that would be
+exciting to watch in a highlight reel.
 
-Part of the data cleaning and statistics team for Hudl's [Greatest Comebacks](https://www.hudl.com/video/5ef26c24ab93fb1a10868c39)
+Using this dataset, Hudl's media team created the [Greatest Comebacks](https://www.hudl.com/video/5ef26c24ab93fb1a10868c39)
 series.

@@ -1,7 +1,6 @@
 ---
 title: "leadr R package"
 slug: leadr
-date: 2020-06-20
 tags: [rpackage]
 ---
 
@@ -10,5 +9,3 @@ tags: [rpackage]
 
   - [Github](https://github.com/tmastny/leadr),
 [Documentation](https://tmastny.github.io/leadr/)
-
-<!--more-->

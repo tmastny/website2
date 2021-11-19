@@ -1,9 +1,13 @@
 ---
 title: "Gallery of R Syntax Highlighting"
 type: "r-syntax-highlighting-gallery"
-summary: >
-  ![](/projects/r-syntax-highlighting-gallery/r-gallery.svg)
 ---
+
+I collected examples of R sytnax highlighting when I was
+searching for the a highlighter to use on this site.
+
+I settled on [settled on prism](https://github.com/tmastny/hugo-xmin/blob/857952f21bd1b7c42ea7951e6d9c3380143126ad/sass/prism-vs.scss#L1-L4).
+I also wrote [this blog post](/blog/syntax-highlighting) on syntax highlighting.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE,
