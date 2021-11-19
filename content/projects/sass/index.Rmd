@@ -1,7 +1,6 @@
 ---
 title: "sass R package"
 slug: sass
-date: 2020-07-20
 tags: [rpackage]
 ---
 
@@ -10,5 +9,3 @@ tags: [rpackage]
 
   - [Github](https://github.com/rstudio/sass),
 [Documentation](https://rstudio.github.io/sass/index.html)
-
-<!--more-->
