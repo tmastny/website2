@@ -1,121 +1,60 @@
 ---
-title: Say no to <no Sub-Vocalization>
+title: Reading for Pleasure
 author: ~
 date: '2020-05-18'
-slug: sub-vocalization-is-good
+slug: reading-for-pleasure
 categories: []
 tags: []
 description:
-draft: true
 output:
   blogdown::html_page:
     toc: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
-                      results='show', cache=FALSE, autodep=FALSE)
-library(reticulate)
-knitr::knit_engines$set(python = reticulate::eng_python)
+knitr::opts_chunk$set(
+  echo = TRUE, warning = FALSE, message = FALSE,
+  results = 'show', cache = FALSE, autodep = FALSE)
 ```
 
+Reading books serves many functions.
+Reading transmits ([but doesn't impart](https://andymatuschak.org/books/)) knowledge.
+Memes like [*52 Books a Year*](https://twitter.com/search?q=52%20books%20a%20year&src=typed_query&f=top)
+or [bookcase zoom backgrounds](https://twitter.com/search?q=bookcase%20zoom%20background&src=typed_query&f=top)
+generate status or signal in-group membership.
+But books can also be read for pleasure.
+My motivation in writing this article is to give myself
+permission to read for pleasure and to provide some tips
+that makes reading more enjoyable.
 
-## The Case Against _Anti-Subvocalization_
+## Make reading fun
 
-The [first article](https://irisreading.com/speed-reading-tips-5-ways-to-minimize-subvocalization/)
-that comes up for me when I google `subvocalization` describes subvocalization
-as follows:
+If you google "how to make reading fun" nearly every article is about
+making reading fun for *children*. But I want to have fun too and
+I think the advice is pretty good.
+Grade Power Learning lists [13 tips](https://gradepowerlearning.com/how-to-make-reading-fun/);
+here are the first 3:
 
-> Subvocalization (also known as auditory reassurance) is a very common habit
-  among readers. It involves saying words in your head while reading and it’s
-  one of the main reasons why people read slowly and have trouble improving
-  their reading speed.
-
-
-The implicit assumption is that you should be reading fast.
-Fast means , more gamification on [Goodreads](https://www.goodreads.com)
-
-
-
-What about reading _for pleasure?_
-
-When LifeHacker posted [10 Benefits of Reading: Why You Should Read Every Day](https://www.lifehack.org/articles/lifestyle/10-benefits-reading-why-you-should-read-everyday.html)
-they didn't even think to put *because it's fun*. The closest they got
-was `Free Entertainment`. What an endorsement.
-
-
-Readers, or aspiring readers want a transactionable relationship with books.
-If they consume them, they get something in return. Knowledge is one.
-Nebulous self-help concepts like tranquilty and memory improvement.
-
-But where are the articles about how to enjoy reading more? What if instead of
-reading 52 books a year, we read one book really well?
-
-## Subvocalization
-
-I'm not convinced it actually works: Professor Elizabeth Schotter writes https://www.nytimes.com/2020/03/17/magazine/speed-reading.html
-
-> eye tracking study to show how people read faster
-
-
-> The way to maintain high comprehension and get through text faster is to
-  practice reading and to become a more skilled language user (e.g., through
-  increased vocabulary). This is because language skill is at the heart of
-  reading speed.
-
-But even this, I don't really care about. I don't want to read faster,
-I want to make reading more enjoyable. More fun.
-
-## Reading as Pleasure
-
-If you google "how to make reading fun," nearly every article is directed
-at making reading fun for *children*. But adults need to have fun too.
-
-In fact, I think the articles are pretty good, and applies to adults as well.
-For example, Grade Power Learning identifies [13 tips](https://gradepowerlearning.com/how-to-make-reading-fun/).
-
-The first three are advice anyone could follow:
-
-1. Pick the right books. This is one of my biggest pet peeves. If you want to
+1. *Pick the right books.* If you want to
    read for fun, don't pick a book you "should" read. Don't feel obligated to
-   pick up *War and Peace*, or anything by Charles Dickens. Read something that
+   pick up *War and Peace*. Read something that
    sounds fun. If you don't know what sounds fun, you'll have to try multiple
-   books. Stop reading it if it isn't good.
+   books. Stop reading the book if you don't like it. Life's too short to force yourself to read
+   bad books.
 
-2. Read aloud. The speed readers should be very made, because reading aloud is
-   ~2 times slower than reading for the average reader. But I think you should
-   take this advice both literally and figuratively. I've had a lot of fun
-   reading aloud to my wife during long road trips.
+2. *Read aloud.* While I've had a lot of fun
+   reading aloud to my wife during long road trips, I think the real advice
+   is to **read in your head as if you were reading aloud**.
+   Give the characters voices, accents, paces of speech. Listen
+   and hear your characters speak. Let them have an voice, beyond the text
+   in the page.
 
-   But the real hard of this advice: **read in your head as if you were reading
-   aloud**. Give your characters voices, accents, paces of speech. Listen
-   and hear your characters speak. Let them have an voice, *beyond the text
-   in the page*.
+   Speed readers may object, because reading aloud is
+   ~2 times slower. But I'm reading for fun, not because I'm
+   trying to finish the book.
 
 
-3. Act out the story. Take time to visualize the novel in your head. It's
-   easy to pass over a line like
-
-   > [descriptive line]
-
-   but I want to be in the book. I want to feel like I'm on the mountain peek.
-   I want to be bored, counting the same cieling tiles as the character.
-
-   Doing this requires extra effort, and *slows you down*, but makes reading
-   more fun.
-
-## Reading as Performance
-
-Points #2 and #3 are really about making reading a performance. Yes, books can
-be a vehicle to consume knowledge, but they are at their most *fun* when you are
-performing them.
-
-You are the actors, director, and cinematographer^[As you start thinking deeply
-about the book, I'd argue you also become the writer]. For some people, this
-could feel intimidating. Not everyone took their, and has an eye for character.
-
-But the best part about reading is that it all takes place in your head. You
-can let all your inhibitions down, and be as silly, dramatic, or cold as you
-want, because no one will know the difference.
-
-And this all flies in the face of the anti-subvocalization folks.
+3. *Act out the story*.
+   As the reader, you are the actors, director, and cintemtographer^[
+As you start thinking deeply about the book, I'd argue you also become the writer.].
+   Take time to visualize the novel in your head and be silly, dramatic, or cold.
