@@ -8,7 +8,7 @@ tags: []
 description:
 output:
   blogdown::html_page:
-    toc: true
+    toc: false
 ---
 
 ```{r setup, include=FALSE}
