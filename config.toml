@@ -31,7 +31,6 @@ projects = "/:sections/:slug/"
     url = "/index.xml"
 
 [params]
-    GithubEdit = "https://github.com/tmastny/website2/tree/master/content/"
     preserveTaxonomyNames = true
     lang = "en"
     paginate = 10
@@ -48,5 +47,3 @@ projects = "/:sections/:slug/"
     noClasses = true
     style = "monokai"
     tabWidth = 4
-# https://gohugo.io/getting-started/configuration-markup#highlight
-# todo: look at markdown render hooks to wrap code in hugo shortcode
