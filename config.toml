@@ -1,4 +1,4 @@
-baseurl = "https://timmastny.rbind.io/"
+baseurl = "https://timmastny.com/"
 theme = "hugo-xmin"
 languageCode = "en-US"
 title = "Tim Mastny"

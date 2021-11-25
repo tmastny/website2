@@ -1,3 +1,3 @@
 # website
 
-https://timmastny.rbind.io/
+https://timmastny.com/

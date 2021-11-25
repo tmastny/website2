@@ -53,7 +53,7 @@ a success with the max DC^[Difficulty class, or the minimum number a player must
 Like spell slots in DnD 5e, the points are a limited resource and have to last
 for multiple encounters.
 
-The [cost is a palpable source of tension in my games](https://timmastny.rbind.io/blog/how-game-mechanics-create-tension/).
+The [cost is a palpable source of tension in my games](/blog/how-game-mechanics-create-tension/).
 Players agonize over how much to spend. They worry about how many points to save
 for future encounters and about a random failure failure occurring
 despite their spend. This feature really augments the tension
