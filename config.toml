@@ -34,7 +34,7 @@ projects = "/:sections/:slug/"
     preserveTaxonomyNames = true
     lang = "en"
     paginate = 10
-    footer = "Tim Mastny | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/timmastny) | [LinkedIn](https://www.linkedin.com/in/timothy-mastny-7b438112a/)"
+    footer = "Tim Mastny | [Github](https://github.com/tmastny) | [Twitter](https://twitter.com/timmastny) | [LinkedIn](https://www.linkedin.com/in/timothy-mastny-7b438112a/) | [Email](mailto:tim@timmastny.com)"
 
 [markup]
   [markup.highlight]

@@ -23,7 +23,7 @@ Single-round, multiple person Prisoner's Dilemma.
 I want to maximize my payout. 
 
 
-If I choose `c` and everyone else choses `d` then I get `0`.
+If I choose `c` and everyone else chooses `d` then I get `0`.
 
 https://gist.github.com/tmastny/0ddde097f0ce6ce11a4cabefd45db349
 
