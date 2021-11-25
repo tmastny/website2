@@ -1,0 +1,103 @@
+---
+title: Prisoner's Dilemma
+author: ~
+date: '2021-11-24'
+slug: prisoners-dilemma
+categories: []
+tags: []
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+
+Single-round, multiple person Prisoner's Dilemma. 
+I want to maximize my payout. 
+
+
+If I choose `c` and everyone else choses `d` then I get `0`.
+
+https://gist.github.com/tmastny/0ddde097f0ce6ce11a4cabefd45db349
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+p1_payout <- function(p1, p2, payouts = c(3, 0, 5, 1)) {
+  case_when(
+    p1 == 'c' & p2 == 'c' ~ payouts[1],
+    p1 == 'c' & p2 == 'd' ~ payouts[2],
+    p1 == 'd' & p2 == 'c' ~ payouts[3],
+    p1 == 'd' & p2 == 'd' ~ payouts[4]
+  )
+}
+```
+
+
+```{r}
+p1_payout('d', 'd')
+p1_payout('d', c('d', 'd'))
+```
+
+```{r}
+opponent_choices <- tibble(cs = 0:19) %>%
+  rowwise() %>%
+  mutate(choices = list(c(rep('c', cs), rep('d', 19 - cs))))
+
+head(opponent_choices)
+```
+
+```{r}
+p1_outcomes <- opponent_choices %>%
+  ungroup() %>%
+  full_join(tibble(p1 = c('c', 'd')), by = character()) %>%
+  rowwise() %>%
+  mutate(payoff = sum(p1_payout(p1, choices)))
+
+p1_outcomes
+```
+
+```{r}
+p1_outcomes %>%
+  select(-choices) %>%
+  pivot_wider(names_from = p1, values_from = payoff)
+```
+
+
+```{r}
+p1_outcomes %>%
+  ggplot() + 
+  geom_line(aes(cs, payoff, color = p1))
+```
+
+Payout scheme where the optimal solution is where individuals
+flip a coin to decide if they should defect.
+
+```{r}
+p1_outcomes %>%
+  mutate(payoff = sum(p1_payout(p1, choices, c(3, 0, 50, 0.01)))) %>%
+  select(-choices) %>%
+  pivot_wider(names_from = p1, values_from = payoff)
+```
+
+Payout scheme where the reward for cooperation is greater
+than the temptation to defect:
+
+```{r}
+p1_outcomes %>%
+  mutate(payoff = sum(p1_payout(p1, choices, c(1000, 0, 100, 100)))) %>%
+  select(-choices) %>%
+  pivot_wider(names_from = p1, values_from = payoff)
+
+```
+
