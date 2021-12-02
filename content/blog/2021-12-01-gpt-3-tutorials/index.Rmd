@@ -1,0 +1,148 @@
+---
+title: Writing R tutorials with GPT-3
+author: ~
+date: '2021-12-01'
+slug: gpt-3-tutorials
+categories: []
+tags: []
+description: How to write R programming, dplyr, tidyr, Python, and pandas tutorials using GPT-3.
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+Inspired by [Gwern's GPT-3 generated fiction](https://www.gwern.net/GPT-3)
+and [Github Copilot](https://copilot.github.com/),
+I wanted to see if GPT-3 could write R tutorials.
+I created an accout on the [Open AI GPT-3 Playground](https://gpt3demo.com/apps/openai-gpt-3-playground)
+and started experimenting.
+
+Getting a good response is very sensitive to the [prompt](https://www.gwern.net/GPT-3#prompts-as-programming).
+Asking for a tutorial on dplyr in a general way produced
+something that was recognizable as R but incoherent.
+Adding "hadley" (as in tidyverse creator [Hadley Wickham](http://hadley.nz/))
+to the prompt completely transformed the answer.
+It wrote more narrative, added explanations of the functions,
+and actually used the dplyr package.
+I find it fasicnating that GPT-3 learned to associate
+Hadley Wickham with quality R content.
+
+Below are some of the responses, with minor edits to formatting.
+
+# dplyr
+
+GPT-3 starts okay, but loses the thread after it reads the csv.
+It doesn't even use dplyr!
+The entire `cols` section is strange.
+I think it's trying to mimic something like `cols <- names(data)`.
+And the comments don't make any sense.
+
+I do think `favorite_color` at the end is very cute.
+
+### Prompt
+
+Write a blog post about how clean a dataset with R:
+
+Name: How to use dplyr to clean data in R
+
+tidyverse, dplyr, library, tidyr
+
+Blog post:
+
+### Response
+
+The tidyverse is a collection of packages that are designed to work together. The package tidyr helps you clean data in R, and the dplyr library provides tools for manipulating datasets with ease.
+
+To use these two packages together, first load them into your session:
+
+```r
+library(tidyverse)
+
+library(dplyr)
+```
+
+Next, create some fake data about people’s names and their favorite colors:
+
+```r
+data <- read.csv("data/people")
+
+names(data) <- c('name', 'color')
+
+cols = list() #create a new column for each variable in the dataset, and then add it to cols with names matching those of the variables in your original dataframe. This way you can use these columns as input into dplyr functions like mutate()
+
+cols[[1]] <- 'name'
+
+cols[[2]] <- 'color'
+
+data$favorite_color = data$color #set the color column to be equal to the original variable in your dataset. This is a good idea because you don’t want it changing later on when you use mutate() or other dplyr functions that change columns. You can also do this with other columns, like name
+```
+
+# dplyr - hadley
+
+This is where the magic happens. By adding hadley to the
+last prompt, GPT-3 writes a mostly coherent tutorial with executable code.
+Although the response thinks `select` operates on rows, not columns,
+it uses the dplyr functions in sensible ways.
+The commentary on `filter` is also interesting.
+It mistakes the `&` (and) for `|` (or), but is otherwise accurate.
+
+### Prompt
+
+Write a blog post about how clean a dataset with R:
+
+Name: How to use dplyr to clean data in R
+
+tidyverse, dplyr, library, tidyr, hadley
+
+Blog post:
+
+### Response
+
+The dplyr package is a powerful tool for manipulating data in R. It provides many functions that are designed to work together, and can be used with other packages like tidyr or ggplot2. One of the most important features of this library is its ability to filter out unwanted rows from your dataset using mutate(), select() and filter().
+
+In order to demonstrate how these three functions work together, we will use a dataset from the tidyverse package. The data is about how many people have died in car accidents each year since 1980, and it includes columns for the number of deaths per 100 million miles driven (per capita).
+
+First we load up our library:
+
+```r
+library(tidyverse)
+```
+
+Then we read in our data into an R object called "data":
+
+```r
+data <- read_csv("data/car_deaths.csv")
+```
+
+Next we use mutate() to create a new column called "per capita" which is calculated by dividing the number of deaths per 100 million miles driven (per capita) by 1000:
+
+```r
+data <- data %>%
+
+mutate(percapa = deathrate / 1000,
+
+year = as.numeric(as.character(year)))
+```
+
+Now we can use select() to filter out any rows where the per capita is less than 0.01:
+
+```r
+data <- data %>%
+
+select(year, percapa)
+```
+
+Finally, we can use filter() to remove any rows that are missing a value for either year or deathrate (per capita):
+
+```r
+data <- data %>%  filter(!is.na(year) & !is.na(percapa))
+```
+
+Now we have a dataset with only the rows that meet our criteria!

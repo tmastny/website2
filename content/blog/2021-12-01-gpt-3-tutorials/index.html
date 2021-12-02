@@ -1,0 +1,119 @@
+---
+title: Writing R tutorials with GPT-3
+author: ~
+date: '2021-12-01'
+slug: gpt-3-tutorials
+categories: []
+tags: []
+description: How to write R programming, dplyr, tidyr, Python, and pandas tutorials using GPT-3.
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#dplyr">dplyr</a>
+<ul>
+<li><a href="#prompt">Prompt</a></li>
+<li><a href="#response">Response</a></li>
+</ul></li>
+<li><a href="#dplyr---hadley">dplyr - hadley</a>
+<ul>
+<li><a href="#prompt-1">Prompt</a></li>
+<li><a href="#response-1">Response</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>Inspired by <a href="https://www.gwern.net/GPT-3">Gwern’s GPT-3 generated fiction</a>
+and <a href="https://copilot.github.com/">Github Copilot</a>,
+I wanted to see if GPT-3 could write R tutorials.
+I created an accout on the <a href="https://gpt3demo.com/apps/openai-gpt-3-playground">Open AI GPT-3 Playground</a>
+and started experimenting.</p>
+<p>Getting a good response is very sensitive to the <a href="https://www.gwern.net/GPT-3#prompts-as-programming">prompt</a>.
+Asking for a tutorial on dplyr in a general way produced
+something that was recognizable as R but incoherent.
+Adding “hadley” (as in tidyverse creator <a href="http://hadley.nz/">Hadley Wickham</a>)
+to the prompt completely transformed the answer.
+It wrote more narrative, added explanations of the functions,
+and actually used the dplyr package.
+I find it fasicnating that GPT-3 learned to associate
+Hadley Wickham with quality R content.</p>
+<p>Below are some of the responses, with minor edits to formatting.</p>
+<div id="dplyr" class="section level1">
+<h1>dplyr</h1>
+<p>GPT-3 starts okay, but loses the thread after it reads the csv.
+It doesn’t even use dplyr!
+The entire <code>cols</code> section is strange.
+I think it’s trying to mimic something like <code>cols &lt;- names(data)</code>.
+And the comments don’t make any sense.</p>
+<p>I do think <code>favorite_color</code> at the end is very cute.</p>
+<div id="prompt" class="section level3">
+<h3>Prompt</h3>
+<p>Write a blog post about how clean a dataset with R:</p>
+<p>Name: How to use dplyr to clean data in R</p>
+<p>tidyverse, dplyr, library, tidyr</p>
+<p>Blog post:</p>
+</div>
+<div id="response" class="section level3">
+<h3>Response</h3>
+<p>The tidyverse is a collection of packages that are designed to work together. The package tidyr helps you clean data in R, and the dplyr library provides tools for manipulating datasets with ease.</p>
+<p>To use these two packages together, first load them into your session:</p>
+<pre class="r"><code>library(tidyverse)
+
+library(dplyr)</code></pre>
+<p>Next, create some fake data about people’s names and their favorite colors:</p>
+<pre class="r"><code>data &lt;- read.csv(&quot;data/people&quot;)
+
+names(data) &lt;- c(&#39;name&#39;, &#39;color&#39;)
+
+cols = list() #create a new column for each variable in the dataset, and then add it to cols with names matching those of the variables in your original dataframe. This way you can use these columns as input into dplyr functions like mutate()
+
+cols[[1]] &lt;- &#39;name&#39;
+
+cols[[2]] &lt;- &#39;color&#39;
+
+data$favorite_color = data$color #set the color column to be equal to the original variable in your dataset. This is a good idea because you don’t want it changing later on when you use mutate() or other dplyr functions that change columns. You can also do this with other columns, like name</code></pre>
+</div>
+</div>
+<div id="dplyr---hadley" class="section level1">
+<h1>dplyr - hadley</h1>
+<p>This is where the magic happens. By adding hadley to the
+last prompt, GPT-3 writes a mostly coherent tutorial with executable code.
+Although the response thinks <code>select</code> operates on rows, not columns,
+it uses the dplyr functions in sensible ways.
+The commentary on <code>filter</code> is also interesting.
+It mistakes the <code>&amp;</code> (and) for <code>|</code> (or), but is otherwise accurate.</p>
+<div id="prompt-1" class="section level3">
+<h3>Prompt</h3>
+<p>Write a blog post about how clean a dataset with R:</p>
+<p>Name: How to use dplyr to clean data in R</p>
+<p>tidyverse, dplyr, library, tidyr, hadley</p>
+<p>Blog post:</p>
+</div>
+<div id="response-1" class="section level3">
+<h3>Response</h3>
+<p>The dplyr package is a powerful tool for manipulating data in R. It provides many functions that are designed to work together, and can be used with other packages like tidyr or ggplot2. One of the most important features of this library is its ability to filter out unwanted rows from your dataset using mutate(), select() and filter().</p>
+<p>In order to demonstrate how these three functions work together, we will use a dataset from the tidyverse package. The data is about how many people have died in car accidents each year since 1980, and it includes columns for the number of deaths per 100 million miles driven (per capita).</p>
+<p>First we load up our library:</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<p>Then we read in our data into an R object called “data”:</p>
+<pre class="r"><code>data &lt;- read_csv(&quot;data/car_deaths.csv&quot;)</code></pre>
+<p>Next we use mutate() to create a new column called “per capita” which is calculated by dividing the number of deaths per 100 million miles driven (per capita) by 1000:</p>
+<pre class="r"><code>data &lt;- data %&gt;%
+
+mutate(percapa = deathrate / 1000,
+
+year = as.numeric(as.character(year)))</code></pre>
+<p>Now we can use select() to filter out any rows where the per capita is less than 0.01:</p>
+<pre class="r"><code>data &lt;- data %&gt;%
+
+select(year, percapa)</code></pre>
+<p>Finally, we can use filter() to remove any rows that are missing a value for either year or deathrate (per capita):</p>
+<pre class="r"><code>data &lt;- data %&gt;%  filter(!is.na(year) &amp; !is.na(percapa))</code></pre>
+<p>Now we have a dataset with only the rows that meet our criteria!</p>
+</div>
+</div>
