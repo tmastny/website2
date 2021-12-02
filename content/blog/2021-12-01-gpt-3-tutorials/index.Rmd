@@ -6,7 +6,6 @@ slug: gpt-3-tutorials
 categories: []
 tags: []
 description: How to write R programming, dplyr, tidyr, Python, and pandas tutorials using GPT-3.
-draft: true
 output:
   blogdown::html_page:
     toc: true
@@ -40,6 +39,7 @@ Below are some of the responses, with minor edits to formatting.
 # dplyr
 
 GPT-3 starts okay, but loses the thread after it reads the csv.
+It doesn't even use dplyr!
 The entire `cols` section is strange.
 I think it's trying to mimic something like `cols <- names(data)`.
 And the comments don't make any sense.
