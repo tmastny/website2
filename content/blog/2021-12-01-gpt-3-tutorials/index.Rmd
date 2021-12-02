@@ -25,7 +25,7 @@ I created an accout on the [Open AI GPT-3 Playground](https://gpt3demo.com/apps/
 and started experimenting.
 
 The quality of the response depends heavily on the [prompt](https://www.gwern.net/GPT-3#prompts-as-programming).
-Asking for a tutorial on dplyr with expected keywords produces
+Asking for a tutorial on dplyr with expected keywords produced
 something recognizable as R but incoherent.
 Adding "hadley" (as in tidyverse creator [Hadley Wickham](http://hadley.nz/))
 to the prompt completely transformed the answer.
