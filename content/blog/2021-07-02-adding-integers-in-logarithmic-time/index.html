@@ -130,7 +130,7 @@ This algorithm is not feasible for even relatively small <code>n</code>.</p>
 <h2>Real-world Implementation</h2>
 <p>Because of the cost and physical space, carry-lookahead adders
 are not implemented for standard 32-bit integers.</p>
-<p>The standard algorithm would require gates proportion to 32, while
+<p>The standard algorithm would require around 32 gates, while
 carry-lookahead would require 2^32 = 4,294,967,296.</p>
 <p>Instead, carry-lookahead adders are implemented using 4-bit sections
 and chained together. The time complexity is still <code>O(n)</code>,
