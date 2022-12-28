@@ -1,0 +1,91 @@
+---
+title: Rmeotely connecting to Windows 10 with an iPad
+author: ~
+date: '2022-12-28'
+slug: remote-connect-windows10-ipad
+categories: []
+tags: []
+description: How to remotely connect to Windows 10 with an iPad
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+<div id="TOC">
+<ul>
+<li><a href="#windows-setup">Windows Setup</a>
+<ul>
+<li><a href="#wsl">WSL</a></li>
+</ul></li>
+<li><a href="#ipad">iPad</a></li>
+</ul>
+</div>
+
+<p>I recently got an iPad and I’d like to use it to write some code.
+I found the app <a href="https://github.com/holzschu/a-shell">a-shell</a>
+was the best way to get code running locally on my iPad. The terminal
+app provides custom builds of Python, C, Vim, git, ssh: most of the things
+you need to get started. But I was still frustrated by the limitations.
+What I really wanted was VSCode and the ability to install and build
+any software.</p>
+<p>My plan was to use my Windows 10 PC as a server that hosted VSCode, and
+connect to that server with the iPad so I could use VSCode in the browser.
+I found this <a href="https://twitter.com/iximiuz/status/1587451857143828481?s=20&amp;t=dmvAeCnrovMO2NrpyI3WLg">tweet</a>
+to be a nice overview of ssh as I was trying to set
+everything up.</p>
+<div id="windows-setup" class="section level2">
+<h2>Windows Setup</h2>
+<p>First, I installed Windows Subsystem for Linux (WSL) 2:</p>
+<ul>
+<li>run powershell as administrator</li>
+<li><code>wsl --install</code></li>
+</ul>
+<p>Next, I need to setup my PC as a server. Luckily, Windows 10 now comes
+with the ability to install OpenSSH directly. I found this
+<a href="https://www.hanselman.com/blog/how-to-ssh-into-a-windows-10-machine-from-linux-or-windows-or-anywhere">tutorial</a> to work.</p>
+<p>I also found that setting up the private keys was a little tricky.
+You’ll have to edit <code>ssh_config</code> to find the location of
+<code>ssh\administrators_authorized_keys</code>.
+Here are two resources I found useful:</p>
+<ul>
+<li><a href="https://serverfault.com/questions/1032713/public-key-authentication-not-work-on-windows-10-professional" class="uri">https://serverfault.com/questions/1032713/public-key-authentication-not-work-on-windows-10-professional</a></li>
+<li><a href="https://jmmv.dev/2020/10/windows-ssh-access.html" class="uri">https://jmmv.dev/2020/10/windows-ssh-access.html</a></li>
+</ul>
+<div id="wsl" class="section level3">
+<h3>WSL</h3>
+<p>On WSL, you’ll now need to install <a href="https://coder.com/docs/code-server/latest/install#installsh">code-server</a>
+to host VSCode.</p>
+<p>The major limitation with WSL is that it doesn’t have <code>systemctl</code>, or at least
+not in the same way as normal Ubuntu. There are ways to get around
+this limitation, but I ended up ignoring it and deploying
+the service manually each time I ssh’d into the machine. I’ll
+explain more in the iPad section.</p>
+<p>Lastly, before I jump to the iPad I recommend installing
+<a href="https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-git">Git on Windows for WSL</a> if you haven’t already.
+This is not strictly needed to ssh onto the machine, but you’ll
+want it setup so you can use git as you would normally.</p>
+<p>It’s also a good time to set it up with a credential store:</p>
+<pre><code>git config --global credential.helper &quot;/mnt/c/Program\ Files/Git/mingw64/libexec/git-core/git-credential-store.exe&quot;</code></pre>
+</div>
+</div>
+<div id="ipad" class="section level2">
+<h2>iPad</h2>
+<p>Next, you’ll need an app to ssh to the machine. You can use a-Shell
+as I recommended before, but my favorite app is Terminus.</p>
+<p>Terminus is the most useful app for ssh, because it allows you to turn
+on location services. This seems strange at first, but by
+turning location services on, it prevents the ssh connection from ending
+while you switch between apps.</p>
+<p>Next, inside Terminus, you’ll need to generate connect to your server
+(<code>whoami</code> and <code>ipconfig</code> on the Windows machine will help you find
+your IP address) and you’ll need to setup your ssh key.</p>
+<p>If the connection was successful, you should see the bash shell
+(or powershell if you didn’t <a href="https://www.hanselman.com/blog/how-to-ssh-into-a-windows-10-machine-from-linux-or-windows-or-anywhere">customize</a> the default shell. If in powershell,
+just run `bash.exe).</p>
+<p>From there, run <code>code-server</code> to deploy your VSCode server.</p>
+<p>In Terminus, setup portforwarding to 8080. That way when you visit <code>http://localhost:8080</code> in Safari, you’ll be connected to VSCode!
+In Safari, you can also click on Share, Add to Homescreen to create a
+VSCode app.</p>
+</div>
