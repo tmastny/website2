@@ -12,15 +12,18 @@ output:
     toc: true 
 ---
 
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a></li>
-<li><a href="#what-i-learned-about-r-packages">What I learned about R Packages</a><ul>
+<li><a href="#what-i-learned-about-r-packages">What I learned about R Packages</a>
+<ul>
 <li><a href="#s3-tibble-and-pillar">S3, Tibble, and Pillar</a></li>
 <li><a href="#non-standard-evaluation">Non-Standard Evaluation</a></li>
 </ul></li>
-<li><a href="#what-i-learned-about-machine-learning">What I learned about Machine Learning</a><ul>
+<li><a href="#what-i-learned-about-machine-learning">What I learned about Machine Learning</a>
+<ul>
 <li><a href="#ensembles">Ensembles</a></li>
 <li><a href="#keras">Keras</a></li>
 </ul></li>
@@ -48,7 +51,8 @@ output:
 </div>
 <div id="non-standard-evaluation" class="section level3">
 <h3>Non-Standard Evaluation</h3>
-<p>Hadley has been talking a lot recently about NSE, and there is a good <a href="http://dplyr.tidyverse.org/articles/programming.html">tutorial</a> on the <code>dplyr</code> website. I ended up using dynamic NSE in a <a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L81">few</a> <a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L69">different</a> places. In the latter instance,</p>
+<p>Hadley has been talking a lot recently about NSE, and there is a good <a href="http://dplyr.tidyverse.org/articles/programming.html">tutorial</a> on the <code>dplyr</code> website.
+I ended up using dynamic NSE in a <a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L81">few</a> <a href="https://github.com/tmastny/leadr/blob/master/R/model_tools.R#L69">different</a> places. In the latter instance,</p>
 <pre class="r"><code>filtered &lt;- model$pred %&gt;%
   dplyr::filter_(paste(column_names, &quot;==&quot;, shQuote(column_values), collapse = &quot;&amp;&quot;))</code></pre>
 <p>I needed to use the deprecated underscored version that operates on strings, because I was filtering on an unknown number of columns (the <code>column_names</code> varies on the model). Therefore, I needed to use <code>paste</code>’s collapse functionality to programmatically concatenate as necessary. I wasn’t able to find any SO references to similiar situations, and haven’t come up with a NSE alternative.</p>
@@ -75,6 +79,10 @@ output:
 <div id="conclusions" class="section level2">
 <h2>Conclusions</h2>
 <p>I’m definitely aware of the limitations of complicated modeling:</p>
-{{% tweet "959953431510175744" %}}
+<blockquote>
+<p>The panelists value string handling, data munging, and adding/dividing but think that complicated modeling is given too much focus relative to how important it is in the real world. <a href="https://twitter.com/hashtag/rstudioconf?src=hash&amp;ref_src=twsrc%5Etfw">#rstudioconf</a> <a href="pic.twitter.com/l3FdwnFKyZ">pic.twitter.com/l3FdwnFKyZ</a><br />
+<br />
+— Julia Silge (<span class="citation">@juliasilge</span>) <a href="https://twitter.com/juliasilge/status/959953431510175744?ref_src=twsrc%5Etfw">February 4, 2018</a></p>
+</blockquote>
 <p>But I still think a Kaggle contest is a great opporunity to get some hands-on experience with data and to find some motivation for R packages.</p>
 </div>
