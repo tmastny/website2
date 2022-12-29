@@ -1,5 +1,5 @@
 ---
-title: Rmeotely connecting to Windows 10 with an iPad
+title: Remotely connecting to Windows 10 with an iPad
 author: ~
 date: '2022-12-28'
 slug: remote-connect-windows10-ipad
@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 ```
 
 I recently got an iPad and I'd like to use it to write some code.
-I found the app [a-shell](https://github.com/holzschu/a-shell) 
+I found the app [a-Shell](https://github.com/holzschu/a-shell) 
 was the best way to get code running locally on my iPad. The terminal
 app provides custom builds of Python, C, Vim, git, ssh: most of the things
 you need to get started. But I was still frustrated by the limitations.
@@ -40,8 +40,8 @@ First, I installed Windows Subsystem for Linux (WSL) 2:
 * `wsl --install`
 
 Next, I need to setup my PC as a server. Luckily, Windows 10 now comes
-with the ability to install OpenSSH directly. I found this 
-[tutorial](https://www.hanselman.com/blog/how-to-ssh-into-a-windows-10-machine-from-linux-or-windows-or-anywhere) to work.
+with the ability to install OpenSSH directly. This 
+[tutorial](https://www.hanselman.com/blog/how-to-ssh-into-a-windows-10-machine-from-linux-or-windows-or-anywhere) got me most of the way there.
 
 I also found that setting up the private keys was a little tricky. 
 You'll have to edit `ssh_config` to find the location of
@@ -61,7 +61,7 @@ this limitation, but I ended up ignoring it and deploying
 the service manually each time I ssh'd into the machine. I'll
 explain more in the iPad section.
 
-Lastly, before I jump to the iPad I recommend installing 
+Lastly, I recommend installing 
 [Git on Windows for WSL](https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-git) if you haven't already.
 This is not strictly needed to ssh onto the machine, but you'll
 want it setup so you can use git as you would normally. 
@@ -81,7 +81,7 @@ on location services. This seems strange at first, but by
 turning location services on, it prevents the ssh connection from ending
 while you switch between apps. 
 
-Next, inside Terminus, you'll need to generate connect to your server 
+Next, inside Terminus, you'll need to connect to your server 
 (`whoami` and `ipconfig` on the Windows machine will help you find
 your IP address) and you'll need to setup your ssh key.
 
@@ -89,7 +89,10 @@ If the connection was successful, you should see the bash shell
 (or powershell if you didn't [customize](https://www.hanselman.com/blog/how-to-ssh-into-a-windows-10-machine-from-linux-or-windows-or-anywhere) the default shell. If in powershell,
 just run `bash.exe).
 
-From there, run `code-server` to deploy your VSCode server.
+From there, if code-server is installed correctly, all you need to do is type in `code-server` to deploy your VSCode server. Since we didn't
+setup a service manager, you'll need to run this each time you connect
+via ssh. It didn't bother me too much so I left it as is, but there 
+are ways to get around this. For example: https://stackoverflow.com/questions/55579342/why-systemd-is-disabled-in-wsl
 
 In Terminus, setup portforwarding to 8080. That way when you visit `http://localhost:8080` in Safari, you'll be connected to VSCode!
 In Safari, you can also click on Share, Add to Homescreen to create a
