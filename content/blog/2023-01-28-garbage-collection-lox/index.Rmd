@@ -13,22 +13,22 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE, warning = FALSE, message = FALSE,
+  warning = FALSE, message = FALSE,
   results = "show", cache = FALSE, autodep = FALSE, error = TRUE
 )
 ```
 
 [Crafting Interpreters](https://craftinginterpreters.com/) is an awesome book by
-[Robert Nystrom](http://journal.stuffwithstuff.com/) about interpeters, compilers, and
+[Robert Nystrom](http://journal.stuffwithstuff.com/) about interpreters, compilers, and
 programming languages. I love this book, because it teaches you how to build *2*
-interpeters line-by-line: a tree-walking interpeter in Java and then a bytecode virtual machine in C.
+interpreters line-by-line: a tree-walking interpreter in Java and then a bytecode virtual machine in C.
 
 In [Chapter 26](https://craftinginterpreters.com/garbage-collection.html),
 he builds a mark-and-sweep garbage collector, and does a fantastic
-job explaining the algorithm with detailed diagrams and illastrations.
+job explaining the algorithm with detailed diagrams and illustrations.
 
 But I also wanted to understand how our *implementation* of mark-and-sweep worked,
-not just the algorithm. And there are some subtle naunces to our implementation.
+not just the algorithm. And there are some subtle nuances to our implementation.
 So in this post, I'm going to clarify how the garbage collector works as implemented,
 by examining a small toy-example he gives in the book and by going through a
 slightly-larger program that actually collects some garbage.
@@ -46,13 +46,16 @@ is no variable referring to that value when the garbage collection runs on the 3
 
 It's true in an abstract sense that `"first value"` could be collected without
 causing a problem, but the implementation works different^[Other [folks](https://github.com/munificent/craftinginterpreters/issues/1068) were also confused by this example, since it differs from the actual implementation.]:
+
 1. `"first value"` is never collected:
    - the compiler creates a top-level function (referred to as `<script>`) that saves
      `"first value"` in the constants table. The compiler functions are explicitly marked
      in `markCompilerRoots`, so the constants won't be collected.
-  - After compilation, the function is converted to a closure and pushed on the
-    virtual machine's stack. All stack variables are also marked, so `"first value"` will _really_
-    never be collected.
+   - After compilation, the function is converted to a closure and pushed on the
+     virtual machine's stack. All stack variables are also marked, so `"first value"` will _really_
+     never be collected.
+
+
 2. garbage collection runs on object allocation, not between statements:
    - garbage collection is called in `reallocate`, either on every allocation if `DEBUG_STRESS_GC`
      is set, or when `vm.bytesAllocated > vm.nextGC`.
@@ -98,6 +101,7 @@ until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`.
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
         ObjClosure* closure = newClosure(function);
         push(OBJ_VAL(closure));
+        ...
 ```
 
 After `makeCounter(10)` is assigned to `c`, the previous closure is
@@ -115,7 +119,7 @@ statement is parsed and executed. Luckily, we can refer to the bytecode logging:
 0039    | OP_POP
 ```
 
-`OP_CALL` calls `makeCounter` which, as I noted above, will call `OP_CLOSURE`
+`OP_CALL` will run the `makeCounter` bytecode which will call `OP_CLOSURE`
 and allocate an object. This happens _before_ we assign the new closure to `c`.
 So deep in `markRoots` when we call `markTable(&vm.globals)`, `c` is still
 associated with the closure returned by `makeCounter(10)`. So both are marked
@@ -136,7 +140,7 @@ the closure (in this case, an `ObjUpvalue` wrapping the `Value` 0).
 > Note in `makeCounter`, the starting value of the counter
 can be set with `init`. This is a helpful way to see why
 you need to allocate new closures on each call, even though the
-underlying function `count` is the same: each one "closes" around
+underlying function `counter` is the same: each one "closes" around
 a different value.
 
 It was really fun to work through Lox's mark-and-sweep

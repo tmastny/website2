@@ -14,14 +14,14 @@ output:
 
 
 <p><a href="https://craftinginterpreters.com/">Crafting Interpreters</a> is an awesome book by
-<a href="http://journal.stuffwithstuff.com/">Robert Nystrom</a> about interpeters, compilers, and
+<a href="http://journal.stuffwithstuff.com/">Robert Nystrom</a> about interpreters, compilers, and
 programming languages. I love this book, because it teaches you how to build <em>2</em>
-interpeters line-by-line: a tree-walking interpeter in Java and then a bytecode virtual machine in C.</p>
+interpreters line-by-line: a tree-walking interpreter in Java and then a bytecode virtual machine in C.</p>
 <p>In <a href="https://craftinginterpreters.com/garbage-collection.html">Chapter 26</a>,
 he builds a mark-and-sweep garbage collector, and does a fantastic
-job explaining the algorithm with detailed diagrams and illastrations.</p>
+job explaining the algorithm with detailed diagrams and illustrations.</p>
 <p>But I also wanted to understand how our <em>implementation</em> of mark-and-sweep worked,
-not just the algorithm. And there are some subtle naunces to our implementation.
+not just the algorithm. And there are some subtle nuances to our implementation.
 So in this post, I’m going to clarify how the garbage collector works as implemented,
 by examining a small toy-example he gives in the book and by going through a
 slightly-larger program that actually collects some garbage.</p>
@@ -34,17 +34,23 @@ print a;</code></pre>
 is no variable referring to that value when the garbage collection runs on the 3rd line
 (and the string isn’t on the virtual machine’s stack.)</p>
 <p>It’s true in an abstract sense that <code>"first value"</code> could be collected without
-causing a problem, but the implementation works different<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:
-1. <code>"first value"</code> is never collected:
-- the compiler creates a top-level function (referred to as <code>&lt;script&gt;</code>) that saves
+causing a problem, but the implementation works different<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:</p>
+<ol style="list-style-type: decimal">
+<li><code>"first value"</code> is never collected:
+<ul>
+<li>the compiler creates a top-level function (referred to as <code>&lt;script&gt;</code>) that saves
 <code>"first value"</code> in the constants table. The compiler functions are explicitly marked
-in <code>markCompilerRoots</code>, so the constants won’t be collected.
-- After compilation, the function is converted to a closure and pushed on the
+in <code>markCompilerRoots</code>, so the constants won’t be collected.</li>
+<li>After compilation, the function is converted to a closure and pushed on the
 virtual machine’s stack. All stack variables are also marked, so <code>"first value"</code> will <em>really</em>
-never be collected.
-2. garbage collection runs on object allocation, not between statements:
-- garbage collection is called in <code>reallocate</code>, either on every allocation if <code>DEBUG_STRESS_GC</code>
-is set, or when <code>vm.bytesAllocated &gt; vm.nextGC</code>.</p>
+never be collected.</li>
+</ul></li>
+<li>garbage collection runs on object allocation, not between statements:
+<ul>
+<li>garbage collection is called in <code>reallocate</code>, either on every allocation if <code>DEBUG_STRESS_GC</code>
+is set, or when <code>vm.bytesAllocated &gt; vm.nextGC</code>.</li>
+</ul></li>
+</ol>
 <p>Here’s a more direct example of Lox garbage collection:</p>
 <pre class="js"><code>fun makeCounter(init) {
   var count = init;
@@ -78,7 +84,8 @@ until it is assigned to the variable <code>c</code> via <code>OP_SET_GLOBAL</cod
 <pre class="c"><code>      case OP_CLOSURE: {
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
         ObjClosure* closure = newClosure(function);
-        push(OBJ_VAL(closure));</code></pre>
+        push(OBJ_VAL(closure));
+        ...</code></pre>
 <p>After <code>makeCounter(10)</code> is assigned to <code>c</code>, the previous closure is
 “dangling” (no object in Lox depends on it). But it won’t be collected
 until the next allocation.</p>
@@ -90,7 +97,7 @@ statement is parsed and executed. Luckily, we can refer to the bytecode logging:
 0035    | OP_CALL             1
 0037    | OP_SET_GLOBAL      10 &#39;c&#39;
 0039    | OP_POP</code></pre>
-<p><code>OP_CALL</code> calls <code>makeCounter</code> which, as I noted above, will call <code>OP_CLOSURE</code>
+<p><code>OP_CALL</code> will run the <code>makeCounter</code> bytecode which will call <code>OP_CLOSURE</code>
 and allocate an object. This happens <em>before</em> we assign the new closure to <code>c</code>.
 So deep in <code>markRoots</code> when we call <code>markTable(&amp;vm.globals)</code>, <code>c</code> is still
 associated with the closure returned by <code>makeCounter(10)</code>. So both are marked
@@ -108,7 +115,7 @@ the closure (in this case, an <code>ObjUpvalue</code> wrapping the <code>Value</
 <p>Note in <code>makeCounter</code>, the starting value of the counter
 can be set with <code>init</code>. This is a helpful way to see why
 you need to allocate new closures on each call, even though the
-underlying function <code>count</code> is the same: each one “closes” around
+underlying function <code>counter</code> is the same: each one “closes” around
 a different value.</p>
 </blockquote>
 <p>It was really fun to work through Lox’s mark-and-sweep
