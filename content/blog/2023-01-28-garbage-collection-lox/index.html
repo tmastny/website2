@@ -32,9 +32,9 @@ a = &quot;updated&quot;;
 print a;</code></pre>
 <p>Robert explains that the string <code>"first value"</code> could be collected because there
 is no variable referring to that value when the garbage collection runs on the 3rd line
-(and the string isn’t on the virtual machine’s stack.)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+(and the string isn’t on the virtual machine’s stack.)</p>
 <p>It’s true in an abstract sense that <code>"first value"</code> could be collected without
-causing a problem, but the implementation works different:
+causing a problem, but the implementation works different<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:
 1. <code>"first value"</code> is never collected:
 - the compiler creates a top-level function (referred to as <code>&lt;script&gt;</code>) that saves
 <code>"first value"</code> in the constants table. The compiler functions are explicitly marked
@@ -79,13 +79,6 @@ until it is assigned to the variable <code>c</code> via <code>OP_SET_GLOBAL</cod
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
         ObjClosure* closure = newClosure(function);
         push(OBJ_VAL(closure));</code></pre>
-<blockquote>
-<p>Note in <code>makeCounter</code>, the starting value of the counter
-can be set with <code>init</code>. This is a helpful way to see why
-you need to allocate new closures on each call, even though the
-underlying function <code>count</code> is the same: each one “closes” around
-a different value.</p>
-</blockquote>
 <p>After <code>makeCounter(10)</code> is assigned to <code>c</code>, the previous closure is
 “dangling” (no object in Lox depends on it). But it won’t be collected
 until the next allocation.</p>
@@ -111,9 +104,19 @@ And that’s what we see in the gc logs:</p>
 <p><code>type 0</code> is the 0th <code>ObjType enum</code> which refers to closures.
 We also need an object of type 4, which is the <code>upValue</code> used by
 the closure (in this case, an <code>ObjUpvalue</code> wrapping the <code>Value</code> 0).</p>
+<blockquote>
+<p>Note in <code>makeCounter</code>, the starting value of the counter
+can be set with <code>init</code>. This is a helpful way to see why
+you need to allocate new closures on each call, even though the
+underlying function <code>count</code> is the same: each one “closes” around
+a different value.</p>
+</blockquote>
+<p>It was really fun to work through Lox’s mark-and-sweep
+implementation in detail. I think I walked away with a better
+understanding of compilers and garbage collection.</p>
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>Other <a href="https://github.com/munificent/craftinginterpreters/issues/1068">folks</a> were also confused by this example.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>Other <a href="https://github.com/munificent/craftinginterpreters/issues/1068">folks</a> were also confused by this example, since it differs from the actual implementation.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

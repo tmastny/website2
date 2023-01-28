@@ -42,10 +42,10 @@ print a;
 ```
 Robert explains that the string `"first value"` could be collected because there
 is no variable referring to that value when the garbage collection runs on the 3rd line
-(and the string isn't on the virtual machine's stack.)^[Other [folks](https://github.com/munificent/craftinginterpreters/issues/1068) were also confused by this example.]
+(and the string isn't on the virtual machine's stack.)
 
 It's true in an abstract sense that `"first value"` could be collected without
-causing a problem, but the implementation works different:
+causing a problem, but the implementation works different^[Other [folks](https://github.com/munificent/craftinginterpreters/issues/1068) were also confused by this example, since it differs from the actual implementation.]:
 1. `"first value"` is never collected:
    - the compiler creates a top-level function (referred to as `<script>`) that saves
      `"first value"` in the constants table. The compiler functions are explicitly marked
@@ -100,12 +100,6 @@ until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`.
         push(OBJ_VAL(closure));
 ```
 
-> Note in `makeCounter`, the starting value of the counter
-can be set with `init`. This is a helpful way to see why
-you need to allocate new closures on each call, even though the
-underlying function `count` is the same: each one "closes" around
-a different value.
-
 After `makeCounter(10)` is assigned to `c`, the previous closure is
 "dangling" (no object in Lox depends on it). But it won't be collected
 until the next allocation.
@@ -138,3 +132,13 @@ And that's what we see in the gc logs:
 `type 0` is the 0th `ObjType enum` which refers to closures.
 We also need an object of type 4, which is the `upValue` used by
 the closure (in this case, an `ObjUpvalue` wrapping the `Value` 0).
+
+> Note in `makeCounter`, the starting value of the counter
+can be set with `init`. This is a helpful way to see why
+you need to allocate new closures on each call, even though the
+underlying function `count` is the same: each one "closes" around
+a different value.
+
+It was really fun to work through Lox's mark-and-sweep
+implementation in detail. I think I walked away with a better
+understanding of compilers and garbage collection.
