@@ -140,5 +140,5 @@ underlying function `count` is the same: each one "closes" around
 a different value.
 
 It was really fun to work through Lox's mark-and-sweep
-implementation in detail. I think I walked away with a better
+implementation in detail. I walked away with a better
 understanding of compilers and garbage collection.
