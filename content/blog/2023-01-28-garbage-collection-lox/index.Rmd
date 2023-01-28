@@ -1,0 +1,140 @@
+---
+title: How Garbage Collection works in Crafting Interpreters
+author: ~
+date: '2023-01-28'
+slug: garbage-collection-crafting-interpreters
+categories: []
+tags: []
+description: How garbage collection works in the Lox programming language from the book Crafting Interpreters.
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+[Crafting Interpreters](https://craftinginterpreters.com/) is an awesome book by
+[Robert Nystrom](http://journal.stuffwithstuff.com/) about interpeters, compilers, and
+programming languages. I love this book, because it teaches you how to build *2*
+interpeters line-by-line: a tree-walking interpeter in Java and then a bytecode virtual machine in C.
+
+In [Chapter 26](https://craftinginterpreters.com/garbage-collection.html),
+he builds a mark-and-sweep garbage collector, and does a fantastic
+job explaining the algorithm with detailed diagrams and illastrations.
+
+But I also wanted to understand how our *implementation* of mark-and-sweep worked,
+not just the algorithm. And there are some subtle naunces to our implementation.
+So in this post, I'm going to clarify how the garbage collector works as implemented,
+by examining a small toy-example he gives in the book and by going through a
+slightly-larger program that actually collects some garbage.
+
+First up, let's walk through an early example he shares in the chapter:
+```js
+var a = "first value";
+a = "updated";
+// GC here.
+print a;
+```
+Robert explains that the string `"first value"` could be collected because there
+is no variable referring to that value when the garbage collection runs on the 3rd line
+(and the string isn't on the virtual machine's stack.)^[Other [folks](https://github.com/munificent/craftinginterpreters/issues/1068) were also confused by this example.]
+
+It's true in an abstract sense that `"first value"` could be collected without
+causing a problem, but the implementation works different:
+1. `"first value"` is never collected:
+   - the compiler creates a top-level function (referred to as `<script>`) that saves
+     `"first value"` in the constants table. The compiler functions are explicitly marked
+     in `markCompilerRoots`, so the constants won't be collected.
+  - After compilation, the function is converted to a closure and pushed on the
+    virtual machine's stack. All stack variables are also marked, so `"first value"` will _really_
+    never be collected.
+2. garbage collection runs on object allocation, not between statements:
+   - garbage collection is called in `reallocate`, either on every allocation if `DEBUG_STRESS_GC`
+     is set, or when `vm.bytesAllocated > vm.nextGC`.
+
+Here's a more direct example of Lox garbage collection:
+```js
+fun makeCounter(init) {
+  var count = init;
+  fun counter() {
+    count = count + 1;
+    return count;
+  }
+
+  return counter;
+}
+
+var c = makeCounter(0);
+print c();
+
+c = makeCounter(10);
+print c();
+
+c = makeCounter(20); // `makeCounter(0)` closure collected here.
+print c();
+```
+
+Each time `makeCounter` is called, the following bytecode is executed:
+```
+== makeCounter ==
+0000    2 OP_GET_LOCAL        1
+0002    6 OP_CLOSURE          0 <fn counter>
+0004      |                     local 2
+0006    8 OP_GET_LOCAL        3
+0008    | OP_RETURN
+0009    9 OP_NIL
+0010    | OP_RETURN
+```
+
+`OP_CLOSURE` allocates a new closure on the heap, pushing the value on the stack (safe from gc)
+until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`.
+```c
+      case OP_CLOSURE: {
+        ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
+        ObjClosure* closure = newClosure(function);
+        push(OBJ_VAL(closure));
+```
+
+> Note in `makeCounter`, the starting value of the counter
+can be set with `init`. This is a helpful way to see why
+you need to allocate new closures on each call, even though the
+underlying function `count` is the same: each one "closes" around
+a different value.
+
+After `makeCounter(10)` is assigned to `c`, the previous closure is
+"dangling" (no object in Lox depends on it). But it won't be collected
+until the next allocation.
+
+We know `c = makeCounter(20);` will allocate an object, so garbage collection
+will be called. But what will be collected? That depends on the order the
+statement is parsed and executed. Luckily, we can refer to the bytecode logging:
+```
+0031   17 OP_GET_GLOBAL      11 'makeCounter'
+0033    | OP_CONSTANT        12 '20'
+0035    | OP_CALL             1
+0037    | OP_SET_GLOBAL      10 'c'
+0039    | OP_POP
+```
+
+`OP_CALL` calls `makeCounter` which, as I noted above, will call `OP_CLOSURE`
+and allocate an object. This happens _before_ we assign the new closure to `c`.
+So deep in `markRoots` when we call `markTable(&vm.globals)`, `c` is still
+associated with the closure returned by `makeCounter(10)`. So both are marked
+and are safe from collection.
+
+Therefore, the only closure collected is the one returned from `makeCounter(0)`.
+And that's what we see in the gc logs:
+```
+0x131704b50 free type 4
+0x131704b20 free type 0
+-- gc end
+   collected 96 bytes (from 2084 to 1988) next at 397
+```
+`type 0` is the 0th `ObjType enum` which refers to closures.
+We also need an object of type 4, which is the `upValue` used by
+the closure (in this case, an `ObjUpvalue` wrapping the `Value` 0).
