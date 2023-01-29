@@ -162,8 +162,6 @@ lm<span class="token punctuation">(</span>width <span class="token operator">~</
 | Prism.js    | string      | "Init", "food_regime"           |
 +-------------+-------------+---------------------------------+
 
-All of the JavaScript parsers are lm
-
 ### Themes
 
 Themes determine the final appearance of the code. While parsing defines
