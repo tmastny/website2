@@ -26,7 +26,7 @@ So in this post, I’m going to clarify how the garbage collector works as imple
 by examining a small toy-example he gives in the book and by going through a
 slightly-larger program that actually collects some garbage.</p>
 <p>First up, let’s walk through an early example he shares in the chapter:</p>
-<pre class="js"><code>var a = &quot;first value&quot;;
+<pre class="javascript"><code>var a = &quot;first value&quot;;
 a = &quot;updated&quot;;
 // GC here.
 print a;</code></pre>
@@ -53,7 +53,7 @@ is set, or when <code>vm.bytesAllocated &gt; vm.nextGC</code>.</li>
 </ul></li>
 </ol>
 <p>Let’s take a look at an example where garbage needs to be collected:</p>
-<pre class="js"><code>fun makeCounter(init) {
+<pre class="javascript"><code>fun makeCounter(init) {
   var count = init;
   fun counter() {
     count = count + 1;
@@ -82,7 +82,7 @@ print c();</code></pre>
 0010    | OP_RETURN</code></pre>
 <p><code>OP_CLOSURE</code> allocates a new closure on the heap, pushing the value on the stack (safe from gc)
 until it is assigned to the variable <code>c</code> via <code>OP_SET_GLOBAL</code> in <code>&lt;script&gt;</code>.</p>
-<pre class="c"><code>      case OP_CLOSURE: {
+<pre class="javascript"><code>      case OP_CLOSURE: {
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
         ObjClosure* closure = newClosure(function);
         push(OBJ_VAL(closure));

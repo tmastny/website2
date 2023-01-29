@@ -34,7 +34,7 @@ by examining a small toy-example he gives in the book and by going through a
 slightly-larger program that actually collects some garbage.
 
 First up, let's walk through an early example he shares in the chapter:
-```js
+```javascript
 var a = "first value";
 a = "updated";
 // GC here.
@@ -49,7 +49,7 @@ causing a problem, but the implementation works different^[Other [folks](https:/
 
 1. `"first value"` is never collected:
    - the compiler creates a top-level function (referred to as `<script>`) that saves
-     `"first value"` in the constants table _during compilation_. 
+     `"first value"` in the constants table _during compilation_.
      The compiler functions are explicitly marked
      in `markCompilerRoots`, so the constants won't be collected.
    - After compilation, that function is converted to a closure and pushed on the
@@ -61,9 +61,8 @@ causing a problem, but the implementation works different^[Other [folks](https:/
    - garbage collection is called in `reallocate`, either on every allocation if `DEBUG_STRESS_GC`
      is set, or when `vm.bytesAllocated > vm.nextGC`.
 
-
 Let's take a look at an example where garbage needs to be collected:
-```js
+```javascript
 fun makeCounter(init) {
   var count = init;
   fun counter() {
@@ -98,7 +97,7 @@ Each time `makeCounter` is called, the following bytecode is executed:
 
 `OP_CLOSURE` allocates a new closure on the heap, pushing the value on the stack (safe from gc)
 until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`.
-```c
+```javascript
       case OP_CLOSURE: {
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
         ObjClosure* closure = newClosure(function);
@@ -106,15 +105,15 @@ until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`.
         ...
 ```
 
-So we want to check each call to `makeCounter` to see if anything is being 
+So we want to check each call to `makeCounter` to see if anything is being
 collected.^[Assuming `DEBUG_STRESS_GC` is set.]
 
-First, we don't expect any garbage to be collected when `c` is initialized. 
+First, we don't expect any garbage to be collected when `c` is initialized.
 `c` has no prior value that could go unreferenced, and this is the first time
 `makeCounter` is called.
 
-`c = makeCounter(10);` is more subtle. We know it allocates an object, but is 
-anything collected? You might think that the closure returned from 
+`c = makeCounter(10);` is more subtle. We know it allocates an object, but is
+anything collected? You might think that the closure returned from
 `makeCounter(0)` would be collected. To know for sure, we need to examine
 the order the statement is executed. Luckily, we can refer to bytecode logging:
 ```
@@ -124,7 +123,6 @@ the order the statement is executed. Luckily, we can refer to bytecode logging:
 0023    | OP_SET_GLOBAL       6 'c'
 0025    | OP_POP
 ```
-
 
 `OP_CALL` will run the `makeCounter` bytecode which will run `OP_CLOSURE`
 and allocate an object. This happens _before_ we assign the new closure to `c`.
