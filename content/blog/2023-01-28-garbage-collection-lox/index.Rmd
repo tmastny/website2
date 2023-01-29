@@ -100,7 +100,7 @@ Each time `makeCounter` is called, the following bytecode is executed:
 ```
 
 `OP_CLOSURE` allocates a new closure on the heap, pushing the value on the stack (safe from gc)
-until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`.
+until it is assigned to the variable `c` via `OP_SET_GLOBAL` in `<script>`:
 ```javascript
       case OP_CLOSURE: {
         ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
@@ -136,14 +136,15 @@ and are safe from collection.
 
 Therefore, nothing is collected!
 
-A similar thing happens with `c = makeCounter(20);`^[Nothing special about
+A similar thing happens with `c = makeCounter(20);`.^[Nothing special about
 running `makeCounter`. Any object allocation would trigger gc. However,
 as of Chapter 26, the only other object allocation we can do in Lox besides
 closures is string concatenation! Everything else is allocated at compile time,
 funny enough.]
-At the time of collection, `c` is associated with the closure from `makeCounter(10)`.
-But this time the closure from `makeCounter(0)` is **not** marked as safe,
-so is collected and freed!
+At the time of collection, `c` is associated with the closure from `makeCounter(10)`,
+so that one is is not collected.
+But the closure from `makeCounter(0)` is **not** marked as safe,
+so it's collected and freed!
 
 And that's what we see in the gc logs:
 ```
@@ -156,12 +157,15 @@ And that's what we see in the gc logs:
 We also see an object of type 4, which is the `upValue` used by
 the closure (an `ObjUpvalue` wrapping the `Value` 0).
 
-It was really fun to work through Lox's mark-and-sweep
-implementation in detail, because I ended up learning a lot more
-about programming languages in general. A recurring theme in the book
+A recurring theme in the book
 is the difference between an abstract specification of the language and the
-real implementation. It was cool to see a small slice of this in a few small
+real implementation. It is cool to see a small slice of this in two small
 examples.
+
+It was also really fun to work through Lox's mark-and-sweep
+implementation in detail, because I love stepping through functions
+with a debugger and tracing the path through a program. I always
+learn so much about the program and the language when I do that.
 
 > Note in `makeCounter`, the starting value of the counter
 can be set with `init`. This is a helpful way to see why
