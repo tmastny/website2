@@ -42,7 +42,7 @@ print a;
 ```
 Robert explains that the string `"first value"` could be collected because there
 is no variable referring to that value when the garbage collection runs on the 3rd line
-(and the string isn't on the virtual machine's stack.)
+(and the string isn't on the virtual machine's stack).
 
 It's true in an abstract sense that `"first value"` could be collected without
 causing a problem, but the implementation works different^[Other [folks](https://github.com/munificent/craftinginterpreters/issues/1068) were also confused by this example, since it differs from the actual implementation.]:
@@ -56,10 +56,14 @@ causing a problem, but the implementation works different^[Other [folks](https:/
      virtual machine's stack. All stack variables are also marked, so `"first value"` will _really_
      never be collected.
 
-
 2. garbage collection runs on object allocation, not between statements:
    - garbage collection is called in `reallocate`, either on every allocation if `DEBUG_STRESS_GC`
      is set, or when `vm.bytesAllocated > vm.nextGC`.
+
+3. `"updated"` is never allocated (at runtime):
+   - like `"first value"`, `"updated"` is allocated at compile time and put in the
+     constants table. So the reassignment at runtime wouldn't cause a new allocation
+     anyway.
 
 Let's take a look at an example where garbage needs to be collected:
 ```javascript

@@ -32,7 +32,7 @@ a = &quot;updated&quot;;
 print a;</code></pre>
 <p>Robert explains that the string <code>"first value"</code> could be collected because there
 is no variable referring to that value when the garbage collection runs on the 3rd line
-(and the string isn’t on the virtual machine’s stack.)</p>
+(and the string isn’t on the virtual machine’s stack).</p>
 <p>It’s true in an abstract sense that <code>"first value"</code> could be collected without
 causing a problem, but the implementation works different<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:</p>
 <ol style="list-style-type: decimal">
@@ -50,6 +50,12 @@ never be collected.</li>
 <ul>
 <li>garbage collection is called in <code>reallocate</code>, either on every allocation if <code>DEBUG_STRESS_GC</code>
 is set, or when <code>vm.bytesAllocated &gt; vm.nextGC</code>.</li>
+</ul></li>
+<li><code>"updated"</code> is never allocated (at runtime):
+<ul>
+<li>like <code>"first value"</code>, <code>"updated"</code> is allocated at compile time and put in the
+constants table. So the reassignment at runtime wouldn’t cause a new allocation
+anyway.</li>
 </ul></li>
 </ol>
 <p>Let’s take a look at an example where garbage needs to be collected:</p>
