@@ -32,7 +32,7 @@ For examples,
 here are the tokens identified by some of the popular syntax highlighters:
 
 +--------------+--------+----------------------------------------------------+
-| highlighter  |  type  |                       tokens                       |
+| highlighter  |  type  | tokens                                             |
 +==============+========+====================================================+
 | highlight.js | client | string,                                            |
 |              |        | keyword                                            |
@@ -88,7 +88,7 @@ lm(width ~ initial_volume * food_regime, data = urchins)</code></pre>
 ```
 
 +--------------+---------+-----------------------+
-| highlighter  |  tokens |        example        |
+| highlighter  |  tokens |example                |
 +==============+=========+=======================+
 | highlight.js | keyword | library               |
 +--------------+---------+-----------------------+
@@ -120,7 +120,7 @@ urchins %<span class="keyword operator">&gt;</span>%
 ```
 
 +-------------+------------------+-------------------------------+
-| highlighter |      tokens      |            example            |
+| highlighter |tokens            |example                        |
 +=============+==================+===============================+
 | Rainbow.js  | function call    | library, setNames, mutate     |
 +-------------+------------------+-------------------------------+
@@ -153,7 +153,7 @@ lm<span class="token punctuation">(</span>width <span class="token operator">~</
 ```
 
 +-------------+-------------+---------------------------------+
-| highlighter |    tokens   |             example             |
+| highlighter |    tokens   |example                          |
 +=============+=============+=================================+
 | Prism.js    | operator    | `<-`, `=`, `%>%`, `~`, `*`, `$` |
 +-------------+-------------+---------------------------------+
@@ -161,8 +161,6 @@ lm<span class="token punctuation">(</span>width <span class="token operator">~</
 +-------------+-------------+---------------------------------+
 | Prism.js    | string      | "Init", "food_regime"           |
 +-------------+-------------+---------------------------------+
-
-All of the JavaScript parsers are lm
 
 ### Themes
 
