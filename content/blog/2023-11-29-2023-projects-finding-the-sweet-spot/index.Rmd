@@ -1,0 +1,61 @@
+---
+title: '2023 Projects: Finding the Sweet Spot'
+author: ~
+date: '2023-11-29'
+slug: 2023-projects-finding-the-sweet-spot
+categories: []
+tags: []
+description: 'Debugging in MIT 6.824: Distributed Systems'
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+I worked on numerous projects for the sake of learning and fun,
+and I wanted to reflect on what made some of those projects
+effective and others less so.
+
+One realization I mentioned in my last post was specification:
+Too perscriptive and I
+feel like I'm copy/pasting code: too vague and I have no idea where to go
+or how I'm doing.
+And I realized this is relative to my own abilities: an underspecified
+project to me might be overspecified and boring to someone else.
+I say that because I'm going to talk about projects along this
+dimensions and I don't want to imply that these exercises/authors
+are bad. In fact, they may be really good to some people,
+but I want to show real examples so you can get a sense about what
+I'm talking about. Ideally this will help you think about what
+you want to get out of your next project before you commit to something.
+
+Underspecified:
+- Julia Evan's [Challenge: find Twitter memes with suffix arrays](https://jvns.ca/blog/twitter-memes-challenge/).
+
+When I first came across this, this was intimidating along two factors:
+1. I didn't know go
+2. the output was underspecified: what "counts" as a twitter meme?
+   Just common substrings? How do I know if I do it right?
+
+Let's contrast that with [Distributed Services with Go](https://pragprog.com/titles/tjgo/distributed-services-with-go/)
+- every line of code you need is written in the text book.
+  You can follow along and get exactly what you need.
+
+[Crafting Interpreters](https://craftinginterpreters.com/contents.html)
+is a great example of the relative effect of specification.
+Taking a look at the contents, like Distributed Services with Go,
+it takes you through each line of code you need to write.
+But for me, each line of code was very novel. Before this,
+I've never implemented scanning, syntax trees, and virutal machines
+so each line of code was highly novel: I had to think carefully
+about how it all worked and went together and even push deeper
+into the design, as I describe in my [garbage collection blog post]().
+I also learned fun Java and C tricks I never encountered,
+such as [flexible array members](https://craftinginterpreters.com/strings.html).

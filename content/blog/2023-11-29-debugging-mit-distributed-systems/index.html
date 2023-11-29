@@ -1,0 +1,206 @@
+---
+title: 'Debugging MIT 6.824: Distributed Systems'
+author: ~
+date: '2023-11-29'
+slug: debugging-mit-6.824-distributed-systems
+categories: []
+tags: []
+description: 'Debugging MIT 6.824: Distributed Systems'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#separate-logical-and-timing-requirements" id="toc-separate-logical-and-timing-requirements">Separate Logical and Timing Requirements</a>
+<ul>
+<li><a href="#state-changes" id="toc-state-changes">State Changes</a></li>
+</ul></li>
+<li><a href="#debuggers" id="toc-debuggers">Debuggers</a>
+<ul>
+<li><a href="#mapreduce" id="toc-mapreduce">MapReduce</a></li>
+<li><a href="#raft" id="toc-raft">Raft</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>This November I worked on <a href="https://pdos.csail.mit.edu/6.824/index.html">MIT 6.824: Distributed Systems</a>
+(the spring 2023 semester
+is called 6.5840).
+I chose to work on this class because:</p>
+<ul>
+<li>the tasks are complicated enough that I’m stretching my abilities</li>
+<li>the projects have clear guidelines and success criteria (automated testing is awesome)</li>
+<li>I get to learn some fundamentals of systems I use in my real job (like Raft in Kubernetes)</li>
+</ul>
+<p>I spent a lot of time debugging my distributed systems,
+and I got a lot of help from these amazing guides.</p>
+<ul>
+<li>6.824’s official <a href="http://nil.csail.mit.edu/6.824/2022/labs/guidance.html">lab guidance</a></li>
+<li><a href="https://blog.josejg.com/debugging-pretty/">TA’s blogpost</a> on pretty printing logs</li>
+<li><a href="https://thesquareplanet.com/blog/students-guide-to-raft/">Students’ Guide to Raft</a>
+has extremely specific advice on implementing Raft for this class</li>
+</ul>
+<p>One thing that surprised me about those resources is that they didn’t talk about
+two techniques I used all the time: unit tests and debuggers.
+In fact, one of the TAs says:</p>
+<blockquote>
+<p>There are no easily accessible debuggers like gdb or pdb that let you run your code step by step.</p>
+</blockquote>
+<p>I don’t think that’s entirely true!
+I agree that in Raft a large class of bugs are related
+to timing and race conditions. And the use of threads definitely
+makes debuggers more complicated. Even so, I got a lot of
+value out of these techniques (in additional to printing and logs!), so I wanted
+to share some ideas here.</p>
+<div id="separate-logical-and-timing-requirements" class="section level2">
+<h2>Separate Logical and Timing Requirements</h2>
+<p>One key idea I used again and again was to test logical
+requirements separately from timing requirements.
+Timing requirements need servers talking to one another in real time,
+while logical requirements are really about inputs and outputs.</p>
+<p>Let’s use a real example by looking at <a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">two conditions</a>
+in a function called <code>AppendEntries</code> that we have to implement in the
+<a href="https://pdos.csail.mit.edu/6.824/labs/lab-raft.html">Raft lab</a>.</p>
+<blockquote>
+<ol start="3" style="list-style-type: decimal">
+<li>If an existing entry conflicts with a new one (same index
+but different terms), delete the existing entry and all that
+follow it (§5.3)</li>
+<li>Append any new entries not already in the log</li>
+</ol>
+</blockquote>
+<p>We can treat these requirements as pure function to unit test:
+given some input, return a new log (possibly with some
+entries deleted and possibly some new entries appended).</p>
+<p>The professor asked the students not to share real code
+so I won’t show exactly what I did,
+but the function might look like this:</p>
+<pre class="go"><code>func deleteAppend(rfEntries []Entry, newEntries []Entry) []Entry {
+  //...
+}
+
+// in AppendEntries RPC
+rf.mu.Lock()
+
+// code before
+rf.log = deleteAppend(rf.log, args.Entries)
+// code after
+
+rf.mu.Unlock()</code></pre>
+<p>Now we can write a unit test by giving it an input and desired output:</p>
+<pre class="go"><code>rfEntries  := []Entry{{1}, {2}, {3}}
+newEntries := []Entry{{2}, {3}, {4}}
+want       := []Entry{{1}, {2}, {3}, {4}}
+
+if deleteAppend(rfEntries, newEntries) != want {
+  panic()
+}</code></pre>
+<p><code>deleteAppend</code> can be surprisingly tricky to implement, but by separating
+this from elections, heartbeats, and appends we can make sure we
+get it right without worrying about timing.</p>
+<div id="state-changes" class="section level3">
+<h3>State Changes</h3>
+<p>We can extend this idea further by unit testing state changes.
+In Raft, each RPC could change the state of both the sender and
+receiver.</p>
+<p>In the same way we wrote the inputs and output above,
+we can set the initial and desired state of Raft after the RPC:</p>
+<pre class="go"><code>initialRaft := &amp;Raft{
+  commitIndex: 4
+  // ...
+}
+
+desiredRaft := &amp;Raft{
+  commitIndex: 5
+  // ...
+}
+
+args := AppendEntriesArgs{
+  LeaderCommit: 5
+  // ...
+}
+reply := AppendEntriesReply{}
+
+initialRaft.AppendEntries(&amp;args, &amp;reply)
+
+if initialRaft.commitIndex != desiredRaft.commitIndex {
+  panic()
+}</code></pre>
+<p>I’m not necessarily suggesting you do this for each RPC:
+in fact, doing this can take a lot of time and often you
+get it right on your first try or it’s obvious what the problem is.
+But I want to show that it’s totally possible to handle the
+logical requirements totally separate from the timing and lock
+problems.</p>
+</div>
+</div>
+<div id="debuggers" class="section level2">
+<h2>Debuggers</h2>
+<p>There are modern debuggers for Go! The easiest one to use
+is the Go Extension in VSCode, which adds visible breaks
+and state inspection like an IDE. I also like <a href="https://github.com/go-delve/delve">delve</a>
+on the command line, which is what I use below (but VSCode works too).</p>
+<p>So how do you use a debugger in the projects?</p>
+<div id="mapreduce" class="section level3">
+<h3>MapReduce</h3>
+<p>Let’s start with <a href="https://pdos.csail.mit.edu/6.824/labs/lab-mr.html">Lab 1: MapReduce</a>.
+The coordinator and workers run on separate processes.
+For example, you might open 3 terminals and run</p>
+<pre class="bash"><code># window 1
+go run mrcoodinator.go pg-*.txt
+
+# window 2
+go run mrworker.go wc.so
+
+# window 3
+go run mrworker.go wc.so</code></pre>
+<p>Since each of those belong to a separate process,
+you can attach a debugger right at the start:</p>
+<pre class="bash"><code>dlv debug mrcoodinator.go -- pg-*.txt</code></pre>
+<p>Workers use a plugin which we first have to build
+with <a href="https://github.com/go-delve/delve/issues/865#issuecomment-480766102">debugger flags</a>:</p>
+<pre class="bash"><code>go build -buildmode=plugin -gcflags=&quot;all=-N -l&quot; ../mrapps/wc.go
+dlv debug mrworker.go -- wc.so</code></pre>
+<p>And in lab 1, there are no timers to worry about so you can
+take your time in the debugger!</p>
+</div>
+<div id="raft" class="section level3">
+<h3>Raft</h3>
+<p>This is useful for lab 1, but Raft (labs 2, 3, 4) is different.
+Raft uses threads instead of processes, but that’s not a problem!
+You can totally use <code>dlv</code> to debug threads. Either by setting a
+breakpoint directly in a function used by a goroutine
+or by <a href="https://vtimothy.com/posts/debugging-goroutines/">switching threads</a>
+while paused in the debugger! (which is really awesome)</p>
+<p>The real problem with Raft is timing. We have election timeouts,
+heartbeat intervals, etc.! If you are sitting paused in a debugger
+they aren’t going to work (which might be okay depending
+on what you want to test).</p>
+<p>However, for the Raft projects I found the debugger most
+useful on tests!
+For example, I love putting a debugger on my unit tests
+that are failing:</p>
+<pre class="bash"><code>dlv test -- -test.run TestDeleteAppend</code></pre>
+<p>Another option is to use the debugger to investigate failed grading tests.
+For example, suppose you run a test and see the following:</p>
+<pre class="bash"><code>go test -run TestConcurrentStarts2B
+#&gt; --- FAIL: TestConcurrentStarts2B (1.10s)
+#&gt;     test_test.go:440: cmd 100 missing in [104 103 102 101 101]</code></pre>
+<p>The meaning of the failure is a little unclear. What is <code>cmd 100</code>
+and where is it missing? To answer this question,
+we can to run the test again with a breakpoint at that failure.</p>
+<pre class="bash"><code>dlv test -- -test.run TestConcurrentStarts2B
+break test_test.go:440
+continue</code></pre>
+<p>Raft runs as normal: you don’t have to worry about timing issues
+since you placed the breakpoint at the failure.
+From there, you can investigate the state of the testing fixtures
+to understand what the failure means: in this case, Command <code>100</code>
+was sent to the leader but was never committed. You can also
+look at the state of the servers at the time of the failure to
+figure out why.</p>
+</div>
+</div>

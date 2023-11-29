@@ -1,0 +1,237 @@
+---
+title: 'Debugging MIT 6.824: Distributed Systems'
+author: ~
+date: '2023-11-29'
+slug: debugging-mit-6.824-distributed-systems
+categories: []
+tags: []
+description: 'Debugging MIT 6.824: Distributed Systems'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+This November I worked on [MIT 6.824: Distributed Systems](https://pdos.csail.mit.edu/6.824/index.html)
+(the spring 2023 semester
+is called 6.5840).
+I chose to work on this class because:
+
+- the tasks are complicated enough that I'm stretching my abilities
+- the projects have clear guidelines and success criteria (automated testing is awesome)
+- I get to learn some fundamentals of systems I use in my real job (like Raft in Kubernetes)
+
+
+I spent a lot of time debugging my distributed systems,
+and I got a lot of help from these amazing guides.
+
+- 6.824's official [lab guidance](http://nil.csail.mit.edu/6.824/2022/labs/guidance.html)
+- [TA's blogpost](https://blog.josejg.com/debugging-pretty/) on pretty printing logs
+- [Students' Guide to Raft](https://thesquareplanet.com/blog/students-guide-to-raft/)
+  has extremely specific advice on implementing Raft for this class
+
+
+One thing that surprised me about those resources is that they didn't talk about
+two techniques I used all the time: unit tests and debuggers.
+In fact, one of the TAs says:
+
+> There are no easily accessible debuggers like gdb or pdb that let you run your code step by step.
+
+
+I don't think that's entirely true!
+I agree that in Raft a large class of bugs are related
+to timing and race conditions. And the use of threads definitely
+makes debuggers more complicated. Even so, I got a lot of
+value out of these techniques (in additional to printing and logs!), so I wanted
+to share some ideas here.
+
+## Separate Logical and Timing Requirements
+
+One key idea I used again and again was to test logical
+requirements separately from timing requirements.
+Timing requirements need servers talking to one another in real time,
+while logical requirements are really about inputs and outputs.
+
+Let's use a real example by looking at [two conditions](https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf)
+in a function called `AppendEntries` that we have to implement in the
+[Raft lab](https://pdos.csail.mit.edu/6.824/labs/lab-raft.html).
+
+>3. If an existing entry conflicts with a new one (same index
+but different terms), delete the existing entry and all that
+follow it (§5.3)
+4. Append any new entries not already in the log
+
+We can treat these requirements as pure function to unit test:
+given some input, return a new log (possibly with some
+entries deleted and possibly some new entries appended).
+
+The professor asked the students not to share real code
+so I won't show exactly what I did,
+but the function might look like this:
+
+```go
+func deleteAppend(rfEntries []Entry, newEntries []Entry) []Entry {
+  //...
+}
+
+// in AppendEntries RPC
+rf.mu.Lock()
+
+// code before
+rf.log = deleteAppend(rf.log, args.Entries)
+// code after
+
+rf.mu.Unlock()
+```
+
+Now we can write a unit test by giving it an input and desired output:
+```go
+rfEntries  := []Entry{{1}, {2}, {3}}
+newEntries := []Entry{{2}, {3}, {4}}
+want       := []Entry{{1}, {2}, {3}, {4}}
+
+if deleteAppend(rfEntries, newEntries) != want {
+  panic()
+}
+```
+
+`deleteAppend` can be surprisingly tricky to implement, but by separating
+this from elections, heartbeats, and appends we can make sure we
+get it right without worrying about timing.
+
+### State Changes
+
+We can extend this idea further by unit testing state changes.
+In Raft, each RPC could change the state of both the sender and
+receiver.
+
+In the same way we wrote the inputs and output above,
+we can set the initial and desired state of Raft after the RPC:
+
+```go
+initialRaft := &Raft{
+  commitIndex: 4
+  // ...
+}
+
+desiredRaft := &Raft{
+  commitIndex: 5
+  // ...
+}
+
+args := AppendEntriesArgs{
+  LeaderCommit: 5
+  // ...
+}
+reply := AppendEntriesReply{}
+
+initialRaft.AppendEntries(&args, &reply)
+
+if initialRaft.commitIndex != desiredRaft.commitIndex {
+  panic()
+}
+```
+
+I'm not necessarily suggesting you do this for each RPC:
+in fact, doing this can take a lot of time and often you
+get it right on your first try or it's obvious what the problem is.
+But I want to show that it's totally possible to handle the
+logical requirements totally separate from the timing and lock
+problems.
+
+## Debuggers
+
+There are modern debuggers for Go! The easiest one to use
+is the Go Extension in VSCode, which adds visible breaks
+and state inspection like an IDE. I also like [delve](https://github.com/go-delve/delve)
+on the command line, which is what I use below (but VSCode works too).
+
+So how do you use a debugger in the projects?
+
+### MapReduce
+
+Let's start with [Lab 1: MapReduce](https://pdos.csail.mit.edu/6.824/labs/lab-mr.html).
+The coordinator and workers run on separate processes.
+For example, you might open 3 terminals and run
+```bash
+# window 1
+go run mrcoodinator.go pg-*.txt
+
+# window 2
+go run mrworker.go wc.so
+
+# window 3
+go run mrworker.go wc.so
+```
+
+Since each of those belong to a separate process,
+you can attach a debugger right at the start:
+
+```bash
+dlv debug mrcoodinator.go -- pg-*.txt
+```
+
+Workers use a plugin which we first have to build
+with [debugger flags](https://github.com/go-delve/delve/issues/865#issuecomment-480766102):
+```bash
+go build -buildmode=plugin -gcflags="all=-N -l" ../mrapps/wc.go
+dlv debug mrworker.go -- wc.so
+```
+
+And in lab 1, there are no timers to worry about so you can
+take your time in the debugger!
+
+### Raft
+
+This is useful for lab 1, but Raft (labs 2, 3, 4) is different.
+Raft uses threads instead of processes, but that's not a problem!
+You can totally use `dlv` to debug threads. Either by setting a
+breakpoint directly in a function used by a goroutine
+or by [switching threads](https://vtimothy.com/posts/debugging-goroutines/)
+while paused in the debugger! (which is really awesome)
+
+The real problem with Raft is timing. We have election timeouts,
+heartbeat intervals, etc.! If you are sitting paused in a debugger
+they aren't going to work (which might be okay depending
+on what you want to test).
+
+However, for the Raft projects I found the debugger most
+useful on tests!
+For example, I love putting a debugger on my unit tests
+that are failing:
+
+```bash
+dlv test -- -test.run TestDeleteAppend
+```
+
+Another option is to use the debugger to investigate failed grading tests.
+For example, suppose you run a test and see the following:
+
+```bash
+go test -run TestConcurrentStarts2B
+#> --- FAIL: TestConcurrentStarts2B (1.10s)
+#>     test_test.go:440: cmd 100 missing in [104 103 102 101 101]
+```
+
+The meaning of the failure is a little unclear. What is `cmd 100`
+and where is it missing? To answer this question,
+we can to run the test again with a breakpoint at that failure.
+```bash
+dlv test -- -test.run TestConcurrentStarts2B
+break test_test.go:440
+continue
+```
+
+Raft runs as normal: you don't have to worry about timing issues
+since you placed the breakpoint at the failure.
+From there, you can investigate the state of the testing fixtures
+to understand what the failure means: in this case, Command `100`
+was sent to the leader but was never committed. You can also
+look at the state of the servers at the time of the failure to
+figure out why.

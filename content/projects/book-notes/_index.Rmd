@@ -12,4 +12,8 @@ type: "book-notes"
   * almost complete notes on [Github](https://github.com/tmastny/Statistical-Rethinking-Notes).\
 \
 * [Simulation and Similiarity](https://www.amazon.com/Simulation-Similarity-Understand-Studies-Philosophy/dp/0190265124)
-  * chapter 1 and 2 note on Chapters 1 and 2 [Notion](https://www.notion.so/Simulation-and-Similarity-2525272efbf14bfca6b480b69e907116).
+  * chapter 1 and 2 note on Chapters 1 and 2 [Notion](https://www.notion.so/Simulation-and-Similarity-2525272efbf14bfca6b480b69e907116).\
+\
+* [Crafting Interpreters](https://craftinginterpreters.com/)
+  * complete notes on [Github](https://github.com/tmastny/crafting-interpreters).
+  * exercises nicely organized as [Pull Requests](https://github.com/tmastny/crafting-interpreters/pulls).
