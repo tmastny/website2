@@ -48,7 +48,7 @@ I don't think that's entirely true!
 I agree that in Raft a large class of bugs are related
 to timing and race conditions. And the use of threads definitely
 makes debuggers more complicated. Even so, I got a lot of
-value out of these techniques (in additional to printing and logs!), so I wanted
+value out of these techniques (in addition to printing and logs!), so I wanted
 to share some ideas here.
 
 ## Separate Logical and Timing Requirements
