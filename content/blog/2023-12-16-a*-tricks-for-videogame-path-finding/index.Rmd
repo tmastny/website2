@@ -100,7 +100,7 @@ showing how it works), so I'll just share my intution
 for how it works.
 
 First, steps are weighted by the distance of the starting
-node to the destination now. This means the algorithm
+node to the destination node. This means the algorithm
 starts by trying to go in a straight line to the destination.
 Unlike Dijkstra's, it won't waste a bunch of time going
 in the opposite direction (unless it has to).
