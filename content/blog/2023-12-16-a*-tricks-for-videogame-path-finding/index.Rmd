@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-*Discussion on [Hacker News](https://news.ycombinator.com/item?id=38833658)*
+*See the discussion of this post on [Hacker News](https://news.ycombinator.com/item?id=38833658).*
 
 My wife and I decided to make an 8-bit, top-down, Zelda-like game written
 for the [PPU466](https://github.com/15-466/15-466-f23-base1)
