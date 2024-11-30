@@ -1,0 +1,21 @@
+---
+title: 'Visualizing CPU Pipeling'
+author: ~
+date: '2024-11-30'
+slug: visualizing-cpu-pipeling
+categories: []
+tags: []
+description: 'Visualizing CPU Pipeling'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+Visualizing CPU Pipelining.
