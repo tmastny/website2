@@ -14,3 +14,118 @@ output:
 
 
 <p>Visualizing CPU Pipelining.</p>
+<div class="pipeline-container">
+  <canvas id="pipelineCanvas"></canvas>
+</div>
+
+<style>
+.pipeline-container {
+  width: 100%;
+  max-width: 850px;
+  margin: 2em auto;
+}
+
+#pipelineCanvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid #eee;
+}
+</style>
+
+<script>
+// Create visualization after DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+  const canvas = document.getElementById('pipelineCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Constants for drawing
+  const STAGE_WIDTH = 80;
+  const STAGE_HEIGHT = 40;
+  const STAGE_GAP = 10;
+  const INSTRUCTION_GAP = 10;
+  const COLORS = {
+    IF: '#e6f3ff',
+    ID: '#ccebff',
+    EX: '#99d6ff',
+    MEM: '#66c2ff',
+    WB: '#33adff'
+  };
+  
+  const instructions = [
+    {name: 'add $t1', stages: []},
+    {name: 'sub $t2', stages: []},
+    {name: 'lw $t3', stages: []},
+    {name: 'add $t5', stages: []},
+    {name: 'and $t4', stages: []}
+  ];
+  
+  function drawStage(x, y, stage) {
+    ctx.fillStyle = COLORS[stage];
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 1;
+    
+    ctx.fillRect(x, y, STAGE_WIDTH, STAGE_HEIGHT);
+    ctx.strokeRect(x, y, STAGE_WIDTH, STAGE_HEIGHT);
+    
+    ctx.fillStyle = '#000';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(stage, x + STAGE_WIDTH/2, y + STAGE_HEIGHT/2);
+  }
+  
+  let currentCycle = 0;
+  const maxCycles = 9;
+  
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw cycle numbers
+    ctx.fillStyle = '#000';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    for(let i = 0; i < maxCycles; i++) {
+      ctx.fillText(`Cycle ${i+1}`, 50 + i * (STAGE_WIDTH + STAGE_GAP), 20);
+    }
+    
+    // Draw instruction names
+    ctx.textAlign = 'right';
+    for(let i = 0; i < instructions.length; i++) {
+      ctx.fillText(instructions[i].name, 
+        40, 
+        50 + i * (STAGE_HEIGHT + INSTRUCTION_GAP));
+    }
+    
+    // Draw stages up to current cycle
+    if(currentCycle >= 0) {
+      for(let cycle = 0; cycle <= currentCycle; cycle++) {
+        for(let i = 0; i < instructions.length; i++) {
+          if(cycle >= i && cycle < i + 5) { // 5 stages
+            const stage = ['IF', 'ID', 'EX', 'MEM', 'WB'][cycle - i];
+            drawStage(
+              50 + cycle * (STAGE_WIDTH + STAGE_GAP),
+              50 + i * (STAGE_HEIGHT + INSTRUCTION_GAP),
+              stage
+            );
+          }
+        }
+      }
+    }
+  }
+  
+  function animate() {
+    if(currentCycle < maxCycles) {
+      currentCycle++;
+      draw();
+      setTimeout(animate, 1000); // 1 second per cycle
+    }
+  }
+  
+  // Set canvas size
+  canvas.width = 850;  // Adjust based on your blog width
+  canvas.height = 400;
+  
+  // Start animation
+  animate();
+});
+</script>
