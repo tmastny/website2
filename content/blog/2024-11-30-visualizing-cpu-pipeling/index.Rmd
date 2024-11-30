@@ -1,11 +1,11 @@
 ---
-title: 'Visualizing CPU Pipeling'
+title: 'Visualizing CPU Pipelining'
 author: ~
 date: '2024-11-30'
 slug: visualizing-cpu-pipeling
 categories: []
 tags: []
-description: 'Visualizing CPU Pipeling'
+description: 'Visualizing CPU Pipelining'
 output:
   blogdown::html_page:
     toc: true
@@ -24,72 +24,61 @@ Visualizing CPU Pipelining.
 instructions <- c("add $t1", "sub $t2", "lw $t3", "add $t5", "and $t4")
 stages <- c("IF", "ID", "EX", "MEM", "WB")
 
-# Generate instruction rows
-generate_instruction_rows <- function(instructions) {
-  rows <- character(length(instructions))
-  
+# Generate instruction list
+generate_instruction_list <- function(instructions) {
+  items <- character(length(instructions))
   for(i in seq_along(instructions)) {
-    # Calculate starting cycle for this instruction's stages
-    start_cycle <- i
-    
-    stages_html <- character(5)
-    for(j in 1:5) {
-      cycle_pos <- start_cycle + j - 1
-      stages_html[j] <- sprintf(
-        '<div class="stage %s" style="grid-column: %d">%s</div>',
-        tolower(stages[j]), cycle_pos, stages[j]
-      )
-    }
-    
-    rows[i] <- sprintf('
-      <div class="instruction-row">
-        <div class="instruction-name">%s</div>
-        <div class="stages">
-          %s
-        </div>
-      </div>
-    ', instructions[i], paste(stages_html, collapse="\n"))
+    items[i] <- sprintf(
+      '<div class="instruction %s">%s</div>',
+      if(i == 1) "active" else "",
+      instructions[i]
+    )
   }
-  
-  paste(rows, collapse="\n")
+  paste(items, collapse="\n")
 }
 
-# Generate cycle numbers
-generate_cycle_numbers <- function(n_cycles=8) {
-  cycles <- character(n_cycles)
-  for(i in 1:n_cycles) {
-    cycles[i] <- sprintf('<div class="cycle">%d</div>', i)
+# Generate pipeline stages
+generate_pipeline_stages <- function() {
+  stages_html <- character(length(stages))
+  for(i in seq_along(stages)) {
+    stages_html[i] <- sprintf(
+      '<div class="stage-container">
+         <div class="stage-name">%s</div>
+         <div class="stage" data-stage="%s"></div>
+       </div>',
+      stages[i],
+      tolower(stages[i])
+    )
   }
-  paste(cycles, collapse="\n")
+  paste(stages_html, collapse="\n")
 }
 ```
 
 ```{=html}
-<div class="pipeline-container">
+<div class="unpipelined-container">
   <div class="controls">
-    <button onclick="stepBack()" class="control-button">◀ Previous</button>
-    <button onclick="stepForward()" class="control-button">Next ▶</button>
-    <button onclick="resetAnimation()" class="control-button">Reset</button>
+    <button onclick="unpipelinedStepBack()" class="control-button">◀ Previous</button>
+    <button onclick="unpipelinedStepForward()" class="control-button">Next ▶</button>
+    <button onclick="unpipelinedReset()" class="control-button">Reset</button>
   </div>
   
-  <div class="timeline">
-    <div class="cycle-label">Cycle</div>
-    `r generate_cycle_numbers()`
+  <div class="instructions-list">
+    <h3>Instructions:</h3>
+    `r generate_instruction_list(instructions)`
   </div>
   
   <div class="pipeline">
-    `r generate_instruction_rows(instructions)`
+    `r generate_pipeline_stages()`
   </div>
 </div>
 
 <style>
-.pipeline-container {
+.unpipelined-container {
   font-family: monospace;
   margin: 2em 0;
   padding: 2em;
-  position: relative;
-  width: 800px;  /* Fixed width */
-  overflow-x: auto; /* Allow horizontal scroll if needed */
+  width: 800px;
+  overflow-x: auto;
 }
 
 .controls {
@@ -110,64 +99,262 @@ generate_cycle_numbers <- function(n_cycles=8) {
   background: #e9ecef;
 }
 
-.timeline {
-  display: grid;
-  grid-template-columns: 100px repeat(8, 80px); /* Fixed width columns */
-  gap: 10px;
-  margin-bottom: 1.5em;
+.instructions-list {
+  margin-bottom: 2em;
 }
 
-.cycle {
+.instructions-list h3 {
+  margin-bottom: 0.5em;
+}
+
+.instruction {
+  padding: 0.5em;
+  margin: 0.25em 0;
+  background: #f8f9fa;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.instruction.active {
+  background: #e6f3ff;
+  opacity: 1;
+  font-weight: bold;
+}
+
+.pipeline {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2em;
+}
+
+.stage-container {
+  flex: 1;
+  margin: 0 0.5em;
   text-align: center;
-  color: #666;
 }
 
-.instruction-row {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  margin-bottom: 10px;
-}
-
-.stages {
-  display: grid;
-  grid-template-columns: repeat(8, 80px); /* Fixed width columns */
-  gap: 10px;
+.stage-name {
+  margin-bottom: 0.5em;
+  font-weight: bold;
 }
 
 .stage {
+  height: 60px;
   padding: 0.5em;
-  text-align: center;
-  background: #e6f3ff;
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  opacity: 0;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
 }
 
-/* Remove automatic animations */
-.stage.if { background: #e6f3ff; }
-.stage.id { background: #ccebff; }
-.stage.ex { background: #99d6ff; }
-.stage.mem { background: #66c2ff; }
-.stage.wb { background: #33adff; }
+.stage.active {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+</style>
 
-.stage.visible {
+<script>
+let unpipelinedStep = 0;
+const unpipelinedInstructions = ["add $t1", "sub $t2", "lw $t3", "add $t5", "and $t4"];
+const stagesPerInstruction = 5;
+
+function updateUnpipelined() {
+  const container = document.querySelector('.unpipelined-container');
+  const stages = container.querySelectorAll('.stage');
+  const instructionElements = container.querySelectorAll('.instruction');
+  
+  // Clear all stages
+  stages.forEach(stage => {
+    stage.textContent = '';
+    stage.classList.remove('active');
+  });
+  
+  // Calculate current instruction and stage
+  const currentInstruction = Math.floor(unpipelinedStep / stagesPerInstruction);
+  const currentStage = unpipelinedStep % stagesPerInstruction;
+  
+  if (currentInstruction < unpipelinedInstructions.length) {
+    // Show current instruction in current stage
+    stages[currentStage].textContent = unpipelinedInstructions[currentInstruction];
+    stages[currentStage].classList.add('active');
+    
+    // Update instruction list highlighting
+    instructionElements.forEach((inst, index) => {
+      if (index === currentInstruction) {
+        inst.classList.add('active');
+      } else {
+        inst.classList.remove('active');
+      }
+    });
+  }
+}
+
+function unpipelinedStepForward() {
+  const maxSteps = unpipelinedInstructions.length * stagesPerInstruction;
+  if (unpipelinedStep < maxSteps) {
+    unpipelinedStep++;
+    updateUnpipelined();
+  }
+}
+
+function unpipelinedStepBack() {
+  if (unpipelinedStep > 0) {
+    unpipelinedStep--;
+    updateUnpipelined();
+  }
+}
+
+function unpipelinedReset() {
+  unpipelinedStep = 0;
+  updateUnpipelined();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  // Only initialize if the container exists
+  if (document.querySelector('.unpipelined-container')) {
+    unpipelinedReset();
+  }
+});
+</script>
+```
+
+```{=html}
+<div class="pipeline-container">
+  <div class="controls">
+    <button onclick="stepBack()" class="control-button">◀ Previous</button>
+    <button onclick="stepForward()" class="control-button">Next ▶</button>
+    <button onclick="resetAnimation()" class="control-button">Reset</button>
+  </div>
+  
+  <div class="instructions-list">
+    <h3>Instructions:</h3>
+    `r generate_instruction_list(instructions)`
+  </div>
+  
+  <div class="pipeline">
+    `r generate_pipeline_stages()`
+  </div>
+</div>
+
+<style>
+.pipeline-container {
+  font-family: monospace;
+  margin: 2em 0;
+  padding: 2em;
+  width: 800px;
+  overflow-x: auto;
+}
+
+.controls {
+  margin-bottom: 1em;
+}
+
+.control-button {
+  padding: 0.5em 1em;
+  margin-right: 0.5em;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+}
+
+.control-button:hover {
+  background: #e9ecef;
+}
+
+.instructions-list {
+  margin-bottom: 2em;
+}
+
+.instructions-list h3 {
+  margin-bottom: 0.5em;
+}
+
+.instruction {
+  padding: 0.5em;
+  margin: 0.25em 0;
+  background: #f8f9fa;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.instruction.active {
+  background: #e6f3ff;
   opacity: 1;
-  transition: opacity 0.2s;
+  font-weight: bold;
 }
 
+.pipeline {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2em;
+}
+
+.stage-container {
+  flex: 1;
+  margin: 0 0.5em;
+  text-align: center;
+}
+
+.stage-name {
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.stage {
+  height: 60px;
+  padding: 0.5em;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+}
+
+.stage.active {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
 </style>
 
 <script>
 let currentStep = 0;
-const maxSteps = 25; // Adjust based on total number of stages
+const maxSteps = 25; // Total number of steps
+const instructions = ["add $t1", "sub $t2", "lw $t3", "add $t5", "and $t4"];
 
-function updateVisibility() {
-  const stages = document.querySelectorAll('.stage');
-  stages.forEach((stage, index) => {
-    if (index < currentStep) {
-      stage.classList.add('visible');
+function updatePipeline() {
+  const container = document.querySelector('.pipeline-container');
+  const stages = container.querySelectorAll('.stage');
+  const instructionElements = container.querySelectorAll('.instruction');
+
+  // Clear all stages
+  stages.forEach(stage => {
+    stage.textContent = '';
+    stage.classList.remove('active');
+  });
+  
+  // Update each stage based on current step
+  for(let i = 0; i < 5; i++) {
+    const instructionIndex = currentStep - i;
+    if (instructionIndex >= 0 && instructionIndex < instructions.length) {
+      stages[i].textContent = instructions[instructionIndex];
+      stages[i].classList.add('active');
+    }
+  }
+  
+  // Update instruction list highlighting
+  instructionElements.forEach((inst, index) => {
+    if (index === Math.min(currentStep, instructions.length - 1)) {
+      inst.classList.add('active');
     } else {
-      stage.classList.remove('visible');
+      inst.classList.remove('active');
     }
   });
 }
@@ -175,20 +362,20 @@ function updateVisibility() {
 function stepForward() {
   if (currentStep < maxSteps) {
     currentStep++;
-    updateVisibility();
+    updatePipeline();
   }
 }
 
 function stepBack() {
   if (currentStep > 0) {
     currentStep--;
-    updateVisibility();
+    updatePipeline();
   }
 }
 
 function resetAnimation() {
   currentStep = 0;
-  updateVisibility();
+  updatePipeline();
 }
 
 // Initialize
