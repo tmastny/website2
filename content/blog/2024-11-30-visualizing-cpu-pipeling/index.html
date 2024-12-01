@@ -375,9 +375,10 @@ instructions.</p>
 <p>Since the field metadata is propogated to each stage register,
 we have all the data we need! What’s missing is a unit to calculate
 this:</p>
-<pre><code>ID/IF.rs == EX/ID.rd || ID/IF.rt == EX/ID.rd ||
-ID/IF.rs == MEM/ID.rd || ID/IF.rt == MEM/ID.rd ||</code></pre>
-<p>That’s the <em>Hazard Detection Unit</em>.</p>
+<pre><code>ID/EXE.rs == EX/MEM.rd || ID/EXE.rt == EX/MEM.rd ||
+ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd</code></pre>
+<p>That’s the <em>Hazard Detection Unit</em>. This unit will attach to
+the ID stage and prevent progress until the hazard is resolved.</p>
 <p>Using the metadata stored in registers, we can add
 a hazard detection unit.</p>
 <div id="pipeline2-container"></div>

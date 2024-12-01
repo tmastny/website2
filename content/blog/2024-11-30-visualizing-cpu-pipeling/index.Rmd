@@ -216,11 +216,13 @@ Since the field metadata is propogated to each stage register,
 we have all the data we need! What's missing is a unit to calculate
 this:
 ```
-ID/IF.rs == EX/ID.rd || ID/IF.rt == EX/ID.rd ||
-ID/IF.rs == MEM/ID.rd || ID/IF.rt == MEM/ID.rd ||
+ID/EXE.rs == EX/MEM.rd || ID/EXE.rt == EX/MEM.rd ||
+ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd
 ```
 
-That's the *Hazard Detection Unit*. 
+That's the *Hazard Detection Unit*. This unit will attach to
+the ID stage and prevent progress until the hazard is resolved.
+
 
 
 
