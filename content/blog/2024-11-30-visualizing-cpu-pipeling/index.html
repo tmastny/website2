@@ -14,8 +14,6 @@ output:
 
 
 <p>Visualizing CPU Pipelining.</p>
-<div id="pipeline-container"></div>
-
 <style>
 /* Your existing CSS stays the same */
 .pipeline-viz {
@@ -209,17 +207,15 @@ class PipelineVisualization {
     this.render();
   }
 }
+</script>
 
-// Initialize visualizations
+<p>Non-pipelined CPU:</p>
+<div id="pipeline1-container"></div>
+
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-  const container = document.getElementById('pipeline-container');
-  
-  // Create both HTML structures first
-  const viz1HTML = createPipelineHTML('pipelineViz1');
-  const viz2HTML = createPipelineHTML('pipelineViz2');
-  
-  // Append all HTML at once
-  container.innerHTML = viz1HTML + '<div style="height: 2em;"></div>' + viz2HTML;
+  const container = document.getElementById('pipeline1-container');
+  container.innerHTML = createPipelineHTML('pipelineViz1');
   
   window.pipelineViz1 = new PipelineVisualization(
     document.getElementById('pipelineViz1'),
@@ -241,8 +237,16 @@ document.addEventListener('DOMContentLoaded', function() {
       ]
     }
   );
+});
+</script>
+<p>Pipelined CPU:</p>
+<div id="pipeline2-container"></div>
 
-  // Data hazard example
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('pipeline2-container');
+  container.innerHTML = createPipelineHTML('pipelineViz2');
+  
   window.pipelineViz2 = new PipelineVisualization(
     document.getElementById('pipelineViz2'),
     {

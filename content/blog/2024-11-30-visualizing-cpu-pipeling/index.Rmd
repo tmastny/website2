@@ -23,3 +23,70 @@ Visualizing CPU Pipelining.
 ```{r, echo=FALSE}
 htmltools::includeHTML("pipeline.html")
 ```
+
+Non-pipelined CPU:
+    
+```{=html}
+<div id="pipeline1-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('pipeline1-container');
+  container.innerHTML = createPipelineHTML('pipelineViz1');
+  
+  window.pipelineViz1 = new PipelineVisualization(
+    document.getElementById('pipelineViz1'),
+    {
+      instructions: [
+        "add $t1",
+        "sub $t2",
+        "lw $t3",
+        "add $t5",
+        "and $t4"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "add $t1" },
+        { pc: 2, if: "sub $t2", id: "add $t1" },
+        { pc: 3, if: "lw $t3", id: "sub $t2", ex: "add $t1" },
+        { pc: 4, if: "add $t5", id: "lw $t3", ex: "sub $t2", mem: "add $t1" },
+        { pc: null, if: "and $t4", id: "add $t5", ex: "lw $t3", mem: "sub $t2", wb: "add $t1" }
+      ]
+    }
+  );
+});
+</script>
+```
+
+Pipelined CPU:
+
+```{=html}
+<div id="pipeline2-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('pipeline2-container');
+  container.innerHTML = createPipelineHTML('pipelineViz2');
+  
+  window.pipelineViz2 = new PipelineVisualization(
+    document.getElementById('pipelineViz2'),
+    {
+      instructions: [
+        "ADD R3, R1, R4",
+        "SUB R5, R3, R6"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "ADD R3, R1, R4" },
+        { pc: 2, if: "SUB R5, R3, R6", id: "ADD R3, R1, R4" },
+        { pc: null, id: "SUB R5, R3, R6", ex: "ADD R3, R1, R4" },
+        { pc: null, id: "SUB R5, R3, R6", mem: "ADD R3, R1, R4" },
+        { pc: null, ex: "SUB R5, R3, R6", wb: "ADD R3, R1, R4" },
+        { pc: null, mem: "SUB R5, R3, R6" },
+        { pc: null, wb: "SUB R5, R3, R6" }
+      ]
+    }
+  );
+});
+</script>
+```
