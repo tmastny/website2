@@ -12,8 +12,68 @@ output:
 ---
 
 
+<div id="TOC">
+<ul>
+<li><a href="#instruction-decoding" id="toc-instruction-decoding">Instruction Decoding</a></li>
+<li><a href="#hazard-detection-unit" id="toc-hazard-detection-unit">Hazard detection unit</a></li>
+</ul>
+</div>
 
-<p>Visualizing CPU Pipelining.</p>
+<p>I want to share I’ve learned about CPU pipelining.
+Thanks to Dan Luu’s branch <a href="https://danluu.com/branch-prediction/">prediction write-up</a>
+I was vaguely aware how this worked conceptually,
+but I was motivated to divide into the details after reading
+Rodrigo Copetti’s <a href="https://www.copetti.org/writings/consoles/playstation/#bibref:9">Playstation MIPS write-up</a>
+where he talked the need for
+branch delay slots and how later CPUs used this to as an advantage
+with branch <em>prediction</em>. I quickly found many subtle and
+fasincating details on CPU pipelining that I had to share.
+For more details, I recommend
+chapter 4 of Computer Organization and Design.</p>
+<p>This post will assume you are familiar with the <a href="https://www.cybercomputing.co.uk/Languages/Hardware/laundryAnalogy.html">laundry</a>
+or “assembly-line” model of CPU pipelining, but are hazy on some of the
+lower-level details. It will also help to have a vague idea of
+the 5-stage MIPS pipeline.</p>
+<p>Let’s start by visualizing a basic CPU model that does not have pipelining
+(aka a single-cycle CPU design):</p>
+<div id="nonpipeline-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('nonpipeline-container');
+  container.innerHTML = createPipelineHTML('nonpipelineViz');
+  
+  window.nonpipelineViz = new PipelineVisualization(
+    document.getElementById('nonpipelineViz'),
+    {
+      instructions: [
+        "add $t1",
+        "sub $t2",
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "add $t1" },
+        { pc: 1, id: "add $t1" },
+        { pc: 1, ex: "add $t1" },
+        { pc: 1, mem: "add $t1" },
+        { pc: 1, wb: "add $t1" },
+        { pc: 2, if: "sub $t2" },
+        { pc: 2, id: "sub $t2" },
+        { pc: 2, ex: "sub $t2" },
+        { pc: 2, mem: "sub $t2" },
+        { pc: 2, wb: "sub $t2" },
+        { pc: null }
+      ]
+    }
+  );
+});
+</script>
+<p>One bottleneck is that each individual component of the pipeline
+is inactive while the instruction is actively being processed in
+another stage.</p>
+<p>Pipelined CPUs fill in these vacancies by running instructions
+through the stages one after the other, rather than waiting
+for a single instruction to finish.</p>
 <style>
 /* Your existing CSS stays the same */
 .pipeline-viz {
@@ -208,7 +268,6 @@ class PipelineVisualization {
 }
 </script>
 
-<p>Non-pipelined CPU:</p>
 <div id="pipeline1-container"></div>
 
 <script>
@@ -243,7 +302,42 @@ document.addEventListener('DOMContentLoaded', function() {
   );
 });
 </script>
-<p>Hazard detection unit</p>
+<p>This seems pretty natural: it’s like an multiple person assembly line.
+But there are some subtle implementation details
+that sets the stage to solve more complicated problems.</p>
+<div id="instruction-decoding" class="section level2">
+<h2>Instruction Decoding</h2>
+<p>Instruction decoding orchestrates the entire pipeline
+by providing reference fields used the remaining stages.</p>
+<p>Let’s work through an example. Say the instruction is</p>
+<pre><code>add $t1, $s2, $s3</code></pre>
+<p>The IF stage fetches the instruction and puts it into
+the ID stage register. Now the ID register contains
+fields that will be used by all the remaining stages.</p>
+<pre><code>pc: 0x014b4820
+-&gt; 
+Field   op      rs      rt      rd      shamt   funct
+Binary  000000  01010   01011   01001   00000   100000
+#       add     $s2     $s3     $t1</code></pre>
+<ul>
+<li>EX will use <code>op</code>, <code>rs</code>, and <code>rt</code> for the ALU
+operation and inputs</li>
+<li>MEM (for <code>lw</code> and <code>sw</code>) uses <code>rt</code></li>
+<li>WB will write to register <code>rd</code></li>
+</ul>
+<p><img src="id-dep.svg" /><!-- --></p>
+<p>With pipelining, we have a problem.
+Look at cycle 3 above: <code>add</code> moves into EX and <code>sub</code> moves into ID.
+But WB needs to know the <code>rd</code> of the <code>add</code> instruction!
+That field used to be safely in the ID register, but <code>sub</code> overwrote it.</p>
+<p>The solution is to have registers between each pipeline stage
+that carry fields from the ID stage (and data from other stages).</p>
+<p><img src="pipeline-registers.svg" /><!-- --></p>
+<p>Now when <code>add</code> reaches WB, it has the <code>rd</code> field so it
+can write to the correct register!</p>
+</div>
+<div id="hazard-detection-unit" class="section level2">
+<h2>Hazard detection unit</h2>
 <div id="pipeline2-container"></div>
 
 <script>
@@ -274,3 +368,4 @@ document.addEventListener('DOMContentLoaded', function() {
   );
 });
 </script>
+</div>
