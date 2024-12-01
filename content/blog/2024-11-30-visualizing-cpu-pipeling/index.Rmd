@@ -50,7 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
         { pc: 2, if: "sub $t2", id: "add $t1" },
         { pc: 3, if: "lw $t3", id: "sub $t2", ex: "add $t1" },
         { pc: 4, if: "add $t5", id: "lw $t3", ex: "sub $t2", mem: "add $t1" },
-        { pc: null, if: "and $t4", id: "add $t5", ex: "lw $t3", mem: "sub $t2", wb: "add $t1" }
+        { pc: null, if: "and $t4", id: "add $t5", ex: "lw $t3", mem: "sub $t2", wb: "add $t1" },
+        { pc: null, id: "and $t4", ex: "add $t5", mem: "lw $t3", wb: "sub $t2" },
+        { pc: null, ex: "and $t4", mem: "add $t5", wb: "lw $t3" },
+        { pc: null, mem: "and $t4", wb: "add $t5" },
+        { pc: null, wb: "and $t4" },
+        { pc: null }
       ]
     }
   );
@@ -58,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 ```
 
-Pipelined CPU:
+Hazard detection unit
 
 ```{=html}
 <div id="pipeline2-container"></div>
@@ -72,18 +77,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('pipelineViz2'),
     {
       instructions: [
-        "ADD R3, R1, R4",
-        "SUB R5, R3, R6"
+        "add r3, r1, r4",
+        "sub r5, r3, r6"
       ],
       sequence: [
         { pc: 0 },
-        { pc: 1, if: "ADD R3, R1, R4" },
-        { pc: 2, if: "SUB R5, R3, R6", id: "ADD R3, R1, R4" },
-        { pc: null, id: "SUB R5, R3, R6", ex: "ADD R3, R1, R4" },
-        { pc: null, id: "SUB R5, R3, R6", mem: "ADD R3, R1, R4" },
-        { pc: null, ex: "SUB R5, R3, R6", wb: "ADD R3, R1, R4" },
-        { pc: null, mem: "SUB R5, R3, R6" },
-        { pc: null, wb: "SUB R5, R3, R6" }
+        { pc: 1, if: "add r3, r1, r4" },
+        { pc: 2, if: "sub r5, r3, r6", id: "add r3, r1, r4" },
+        { pc: null, id: "sub r5, r3, r6", ex: "add r3, r1, r4" },
+        { pc: null, id: "sub r5, r3, r6", mem: "add r3, r1, r4" },
+        { pc: null, id: "sub r5, r3, r6", wb: "add r3, r1, r4" },
+        { pc: null, ex: "sub r5, r3, r6" },
+        { pc: null, mem: "sub r5, r3, r6" },
+        { pc: null, wb: "sub r5, r3, r6" },
+        { pc: null }
       ]
     }
   );
