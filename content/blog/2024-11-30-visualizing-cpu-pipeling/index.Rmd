@@ -223,8 +223,11 @@ ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd
 That's the *Hazard Detection Unit*. This unit will attach to
 the ID stage and prevent progress until the hazard is resolved.
 
-
-
+> Note that this hazard detection logic works for "R-type" instructions
+like `add`, `and`, etc. that write to registers, but not every
+instructions write to registers (like `sw`). We'd technically
+need to check a few other conditions for a complete implementation,
+especially around data hazards with `lw` and `sw`. 
 
 
 Using the metadata stored in registers, we can add
