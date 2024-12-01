@@ -1,0 +1,194 @@
+<style>
+/* Your existing CSS stays the same */
+.pipeline-viz {
+  font-family: monospace;
+  margin: 2em 0;
+  padding: 2em;
+  width: 800px;
+  overflow-x: auto;
+}
+
+.controls {
+  margin-bottom: 1em;
+}
+
+.control-button {
+  padding: 0.5em 1em;
+  margin-right: 0.5em;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+}
+
+.control-button:hover {
+  background: #e9ecef;
+}
+
+.instructions-list {
+  margin-bottom: 2em;
+}
+
+.instruction {
+  padding: 0.5em;
+  margin: 0.25em 0;
+  background: #f8f9fa;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.instruction.active {
+  background: #e6f3ff;
+  opacity: 1;
+  font-weight: bold;
+}
+
+.pipeline {
+  display: flex;
+  justify-content: flex-start;
+  gap: 1em;
+  margin-top: 2em;
+}
+
+.stage-container {
+  flex: 1;
+  text-align: center;
+}
+
+.stage-name {
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.stage {
+  height: 60px;
+  width: 140px;
+  padding: 0.5em;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+}
+
+.stage.active {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+</style>
+
+<script>
+// Fixed createPipelineHTML function with correct button handlers
+function createPipelineHTML(id) {
+  return `
+    <div class="pipeline-viz" id="${id}">
+      <div class="controls">
+        <button onclick="window.${id}.stepBack()" class="control-button">◀ Previous</button>
+        <button onclick="window.${id}.stepForward()" class="control-button">Next ▶</button>
+        <button onclick="window.${id}.reset()" class="control-button">Reset</button>
+      </div>
+      
+      <div class="instructions-list">
+        <div id="${id}-instructions"></div>
+      </div>
+      
+      <div class="pipeline">
+        <div class="stage-container">
+          <div class="stage-name">IF</div>
+          <div class="stage" data-stage="if"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">ID</div>
+          <div class="stage" data-stage="id"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">EX</div>
+          <div class="stage" data-stage="ex"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">MEM</div>
+          <div class="stage" data-stage="mem"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">WB</div>
+          <div class="stage" data-stage="wb"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Your existing PipelineVisualization class stays exactly the same
+class PipelineVisualization {
+  constructor(container, config) {
+    this.container = container;
+    this.config = config;
+    this.currentStep = 0;
+    this.initialize();
+  }
+
+  initialize() {
+    const instructionContainer = this.container.querySelector('[id$="-instructions"]');
+    this.config.instructions.forEach(inst => {
+      const div = document.createElement('div');
+      div.className = 'instruction';
+      div.textContent = inst;
+      instructionContainer.appendChild(div);
+    });
+    this.render();
+  }
+
+  render() {
+    const stages = this.container.querySelectorAll('.stage');
+    const instructions = this.container.querySelectorAll('.instruction');
+    
+    stages.forEach(stage => {
+      stage.textContent = '';
+      stage.classList.remove('active');
+    });
+    
+    instructions.forEach(inst => inst.classList.remove('active'));
+
+    const state = this.config.sequence[this.currentStep] || {};
+    
+    Object.entries(state).forEach(([stage, instruction]) => {
+      if (instruction && stage !== 'pc') {
+        const stageElement = this.container.querySelector(
+          `.stage[data-stage="${stage.toLowerCase()}"]`
+        );
+        if (stageElement) {
+          stageElement.textContent = instruction;
+          stageElement.classList.add('active');
+        }
+      }
+    });
+
+    if (state.pc !== null && state.pc !== undefined && state.pc < instructions.length) {
+      instructions[state.pc].classList.add('active');
+    }
+  }
+
+  stepForward() {
+    if (this.currentStep < this.config.sequence.length - 1) {
+      this.currentStep++;
+      this.render();
+    }
+  }
+
+  stepBack() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      this.render();
+    }
+  }
+
+  reset() {
+    this.currentStep = 0;
+    this.render();
+  }
+}
+</script>
+
