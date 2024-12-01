@@ -15,7 +15,7 @@ output:
 <div id="TOC">
 <ul>
 <li><a href="#instruction-decoding" id="toc-instruction-decoding">Instruction Decoding</a></li>
-<li><a href="#hazard-detection-unit" id="toc-hazard-detection-unit">Hazard detection unit</a></li>
+<li><a href="#hazard-detection" id="toc-hazard-detection">Hazard detection</a></li>
 </ul>
 </div>
 
@@ -309,7 +309,8 @@ that sets the stage to solve more complicated problems.</p>
 <h2>Instruction Decoding</h2>
 <p>Instruction decoding orchestrates the entire pipeline
 by providing reference fields used the remaining stages.</p>
-<p>Let’s work through an example. Say the instruction is</p>
+<p>Let’s work through an example (this is not quite how it works).
+Say the instruction is</p>
 <pre><code>add $t1, $s2, $s3</code></pre>
 <p>The IF stage fetches the instruction and puts it into
 the ID stage register. Now the ID register contains
@@ -329,15 +330,56 @@ operation and inputs</li>
 <p>With pipelining, we have a problem.
 Look at cycle 3 above: <code>add</code> moves into EX and <code>sub</code> moves into ID.
 But WB needs to know the <code>rd</code> of the <code>add</code> instruction!
-That field used to be safely in the ID register, but <code>sub</code> overwrote it.</p>
+That field used to be safely stored in the ID register, but <code>sub</code> overwrote it.</p>
 <p>The solution is to have registers between each pipeline stage
-that carry fields from the ID stage (and data from other stages).</p>
+that carry fields from the ID stage (as well as other stages).</p>
 <p><img src="pipeline-registers.svg" /><!-- --></p>
 <p>Now when <code>add</code> reaches WB, it has the <code>rd</code> field so it
 can write to the correct register!</p>
 </div>
-<div id="hazard-detection-unit" class="section level2">
-<h2>Hazard detection unit</h2>
+<div id="hazard-detection" class="section level2">
+<h2>Hazard detection</h2>
+<p>The field metadata from ID needs to be available at each stage
+to enable basic operations like writing back to the registers,
+but the feilds also turn out to be crucial to solve data hazards.</p>
+<p>To start, let’s look at this example:</p>
+<div id="pipelineblocked-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('pipelineblocked-container');
+  container.innerHTML = createPipelineHTML('pipelineblocked');
+  
+  window.pipelineblocked = new PipelineVisualization(
+    document.getElementById('pipelineblocked'),
+    {
+      instructions: [
+        "add r3, r1, r4",
+        "sub r5, r3, r6"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "add r3, r1, r4" },
+        { pc: 2, if: "sub r5, r3, r6", id: "add r3, r1, r4" },
+        { pc: null, id: "sub r5, r3, r6", ex: "add r3, r1, r4" },
+      ]
+    }
+  );
+});
+</script>
+<p><code>sub</code> has a dependency on the output of <code>add</code>: this is called a
+data hazard. Structurally, the CPU could proceed but the result
+would be incorrect. We need a way to check if any of the inputs
+of the instruction in ID is the output register for any downstream
+instructions.</p>
+<p>Since the field metadata is propogated to each stage register,
+we have all the data we need! What’s missing is a unit to calculate
+this:</p>
+<pre><code>ID/IF.rs == EX/ID.rd || ID/IF.rt == EX/ID.rd ||
+ID/IF.rs == MEM/ID.rd || ID/IF.rt == MEM/ID.rd ||</code></pre>
+<p>That’s the <em>Hazard Detection Unit</em>.</p>
+<p>Using the metadata stored in registers, we can add
+a hazard detection unit.</p>
 <div id="pipeline2-container"></div>
 
 <script>

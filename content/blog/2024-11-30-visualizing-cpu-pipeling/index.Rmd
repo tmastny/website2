@@ -132,7 +132,8 @@ that sets the stage to solve more complicated problems.
 Instruction decoding orchestrates the entire pipeline
 by providing reference fields used the remaining stages.
 
-Let's work through an example. Say the instruction is
+Let's work through an example (this is not quite how it works). 
+Say the instruction is
 ```
 add $t1, $s2, $s3
 ```
@@ -159,10 +160,10 @@ knitr::include_graphics("id-dep.svg")
 With pipelining, we have a problem. 
 Look at cycle 3 above: `add` moves into EX and `sub` moves into ID.
 But WB needs to know the `rd` of the `add` instruction! 
-That field used to be safely in the ID register, but `sub` overwrote it. 
+That field used to be safely stored in the ID register, but `sub` overwrote it. 
 
 The solution is to have registers between each pipeline stage
-that carry fields from the ID stage (and data from other stages).
+that carry fields from the ID stage (as well as other stages).
 
 ```{r, echo=FALSE}
 knitr::include_graphics("pipeline-registers.svg")
@@ -171,10 +172,61 @@ knitr::include_graphics("pipeline-registers.svg")
 Now when `add` reaches WB, it has the `rd` field so it
 can write to the correct register!
 
+## Hazard detection 
+
+The field metadata from ID needs to be available at each stage
+to enable basic operations like writing back to the registers, 
+but the feilds also turn out to be crucial to solve data hazards. 
+
+To start, let's look at this example:
+```{=html}
+<div id="pipelineblocked-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('pipelineblocked-container');
+  container.innerHTML = createPipelineHTML('pipelineblocked');
+  
+  window.pipelineblocked = new PipelineVisualization(
+    document.getElementById('pipelineblocked'),
+    {
+      instructions: [
+        "add r3, r1, r4",
+        "sub r5, r3, r6"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "add r3, r1, r4" },
+        { pc: 2, if: "sub r5, r3, r6", id: "add r3, r1, r4" },
+        { pc: null, id: "sub r5, r3, r6", ex: "add r3, r1, r4" },
+      ]
+    }
+  );
+});
+</script>
+```
+
+`sub` has a dependency on the output of `add`: this is called a 
+data hazard. Structurally, the CPU could proceed but the result 
+would be incorrect. We need a way to check if any of the inputs
+of the instruction in ID is the output register for any downstream 
+instructions. 
+
+Since the field metadata is propogated to each stage register,
+we have all the data we need! What's missing is a unit to calculate
+this:
+```
+ID/IF.rs == EX/ID.rd || ID/IF.rt == EX/ID.rd ||
+ID/IF.rs == MEM/ID.rd || ID/IF.rt == MEM/ID.rd ||
+```
+
+That's the *Hazard Detection Unit*. 
 
 
 
-## Hazard detection unit
+
+Using the metadata stored in registers, we can add
+a hazard detection unit.
 
 ```{=html}
 <div id="pipeline2-container"></div>
