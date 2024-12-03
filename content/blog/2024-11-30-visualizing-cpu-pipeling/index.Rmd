@@ -2,7 +2,7 @@
 title: 'Visualizing CPU Pipelining'
 author: ~
 date: '2024-11-30'
-slug: visualizing-cpu-pipeling
+slug: visualizing-cpu-pipelining
 categories: []
 tags: []
 description: 'Visualizing CPU Pipelining'
@@ -19,13 +19,13 @@ knitr::opts_chunk$set(
 ```
 
 I want to share what I've learned about CPU pipelining. 
-Thanks to Dan Luu's branch [prediction write-up](https://danluu.com/branch-prediction/)
+Thanks to Dan Luu's branch [prediction write-up](https://danluu.com/branch-prediction/),
 I was vaguely aware how this worked conceptually, 
-but I was motivated to divide into the details after reading
+but I was motivated to dive into the details after reading
 Rodrigo Copetti's [Playstation MIPS write-up](https://www.copetti.org/writings/consoles/playstation/#bibref:9)
 where he talked about branch delay slots and how they evolved into
 branch *prediction*. I quickly found many subtle and
-fasincating details on CPU pipelining that I had to share. 
+fascinating details on CPU pipelining that I had to share. 
 For more details, I recommend 
 chapter 4 of Computer Organization and Design.
 
@@ -35,7 +35,7 @@ lower-level details. It will also help to have a vague idea of
 the 5-stage MIPS pipeline ([this](https://courses.cs.washington.edu/courses/cse410/05sp/lectures/cse410-10-pipelining-a.pdf)
 is a nice, brief high-level summary), since our model CPU will be the 32-bit MIPS.
 
-## Visualizing Pipelines
+## Visualizing pipelines
 
 Let's start by visualizing a basic CPU model that does not have pipelining 
 (aka a single-cycle CPU design):
@@ -215,7 +215,7 @@ would be incorrect. We need a way to check if any of the inputs
 of the instruction in ID match the output register for any 
 downstream instructions. 
 
-Since the field metadata is propogated to each stage register,
+Since the field metadata is propagated to each stage register,
 we have all the data we need! What's missing is a unit to calculate
 this:
 ```
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 > Why are stalls also called bubbles? Because once they appear
 they flow through the pipeline until they pop out of the end.
-Like a diver who let's out some air underwater, the bubble
+Like a diver who lets out air underwater, the bubble
 will rise to the surface. Stretching the analogy further,
 the diver, like the HDU, can let out more than one bubble
 depending on the circumstance. The previous example let out
@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
 I'm not going to go into all the details on how the HDU and FU
 work together, because it's a little bit different
 than how I've laid it out here. And as I hinted at with this example,
-there nuances around `lw` and `sw` instructions
+there are nuances around `lw` and `sw` instructions
 you have to be careful with.  
 
 ## Branching
@@ -562,7 +562,7 @@ knitr::include_graphics("dynamic-branch.svg")
     * compares the actual branch result to the prediction
     * flushes the pipeline if the prediction was incorrect
     * writes to BPU to update the prediction (depending on the prediction scheme, it will 
-      write to the unit whether the prediction is write or wrong)
+      write to the unit whether the prediction is right or wrong)
 * BTAC (Branch Target Address Calculation)
     * calculates the branch target address from the branch's PC and the branch offset,
       which the BRU uses to update the PC on a misprediction
