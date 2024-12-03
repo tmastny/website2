@@ -2,7 +2,7 @@
 title: 'Visualizing CPU Pipelining'
 author: ~
 date: '2024-11-30'
-slug: visualizing-cpu-pipeling
+slug: visualizing-cpu-pipelining
 categories: []
 tags: []
 description: 'Visualizing CPU Pipelining'
@@ -19,14 +19,13 @@ knitr::opts_chunk$set(
 ```
 
 I want to share what I've learned about CPU pipelining. 
-Thanks to Dan Luu's branch [prediction write-up](https://danluu.com/branch-prediction/)
+Thanks to Dan Luu's branch [prediction write-up](https://danluu.com/branch-prediction/),
 I was vaguely aware how this worked conceptually, 
-but I was motivated to divide into the details after reading
+but I was motivated to dive into the details after reading
 Rodrigo Copetti's [Playstation MIPS write-up](https://www.copetti.org/writings/consoles/playstation/#bibref:9)
-where he talked the need for
-branch delay slots and how later CPUs used this to as an advantage
-with branch *prediction*. I quickly found many subtle and
-fasincating details on CPU pipelining that I had to share. 
+where he talked about branch delay slots and how they evolved into
+branch *prediction*. I quickly found many subtle and
+fascinating details on CPU pipelining that I had to share. 
 For more details, I recommend 
 chapter 4 of Computer Organization and Design.
 
@@ -34,9 +33,9 @@ This post will assume you are familiar with the [laundry](https://www.cybercompu
 or "assembly-line" model of CPU pipelining, but are hazy on some of the
 lower-level details. It will also help to have a vague idea of 
 the 5-stage MIPS pipeline ([this](https://courses.cs.washington.edu/courses/cse410/05sp/lectures/cse410-10-pipelining-a.pdf)
-is a nice, brief high-level summary).
+is a nice, brief high-level summary), since our model CPU will be the 32-bit MIPS.
 
-## CPU Visualizations
+## Visualizing pipelines
 
 Let's start by visualizing a basic CPU model that does not have pipelining 
 (aka a single-cycle CPU design):
@@ -126,8 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
 ```
 
 This seems pretty natural: it's like an multiple person assembly line.
-But there are some subtle implementation details 
-that help solve more complicated problems. 
+But there are already some subtle problems that need to be solved. 
 
 ## Instruction Decoding
 
@@ -214,10 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
 `sub` has a dependency on the output of `add`: this is called a 
 data hazard. Structurally, the CPU could proceed but the result 
 would be incorrect. We need a way to check if any of the inputs
-of the instruction in ID matches the output register for any 
+of the instruction in ID match the output register for any 
 downstream instructions. 
 
-Since the field metadata is propogated to each stage register,
+Since the field metadata is propagated to each stage register,
 we have all the data we need! What's missing is a unit to calculate
 this:
 ```
@@ -225,13 +223,13 @@ ID/EXE.rs == EX/MEM.rd || ID/EXE.rt == EX/MEM.rd ||
 ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd
 ```
 
-That's the *Hazard Detection Unit* (HDU). This unit will attach to
-the ID stage and will both detect a hazard
+That's the *Hazard Detection Unit* (HDU). This unit 
+will both detect hazards
 and prevent progress until the hazard is resolved.
 
 > This hazard detection logic works for "R-type" instructions
 that write to registers (like `add` and `and`), but not every
-instructions write to registers (like `sw`). We'd technically
+instruction writes to registers (like `sw`). We'd technically
 need to check a few other conditions for a complete implementation,
 especially around data hazards involving `lw` and `sw`. 
 
@@ -241,12 +239,12 @@ knitr::include_graphics("hdu.svg")
 
 The solid lines show the inputs to the HDU, detecting the hazard.
 The dotted lines are the control signals, stopping the PC and IF
-and writing a `nop` instruction to the ID/EXE register.
+and writing a `nop` instruction to the ID/EX register.
 
 The `nop` will proceed through each stage, eventually causing the
 hazard comparison logic to be false. This will lift the stall
-on the PC and IF stages, and remove the `nop` signal from the 
-ID/EXE register, allowing the `sub` instruction to continue. 
+on the PC and IF stages, and remove the signal 
+allowing the `sub` instruction to continue. 
 
 ```{=html}
 <div id="pipeline2-container"></div>
@@ -283,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 > Why are stalls also called bubbles? Because once they appear
 they flow through the pipeline until they pop out of the end.
-Like a diver who let's out some air underwater, the bubble
+Like a diver who lets out air underwater, the bubble
 will rise to the surface. Stretching the analogy further,
 the diver, like the HDU, can let out more than one bubble
 depending on the circumstance. The previous example let out
@@ -366,8 +364,8 @@ add r3, r1, r4
 ```
 
 Our HDU handles this situation just fine: in fact, it's identical
-to the previous HDU example where the HDU must stall until
-WB writes back to register `r1`, creating 2 bubbles. 
+to our previous example where we must stall until
+WB writes back to register `r1`, creating 2 bubbles.
 
 But there's an opportunity here: 
 the intermediate result is available in the MEM/WB register
@@ -412,19 +410,174 @@ document.addEventListener('DOMContentLoaded', function() {
 I'm not going to go into all the details on how the HDU and FU
 work together, because it's a little bit different
 than how I've laid it out here. And as I hinted at with this example,
-there some additional nuance around `lw` and `sw` instructions
+there are nuances around `lw` and `sw` instructions
 you have to be careful with.  
 
-But I encourage you to work
-through some data hazard examples of your own to get a better
-feel how for how it works.
+## Branching
+
+The tools we've built up so far (register metadata, 
+forwarding, and stalls) will help us tackle
+branching aka control hazards. 
+
+We'll start out with the simplest technique. 
+
+### Predict branch not taken
+
+The logic and implementation behind branch not taken
+is very similar to forwarding to resolve data hazards. 
+With forwarding, the EX (or MEM) result of one instruction
+is used as input to the EX stage of an upcoming instruction. 
+
+For branch prediction, the EX stage calculates the branch condition
+and saves the result to the EX/MEM register. If the branch **is** taken,
+we "forward" that fact to *all* previous stages.
+This information is not used as an input, but rather converts
+the instruction into a `nop` that will bubble through the pipeline.
+
+Additionally, the branch target address was saved in the
+inter-stage registers and is used to update the PC 
+(this is calculated from the branch offset instruction argument
+and the branch's PC during the ID stage in the Branch Target
+Address Calculation (BTAC) unit. There is a diagram below showing
+the flow).
+
+```{=html}
+<div id="branchpipeline-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('branchpipeline-container');
+  container.innerHTML = createPipelineHTML('branchpipeline');
+
+  window.branchpipeline = new PipelineVisualization(
+    document.getElementById('branchpipeline'),
+    {
+      instructions: [
+        "beq r1, r2, br",
+        "add r7, r1, r4",
+        "lw r8, 0(t6)",
+        "add r8, r8, r9",
+        "sw r8, 0(t6)",
+        "sw r7, 4(t6)",
+        "add r3, r1, r4",
+        "br: and r9, r10, r11",
+        "sub r5, r3, r6"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "beq r1, r2, br" },
+        { pc: 2, if: "add r7, r1, r4", id: "beq r1, r2, br" },
+        { pc: 3, if: "lw r8, 0(r7)", id: "add r7, r1, r4", ex: "beq r1, r2, br" },
+        { pc: 4, if: "add r8, r8, r9", id: "lw r8, 0(r7)", ex: "add r7, r1, r4", mem: "beq r1, r2, br" },
+        { pc: 7, if: "and r9, r10, r11", wb: "beq r1, r2, br" },
+        { pc: null, if: "sub r5, r3, r6", id: "and r9, r10, r11" },
+        { pc: null, id: "sub r5, r3, r6", ex: "and r9, r10, r11" },
+        { pc: null, ex: "sub r5, r3, r6", mem: "and r9, r10, r11" },
+        { pc: null, mem: "sub r5, r3, r6", wb: "and r9, r10, r11" },
+        { pc: null, wb: "sub r5, r3, r6" },
+        { pc: null }
+      ]
+    }
+  );
+});
+</script>
+```
+
+#### Branch delay slot
+
+A simple improvement to this scheme actually uses less hardware. 
+Instead of converting ID, IF, and EX into `nop` we assume that the
+instruction immediately after the branch will execute no matter what. 
+The position immediately after the branch is called the *branch delay slot*
+and the compiler or programmer is responsible for filling it. 
+
+The advantage is that instead of 3 bubbles, we only have 2. 
+
+Suppose we add an instruction prior to the branch in our last example.
+The compiler may reorganize the instructions so `add` happens after
+the branch in the branch delay slot.
+
+```
+add t0, t1, t2  \   beq r1, r2, br
+beq r1, r2, br  /   add t0, t1, t2
+add r7, r1, r4      add r7, r1, r4
+lw  r8, 0(t6)       lw  r8, 0(t6)
+```
+
+Now the pipeline can still "predict" branch not taken, 
+but `add t0` will still execute and do useful work. 
+
+Unfortunately, sometimes the compiler can't find an instruction
+to fill the branch delay slot and will have to 
+insert a `nop` anyway.
+
+Take a look at this example, where we iterate over an array
+until we find zero. 
+```
+loop:
+    lw   t0, 0(s0)    
+    beq  t0, 0, done 
+    nop                 
+    add  s0, s0, 4      
+    j    loop           
+done:
+```
+`add` can not go into the branch delay slot, because if the branch
+was taken, we would have incorrectly modified `s0`. `s0` would no longer point to
+the first zero in the array. And we can't move `lw` down into the slot, because the branch depends
+on the value of `t0`, so `lw` must execute first.
+
+Now maybe a sufficiently intelligent compiler could figure out a solution
+(maybe it's okay to put `add` in the slot and as long as we later subtract 4 to get the
+zero's pointer), but these are the situations the compiler has to consider.
+
+### Dynamic branch prediction 
+
+In this section, I only want to briefly cover dynamic branch prediction resolution,
+because Dan Luu's [write-up](https://danluu.com/branch-prediction/) covers
+many details about the prediction itself (I recommend the section on 2-bit saturating
+counters. His explanation really made things click for me). 
+
+Luckily, the resolution logic for dynamic branch is almost identical to
+the resolution logic when we predict branch not taken. 
+In the simple branch prediction case, we compare the branch result of
+the EX stage to our *assumption* that the branch was not taken. 
+
+For dynamic branch prediction resolution, we need to store the prediction
+and compare it to the actual branch result in the EX/MEM register.
+The means when we fetch the branch prediction in the IF stage, the prediction
+must be stored in the IF/ID register and propagated to downstream 
+inter-stage registers.
+
+I'm not including an iterative visualization here, 
+because it's identical to the last one. 
+I do have a rough schematic of branch prediction and resolution
+to show the high-level flow:
+
+```{r, echo=FALSE}
+knitr::include_graphics("dynamic-branch.svg")
+```
+
+* BRU (Branch Resolution Unit) 
+    * compares the actual branch result to the prediction
+    * flushes the pipeline if the prediction was incorrect
+    * writes to BPU to update the prediction (depending on the prediction scheme, it will 
+      write to the unit whether the prediction is right or wrong)
+* BTAC (Branch Target Address Calculation)
+    * calculates the branch target address from the branch's PC and the branch offset,
+      which the BRU uses to update the PC on a misprediction
+* BPU (Branch Prediction Unit, aka Branch Target Buffer (BTB))
+    * looks up the branch prediction based on last bits of branch PC and
+    * writes prediction to IF/ID register
+    * stores whether the branch was last taken or not
 
 ## Conclusion
 
-There are many more cool elements to CPU pipelining.
-Compiler optimization and design is closely related to CPU
-pipelining and 
-many hazards can be resolved by [reordering instructions in
-careful ways](https://www.copetti.org/writings/consoles/playstation/#bibref:10). 
-And the logical follow-up from this post is control hazards, 
-which ties directly into stalls and evolves into branch prediction.
+I first got interested in CPU pipelining through high-level articles like Dan Luu's 
+[branch prediction write-up](https://danluu.com/branch-prediction/) and Rodrigo Copetti's 
+[PlayStation architecture analysis](https://www.copetti.org/writings/consoles/playstation/#bibref:10). 
+Conceptually, the ideas were fascinating, and they made me want to dive into the details to
+see how everything worked.
+
+I was most impressed by how the simple core mechanisms of register metadata, stalls, and forwarding
+are continuously combined and remixed to solve increasingly complex problems.
