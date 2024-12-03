@@ -22,8 +22,8 @@ output:
 <li><a href="#branching" id="toc-branching">Branching</a>
 <ul>
 <li><a href="#predict-branch-not-taken" id="toc-predict-branch-not-taken">Predict branch not taken</a></li>
-</ul></li>
 <li><a href="#dynamic-branch-prediction" id="toc-dynamic-branch-prediction">Dynamic branch prediction</a></li>
+</ul></li>
 <li><a href="#conclusion" id="toc-conclusion">Conclusion</a></li>
 </ul>
 </div>
@@ -33,9 +33,8 @@ Thanks to Dan Luu’s branch <a href="https://danluu.com/branch-prediction/">pre
 I was vaguely aware how this worked conceptually,
 but I was motivated to divide into the details after reading
 Rodrigo Copetti’s <a href="https://www.copetti.org/writings/consoles/playstation/#bibref:9">Playstation MIPS write-up</a>
-where he talked the need for
-branch delay slots and how later CPUs used this to as an advantage
-with branch <em>prediction</em>. I quickly found many subtle and
+where he talked about branch delay slots and how they evolved into
+branch <em>prediction</em>. I quickly found many subtle and
 fasincating details on CPU pipelining that I had to share.
 For more details, I recommend
 chapter 4 of Computer Organization and Design.</p>
@@ -43,7 +42,7 @@ chapter 4 of Computer Organization and Design.</p>
 or “assembly-line” model of CPU pipelining, but are hazy on some of the
 lower-level details. It will also help to have a vague idea of
 the 5-stage MIPS pipeline (<a href="https://courses.cs.washington.edu/courses/cse410/05sp/lectures/cse410-10-pipelining-a.pdf">this</a>
-is a nice, brief high-level summary).</p>
+is a nice, brief high-level summary), since our model CPU will be the 32-bit MIPS.</p>
 <div id="visualizing-pipelines" class="section level2">
 <h2>Visualizing Pipelines</h2>
 <p>Let’s start by visualizing a basic CPU model that does not have pipelining
@@ -314,8 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <p>This seems pretty natural: it’s like an multiple person assembly line.
-But there are some subtle implementation details
-that help solve more complicated problems.</p>
+But there are already some subtle problems that need to be solved.</p>
 </div>
 <div id="instruction-decoding" class="section level2">
 <h2>Instruction Decoding</h2>
@@ -385,31 +383,31 @@ document.addEventListener('DOMContentLoaded', function() {
 <p><code>sub</code> has a dependency on the output of <code>add</code>: this is called a
 data hazard. Structurally, the CPU could proceed but the result
 would be incorrect. We need a way to check if any of the inputs
-of the instruction in ID matches the output register for any
+of the instruction in ID match the output register for any
 downstream instructions.</p>
 <p>Since the field metadata is propogated to each stage register,
 we have all the data we need! What’s missing is a unit to calculate
 this:</p>
 <pre><code>ID/EXE.rs == EX/MEM.rd || ID/EXE.rt == EX/MEM.rd ||
 ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd</code></pre>
-<p>That’s the <em>Hazard Detection Unit</em> (HDU). This unit will attach to
-the ID stage and will both detect a hazard
+<p>That’s the <em>Hazard Detection Unit</em> (HDU). This unit will
+will both detect hazards
 and prevent progress until the hazard is resolved.</p>
 <blockquote>
 <p>This hazard detection logic works for “R-type” instructions
 that write to registers (like <code>add</code> and <code>and</code>), but not every
-instructions write to registers (like <code>sw</code>). We’d technically
+instruction writes to registers (like <code>sw</code>). We’d technically
 need to check a few other conditions for a complete implementation,
 especially around data hazards involving <code>lw</code> and <code>sw</code>.</p>
 </blockquote>
 <p><img src="hdu.svg" /><!-- --></p>
 <p>The solid lines show the inputs to the HDU, detecting the hazard.
 The dotted lines are the control signals, stopping the PC and IF
-and writing a <code>nop</code> instruction to the ID/EXE register.</p>
+and writing a <code>nop</code> instruction to the ID/EX register.</p>
 <p>The <code>nop</code> will proceed through each stage, eventually causing the
 hazard comparison logic to be false. This will lift the stall
-on the PC and IF stages, and remove the <code>nop</code> signal from the
-ID/EXE register, allowing the <code>sub</code> instruction to continue.</p>
+on the PC and IF stages, and remove the signal
+allowing the <code>sub</code> instruction to continue.</p>
 <div id="pipeline2-container"></div>
 
 <script>
@@ -556,16 +554,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <p>I’m not going to go into all the details on how the HDU and FU
 work together, because it’s a little bit different
 than how I’ve laid it out here. And as I hinted at with this example,
-there some additional nuance around <code>lw</code> and <code>sw</code> instructions
+there nuances around <code>lw</code> and <code>sw</code> instructions
 you have to be careful with.</p>
-<p>But I encourage you to work
-through some data hazard examples of your own to get a better
-feel how for how it works.</p>
 </div>
 <div id="branching" class="section level2">
 <h2>Branching</h2>
-<p>The tools we’ve built up so far, register metadata,
-forwarding, and stalls, will help us tackle
+<p>The tools we’ve built up so far (register metadata,
+forwarding, and stalls) will help us tackle
 branching aka control hazards.</p>
 <p>We’ll start out with the simplest technique.</p>
 <div id="predict-branch-not-taken" class="section level3">
@@ -579,8 +574,12 @@ and saves the result to the EX/MEM register. If the branch <strong>is</strong> t
 we “forward” that fact to <em>all</em> previous stages.
 This information is not used as an input, but rather converts
 the instruction into a <code>nop</code> that will bubble through the pipeline.</p>
-<p>Additionally, the branch target offset was saved in the
-inter-stage registers and is used to update the PC.</p>
+<p>Additionally, the branch target address was saved in the
+inter-stage registers and is used to update the PC
+(this is calculated from the branch offset instruction argument
+and the branch’s PC during the ID stage in the Branch Target
+Address Calculation (BTAC) unit. There is a diagram below showing
+the flow).</p>
 <div id="branchpipeline-container"></div>
 
 <script>
@@ -626,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
 Instead of converting ID, IF, and EX into <code>nop</code> we assume that the
 instruction immediately after the branch will execute no matter what.
 The position immediately after the branch is called the <em>branch delay slot</em>
-and the compiler or programmer has the responsibility to fill.</p>
+and the compiler or programmer is responsible for filling it.</p>
 <p>The advantage is that instead of 3 bubbles, we only have 2.</p>
 <p>Suppose we add an instruction prior to the branch in our last example.
 The compiler may reorganize the instructions so <code>add</code> happens after
@@ -658,12 +657,12 @@ on the value of <code>t0</code>, so <code>lw</code> must execute first.</p>
 zero’s pointer), but these are the situations the compiler has to consider.</p>
 </div>
 </div>
-</div>
-<div id="dynamic-branch-prediction" class="section level2">
-<h2>Dynamic branch prediction</h2>
+<div id="dynamic-branch-prediction" class="section level3">
+<h3>Dynamic branch prediction</h3>
 <p>In this section, I only want to briefly cover dynamic branch prediction resolution,
 because Dan Luu’s <a href="https://danluu.com/branch-prediction/">write-up</a> covers
-many details about the prediction itself.</p>
+many details about the prediction itself (I recommend the section on 2-bit saturating
+counters. His explanation really made things click for me).</p>
 <p>Luckily, the resolution logic for dynamic branch is almost identical to
 the resolution logic when we predict branch not taken.
 In the simple branch prediction case, we compare the branch result of
@@ -673,6 +672,32 @@ and compare it to the actual branch result in the EX/MEM register.
 The means when we fetch the branch prediction in the IF stage, the prediction
 must be stored in the IF/ID register and propagated to downstream
 inter-stage registers.</p>
+<p>I’m not including an iterative visualization here,
+because it’s identical to the last one.
+I do have a rough schematic of branch prediction and resolution
+to show the high-level flow:</p>
+<p><img src="dynamic-branch.svg" /><!-- --></p>
+<ul>
+<li>BRU (Branch Resolution Unit)
+<ul>
+<li>compares the actual branch result to the prediction</li>
+<li>flushes the pipeline if the prediction was incorrect</li>
+<li>writes to BPU to update the prediction (depending on the prediction scheme, it will
+write to the unit whether the prediction is write or wrong)</li>
+</ul></li>
+<li>BTAC (Branch Target Address Calculation)
+<ul>
+<li>calculates the branch target address from the branch’s PC and the branch offset,
+which the BRU uses to update the PC on a misprediction</li>
+</ul></li>
+<li>BPU (Branch Prediction Unit, aka Branch Target Buffer (BTB))
+<ul>
+<li>looks up the branch prediction based on last bits of branch PC and</li>
+<li>writes prediction to IF/ID register</li>
+<li>stores whether the branch was last taken or not</li>
+</ul></li>
+</ul>
+</div>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
