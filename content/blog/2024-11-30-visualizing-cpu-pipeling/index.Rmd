@@ -223,7 +223,7 @@ ID/EXE.rs == EX/MEM.rd || ID/EXE.rt == EX/MEM.rd ||
 ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd
 ```
 
-That's the *Hazard Detection Unit* (HDU). This unit will
+That's the *Hazard Detection Unit* (HDU). This unit 
 will both detect hazards
 and prevent progress until the hazard is resolved.
 
@@ -364,8 +364,8 @@ add r3, r1, r4
 ```
 
 Our HDU handles this situation just fine: in fact, it's identical
-to the previous HDU example where the HDU must stall until
-WB writes back to register `r1`, creating 2 bubbles. 
+to our previous example where we must stall until
+WB writes back to register `r1`, creating 2 bubbles.
 
 But there's an opportunity here: 
 the intermediate result is available in the MEM/WB register
