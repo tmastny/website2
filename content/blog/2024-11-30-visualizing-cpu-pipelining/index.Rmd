@@ -563,6 +563,7 @@ knitr::include_graphics("dynamic-branch.svg")
     * flushes the pipeline if the prediction was incorrect
     * writes to BPU to update the prediction (depending on the prediction scheme, it will 
       write to the unit whether the prediction is right or wrong)
+    * sets the PC to the branch target address if the prediction was incorrect
 * BTAC (Branch Target Address Calculation)
     * calculates the branch target address from the branch's PC and the branch offset,
       which the BRU uses to update the PC on a misprediction
