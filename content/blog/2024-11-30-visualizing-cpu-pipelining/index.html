@@ -672,7 +672,7 @@ and compare it to the actual branch result in the EX/MEM register.
 The means when we fetch the branch prediction in the IF stage, the prediction
 must be stored in the IF/ID register and propagated to downstream
 inter-stage registers.</p>
-<p>I’m not including an iterative visualization here,
+<p>I’m not including an interactive visualization here,
 because it’s identical to the last one.
 I do have a rough schematic of branch prediction and resolution
 to show the high-level flow:</p>
@@ -682,17 +682,20 @@ to show the high-level flow:</p>
 <ul>
 <li>compares the actual branch result to the prediction</li>
 <li>flushes the pipeline if the prediction was incorrect</li>
-<li>writes to BPU to update the prediction (depending on the prediction scheme, it will
-write to the unit whether the prediction is right or wrong)</li>
+<li>signal to BPU to update the prediction (depending on the prediction scheme, it will
+signal to the unit whether the prediction is right or wrong)</li>
+<li>on misprediction sets the PC to either the next address after the branch
+or the branch target address calculated by the BTAC (depending on if branch was taken or not)</li>
 </ul></li>
 <li>BTAC (Branch Target Address Calculation)
 <ul>
-<li>calculates the branch target address from the branch’s PC and the branch offset,
-which the BRU uses to update the PC on a misprediction</li>
+<li>calculates the branch target address from the branch’s PC and the branch offset</li>
+<li>saves branch target address to the ID/EX register to be used if prediction was
+branch not taken, but branch should have been taken.</li>
 </ul></li>
 <li>BPU (Branch Prediction Unit, aka Branch Target Buffer (BTB))
 <ul>
-<li>looks up the branch prediction based on last bits of branch PC and</li>
+<li>looks up the branch prediction based on the last bits of the branch’s PC</li>
 <li>writes prediction to IF/ID register</li>
 <li>stores whether the branch was last taken or not</li>
 </ul></li>
