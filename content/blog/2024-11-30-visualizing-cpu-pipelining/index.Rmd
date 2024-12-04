@@ -561,14 +561,16 @@ knitr::include_graphics("dynamic-branch.svg")
 * BRU (Branch Resolution Unit) 
     * compares the actual branch result to the prediction
     * flushes the pipeline if the prediction was incorrect
-    * writes to BPU to update the prediction (depending on the prediction scheme, it will 
-      write to the unit whether the prediction is right or wrong)
-    * sets the PC to the branch target address if the prediction was incorrect
+    * signal to BPU to update the prediction (depending on the prediction scheme, it will 
+      signal to the unit whether the prediction is right or wrong)
+    * on misprediction sets the PC to either the next address after the branch
+      or the branch target address calculated by the BTAC (depending on if branch was taken or not)
 * BTAC (Branch Target Address Calculation)
-    * calculates the branch target address from the branch's PC and the branch offset,
-      which the BRU uses to update the PC on a misprediction
+    * calculates the branch target address from the branch's PC and the branch offset
+    * saves branch target address to the ID/EX register to be used if prediction was
+      branch not taken, but branch should have been taken.
 * BPU (Branch Prediction Unit, aka Branch Target Buffer (BTB))
-    * looks up the branch prediction based on last bits of branch PC and
+    * looks up the branch prediction based on the last bits of the branch's PC
     * writes prediction to IF/ID register
     * stores whether the branch was last taken or not
 
