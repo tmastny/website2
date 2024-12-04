@@ -549,7 +549,7 @@ The means when we fetch the branch prediction in the IF stage, the prediction
 must be stored in the IF/ID register and propagated to downstream 
 inter-stage registers.
 
-I'm not including an iterative visualization here, 
+I'm not including an interactive visualization here, 
 because it's identical to the last one. 
 I do have a rough schematic of branch prediction and resolution
 to show the high-level flow:
