@@ -2,7 +2,7 @@
 title: 'Visualizing CPU Pipelining'
 author: ~
 date: '2024-11-30'
-slug: visualizing-cpu-pipeling
+slug: visualizing-cpu-pipelining
 categories: []
 tags: []
 description: 'Visualizing CPU Pipelining'
@@ -14,7 +14,7 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#visualizing-pipelines" id="toc-visualizing-pipelines">Visualizing Pipelines</a></li>
+<li><a href="#visualizing-pipelines" id="toc-visualizing-pipelines">Visualizing pipelines</a></li>
 <li><a href="#instruction-decoding" id="toc-instruction-decoding">Instruction Decoding</a></li>
 <li><a href="#hazard-detection" id="toc-hazard-detection">Hazard detection</a></li>
 <li><a href="#forwarding" id="toc-forwarding">Forwarding</a></li>
@@ -29,13 +29,13 @@ output:
 </div>
 
 <p>I want to share what I’ve learned about CPU pipelining.
-Thanks to Dan Luu’s branch <a href="https://danluu.com/branch-prediction/">prediction write-up</a>
+Thanks to Dan Luu’s branch <a href="https://danluu.com/branch-prediction/">prediction write-up</a>,
 I was vaguely aware how this worked conceptually,
-but I was motivated to divide into the details after reading
+but I was motivated to dive into the details after reading
 Rodrigo Copetti’s <a href="https://www.copetti.org/writings/consoles/playstation/#bibref:9">Playstation MIPS write-up</a>
 where he talked about branch delay slots and how they evolved into
 branch <em>prediction</em>. I quickly found many subtle and
-fasincating details on CPU pipelining that I had to share.
+fascinating details on CPU pipelining that I had to share.
 For more details, I recommend
 chapter 4 of Computer Organization and Design.</p>
 <p>This post will assume you are familiar with the <a href="https://www.cybercomputing.co.uk/Languages/Hardware/laundryAnalogy.html">laundry</a>
@@ -44,7 +44,7 @@ lower-level details. It will also help to have a vague idea of
 the 5-stage MIPS pipeline (<a href="https://courses.cs.washington.edu/courses/cse410/05sp/lectures/cse410-10-pipelining-a.pdf">this</a>
 is a nice, brief high-level summary), since our model CPU will be the 32-bit MIPS.</p>
 <div id="visualizing-pipelines" class="section level2">
-<h2>Visualizing Pipelines</h2>
+<h2>Visualizing pipelines</h2>
 <p>Let’s start by visualizing a basic CPU model that does not have pipelining
 (aka a single-cycle CPU design):</p>
 <div id="nonpipeline-container"></div>
@@ -385,12 +385,12 @@ data hazard. Structurally, the CPU could proceed but the result
 would be incorrect. We need a way to check if any of the inputs
 of the instruction in ID match the output register for any
 downstream instructions.</p>
-<p>Since the field metadata is propogated to each stage register,
+<p>Since the field metadata is propagated to each stage register,
 we have all the data we need! What’s missing is a unit to calculate
 this:</p>
 <pre><code>ID/EXE.rs == EX/MEM.rd || ID/EXE.rt == EX/MEM.rd ||
 ID/MEM.rs == MEM/WB.rd || ID/MEM.rt == MEM/WB.rd</code></pre>
-<p>That’s the <em>Hazard Detection Unit</em> (HDU). This unit will
+<p>That’s the <em>Hazard Detection Unit</em> (HDU). This unit
 will both detect hazards
 and prevent progress until the hazard is resolved.</p>
 <blockquote>
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <blockquote>
 <p>Why are stalls also called bubbles? Because once they appear
 they flow through the pipeline until they pop out of the end.
-Like a diver who let’s out some air underwater, the bubble
+Like a diver who lets out air underwater, the bubble
 will rise to the surface. Stretching the analogy further,
 the diver, like the HDU, can let out more than one bubble
 depending on the circumstance. The previous example let out
@@ -513,7 +513,7 @@ Let’s look at this example:</p>
 <pre><code>lw  r1, 0(r2)  
 add r3, r1, r4</code></pre>
 <p>Our HDU handles this situation just fine: in fact, it’s identical
-to the previous HDU example where the HDU must stall until
+to our previous example where we must stall until
 WB writes back to register <code>r1</code>, creating 2 bubbles.</p>
 <p>But there’s an opportunity here:
 the intermediate result is available in the MEM/WB register
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <p>I’m not going to go into all the details on how the HDU and FU
 work together, because it’s a little bit different
 than how I’ve laid it out here. And as I hinted at with this example,
-there nuances around <code>lw</code> and <code>sw</code> instructions
+there are nuances around <code>lw</code> and <code>sw</code> instructions
 you have to be careful with.</p>
 </div>
 <div id="branching" class="section level2">
@@ -683,7 +683,7 @@ to show the high-level flow:</p>
 <li>compares the actual branch result to the prediction</li>
 <li>flushes the pipeline if the prediction was incorrect</li>
 <li>writes to BPU to update the prediction (depending on the prediction scheme, it will
-write to the unit whether the prediction is write or wrong)</li>
+write to the unit whether the prediction is right or wrong)</li>
 </ul></li>
 <li>BTAC (Branch Target Address Calculation)
 <ul>
