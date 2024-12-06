@@ -32,7 +32,7 @@ Hobbies and interests:
   * The Art of Probability by Richard Hamming
   * Some of the MIT courses are incredible: [6.1810](https://pdos.csail.mit.edu/6.828/2023/),
     [6.5840](http://nil.csail.mit.edu/6.5840/2023/), [6.004](https://computationstructures.org).
-    I like these courses because they are project basd and have automated
+    I like these courses because they are project based and have automated
     grading systems for instant feedback.
 
 I also dabble in chess, go, piano, and I read a lot of non-fiction too.
@@ -57,16 +57,16 @@ unlearn in the professional world: being argumentative, overly
 critical, and monologuing.
 
 I graduated with a degree in Mathematics with a concentration in
-Electrical Engineering, but my majors changed from Crimonology,
+Electrical Engineering, but my majors changed from Criminology,
 Anthropology, and Geology along the way.
 
 During college, I had a keen interest in aerospace, interning as
 NASA's Jet Propulsion Laboratory for 3 summers.
 I was fortunate enough to be there during both the discovery of the
 Higgs Boson and the landing of the Curiosity Rover on Mars.
-I personally worked on automating electromagnetic compatiability testing
+I personally worked on automating electromagnetic compatibility testing
 systems for the [GOES-R](https://www.goes-r.gov) weather satellite
-and the [Low-Density Supeesonic Decelerator](https://en.wikipedia.org/wiki/Low-Density_Supersonic_Decelerator)
+and the [Low-Density Supersonic Decelerator](https://en.wikipedia.org/wiki/Low-Density_Supersonic_Decelerator)
 (LDSD) project.
 
 My first job out of college was at Boeing, where I developed an interest in
