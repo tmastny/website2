@@ -146,6 +146,14 @@ gshare examples feel like the more typical case.
 
 But how do we know?
 
+Reasoning abstractly:
+
+## Hacking gdb
+
+
+
+# Appendix
+
 ## Collisions in a random program
 
 Let's suppose we have a program consisting
@@ -154,3 +162,6 @@ Each branch has a unique 4-bit branch history.
 
 Given our fixed 4-bit key size, we can only
 address 16 different keys.
+
+Key hashes are actually more likely in the XOR case
+for a random program.
