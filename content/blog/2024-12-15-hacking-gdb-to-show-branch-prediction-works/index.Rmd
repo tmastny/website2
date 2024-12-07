@@ -145,3 +145,12 @@ To me, this feels like a contrived example, whereas the
 gshare examples feel like the more typical case.
 
 But how do we know?
+
+## Collisions in a random program
+
+Let's suppose we have a program consisting
+of 16 unique 4-bit branch addresses.
+Each branch has a unique 4-bit branch history.
+
+Given our fixed 4-bit key size, we can only
+address 16 different keys.
