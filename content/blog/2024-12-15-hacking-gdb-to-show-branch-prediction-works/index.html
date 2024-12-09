@@ -1,0 +1,171 @@
+---
+title: 'Hacking GDB to Show Branch Prediction Works'
+author: ~
+date: '2024-12-15'
+slug: hacking-gdb-to-show-branch-prediction-works
+categories: []
+tags: []
+description: 'Hacking GDB to Show Branch Prediction Works'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#proof-by-example" id="toc-proof-by-example">Proof by example</a>
+<ul>
+<li><a href="#ghsare-is-better" id="toc-ghsare-is-better">ghsare is better</a></li>
+</ul></li>
+<li><a href="#branch-actual-concat-key-concat-pred-gshare-key-gshare-pred" id="toc-branch-actual-concat-key-concat-pred-gshare-key-gshare-pred">Branch | Actual | Concat Key | Concat Pred | Gshare Key | Gshare Pred</a>
+<ul>
+<li><a href="#concatenation-is-better" id="toc-concatenation-is-better">concatenation is better</a></li>
+</ul></li>
+<li><a href="#branch-addr-history-actual-key-prediction" id="toc-branch-addr-history-actual-key-prediction">Branch Addr | History | Actual | Key | Prediction</a></li>
+<li><a href="#section" id="toc-section">0011 | 1001 | 1 | 1010 | 0</a></li>
+<li><a href="#section-1" id="toc-section-1">1100 | 0110 | 0 | 1010 | 1</a></li>
+<li><a href="#section-2" id="toc-section-2">0011 | 0011 | 0 | 0000 | 1</a></li>
+<li><a href="#section-3" id="toc-section-3">1100 | 1100 | 1 | 0000 | 0</a></li>
+<li><a href="#section-4" id="toc-section-4">0011 | 0110 | 0 | 0101 | 1</a></li>
+<li><a href="#section-5" id="toc-section-5">1100 | 1001 | 1 | 0101 | 0</a></li>
+<li><a href="#section-6" id="toc-section-6">0011 | 1100 | 1 | 1111 | 0</a></li>
+<li><a href="#section-7" id="toc-section-7">1100 | 0011 | 0 | 1111 | 1</a></li>
+<li><a href="#section-8" id="toc-section-8">0011 | 1001 | 1 | 1010 | 0</a></li>
+<li><a href="#section-9" id="toc-section-9">1100 | 0110 | 0 | 1010 | 1</a></li>
+<li><a href="#hacking-gdb" id="toc-hacking-gdb">Hacking gdb</a></li>
+<li><a href="#appendix" id="toc-appendix">Appendix</a>
+<ul>
+<li><a href="#collisions-in-a-random-program" id="toc-collisions-in-a-random-program">Collisions in a random program</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>All I know about the gshare branch prediction algorithm
+is Dan Luu’s <a href="https://danluu.com/branch-prediction/">short overview</a>
+on his blog.</p>
+<p>Given a fixed key size that indexes into the branch prediction table,
+it seems like an obvious improvement to the concatenation
+method.</p>
+<p>Instead of having a fixed portion of the address
+with a short branch history, we could use both
+more of the address and more of the branch history.</p>
+<p>But I couldn’t help but think how do we know this is truly
+an improvement? Instead of researching,
+I decided to try to see if I could figure it out myself.</p>
+<div id="proof-by-example" class="section level2">
+<h2>Proof by example</h2>
+<div id="ghsare-is-better" class="section level3">
+<h3>ghsare is better</h3>
+<p>First, let’s come up with some examples where gshare
+outperforms concatenation.</p>
+<p>Example 1: same branch history, different predictions.</p>
+<p>With gshares, two different addresses with the same branch history
+will always map to different keys: this is important
+for prediction accuracy when the two branches have
+different outcomes.</p>
+<pre><code>Branch   address history  gshare  concat  actual
+A        1010    1011     0001    1011    0
+B        1110    1011     0100    1011    1</code></pre>
+<p>So in this case, gshare disambiguates the two branches
+with different outcomes, while concatenation does not.</p>
+<p>Example 2: using more history bits for a fixed key size.</p>
+<p>Let’s assume we have a branch history pattern like this:</p>
+<pre><code>1101 1101 1101 1101...</code></pre>
+<p>With a 1-bit prediction table, long-term gshare has a 100%
+prediction accuracy, but concatenation does not has 50% accuracy:</p>
+<pre><code>branch   address history  gshare  concat  actual
+A        1010    1101     0111    1001       1
+A        1010    1110     0100    1000       1
+A        1010    0111     1101    1011       0
+A        1010    1011     1000    1011       1</code></pre>
+<p>The reason is that the 0111 and 1011 histories alias.
+Working this through sequentially:</p>
+</div>
+</div>
+<div id="branch-actual-concat-key-concat-pred-gshare-key-gshare-pred" class="section level2">
+<h2>Branch | Actual | Concat Key | Concat Pred | Gshare Key | Gshare Pred</h2>
+<pre><code> 0 |      1 | 1000       |           1 | 1010       |          1
+ 1 |      1 | 1001       |           1 | 1011       |          1
+ 2 |      0 | 1011       |           1 | 1001       |          1
+ 3 |      1 | 1010       |           1 | 1100       |          1
+ 4 |      1 | 1001       |           1 | 0111       |          1
+ 5 |      1 | 1011       |           0 | 0001       |          1
+ 6 |      0 | 1011       |           1 | 1101       |          1
+ 7 |      1 | 1010       |           1 | 0100       |          1
+ 8 |      1 | 1001       |           1 | 0111       |          1
+ 9 |      1 | 1011       |           0 | 0001       |          1
+10 |      0 | 1011       |           1 | 1101       |          0</code></pre>
+<p>Because the actual result alternates between 0 and 1,
+the prediction bit alters as well.
+Even if we used 2-bit saturation counter, we would only improve
+the accuracy to 75%.</p>
+<div id="concatenation-is-better" class="section level3">
+<h3>concatenation is better</h3>
+<p>However, we can also come up with an example where gshare
+does <em>worse</em> than concatenation. Two keys in the branch
+prediction table will collide in gshare
+when the address of one equals the history of the other (and vice versa):</p>
+<pre><code>Branch   Address  History  Gshare  Concat  Actual
+A        0011     1100     0000    1100    1
+B        1100     0011     0000    0011    0</code></pre>
+<p>In this case, both branches map to the same prediction entry (000)
+even though they have different behaviors. Concatenation keeps them
+separate because it uses different bits from the address and history.</p>
+<p>So if the branch was running in a way where branch A was always executed
+before branch B, the prediction accuracy of gshare would be 0%!</p>
+</div>
+</div>
+<div id="branch-addr-history-actual-key-prediction" class="section level2">
+<h2>Branch Addr | History | Actual | Key | Prediction</h2>
+</div>
+<div id="section" class="section level2">
+<h2>0011 | 1001 | 1 | 1010 | 0</h2>
+</div>
+<div id="section-1" class="section level2">
+<h2>1100 | 0110 | 0 | 1010 | 1</h2>
+</div>
+<div id="section-2" class="section level2">
+<h2>0011 | 0011 | 0 | 0000 | 1</h2>
+</div>
+<div id="section-3" class="section level2">
+<h2>1100 | 1100 | 1 | 0000 | 0</h2>
+</div>
+<div id="section-4" class="section level2">
+<h2>0011 | 0110 | 0 | 0101 | 1</h2>
+</div>
+<div id="section-5" class="section level2">
+<h2>1100 | 1001 | 1 | 0101 | 0</h2>
+</div>
+<div id="section-6" class="section level2">
+<h2>0011 | 1100 | 1 | 1111 | 0</h2>
+</div>
+<div id="section-7" class="section level2">
+<h2>1100 | 0011 | 0 | 1111 | 1</h2>
+</div>
+<div id="section-8" class="section level2">
+<h2>0011 | 1001 | 1 | 1010 | 0</h2>
+</div>
+<div id="section-9" class="section level2">
+<h2>1100 | 0110 | 0 | 1010 | 1</h2>
+<p>To me, this feels like a contrived example, whereas the
+gshare examples feel like the more typical case.</p>
+<p>But how do we know?</p>
+<p>Reasoning abstractly:</p>
+</div>
+<div id="hacking-gdb" class="section level2">
+<h2>Hacking gdb</h2>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="collisions-in-a-random-program" class="section level2">
+<h2>Collisions in a random program</h2>
+<p>Let’s suppose we have a program consisting
+of 16 unique 4-bit branch addresses.
+Each branch has a unique 4-bit branch history.</p>
+<p>Given our fixed 4-bit key size, we can only
+address 16 different keys.</p>
+<p>Key hashes are actually more likely in the XOR case
+for a random program.</p>
+</div>
+</div>
