@@ -1,5 +1,5 @@
 ---
-title: "Gallery of R Syntax Highlighting"
+title: "R Syntax Highlighting Gallery"
 type: "r-syntax-highlighting-gallery"
 ---
 

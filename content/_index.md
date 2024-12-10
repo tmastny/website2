@@ -22,22 +22,22 @@ I write about low-level programming, data science, and algorithms.
 
 ## Key Projects
 * [sass](https://github.com/rstudio/sass/)
-  * low-level wrapper around libsass. Part of the [Shiny](https://github.com/rstudio/shiny) backend,
-    a web framework for R with millions of downloads per year.
-* [Hudl's Greatest Comebacks](https://timmastny.com/projects/hudl-greatest-comebacks/)
+  * low-level wrapper around libsass. Helps run [Shiny](https://github.com/rstudio/shiny) and [RMarkdown](https://github.com/rstudio/rmarkdown).
+  * over [900k downloads per month](https://cranlogs.r-pkg.org/badges/sass).
+* [Hudl's Greatest Comebacks](https://www.hudl.com/video/5ef26c24ab93fb1a10868c39)
   * an internal data analytics tool used to find exciting football games and moments,
     leading to the creation of numerous viral football highlight videos.
 * [tsrecipes](https://github.com/tmastny/tsrecipes/)
   * a collection of time series algorithms, focused on the underexplored goals of clustering and classification
-    with technquies from data compression and signal processing.
-  * Extended articles are available on the package [website](https://tmastny.github.io/tsrecipes/articles/time-series-clustering.html).
+    with techniques from data compression and signal processing.
+  * extended articles are available on the package [website](https://tmastny.github.io/tsrecipes/articles/time-series-clustering.html).
+
+[All my projects.](/projects)
 
 ### Tools and Libraries
 
 * [browse](https://github.com/tmastny/browse): tool to open a local file in Github
 * [feat](https://github.com/tmastny/feat): python library to manage column features in scikit learn
 * [leadr](https://github.com/tmastny/leadr): R package to manage machine learning model metadata
-
-[All my projects.](/project)
 
 [My github.](https://github.com/tmastny)

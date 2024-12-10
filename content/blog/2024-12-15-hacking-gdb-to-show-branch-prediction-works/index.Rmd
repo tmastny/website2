@@ -1,0 +1,167 @@
+---
+title: 'Hacking GDB to Show Branch Prediction Works'
+author: ~
+date: '2024-12-15'
+slug: hacking-gdb-to-show-branch-prediction-works
+categories: []
+tags: []
+description: 'Hacking GDB to Show Branch Prediction Works'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+All I know about the gshare branch prediction algorithm
+is Dan Luu's [short overview](https://danluu.com/branch-prediction/)
+on his blog.
+
+Given a fixed key size that indexes into the branch prediction table,
+it seems like an obvious improvement to the concatenation
+method.
+
+Instead of having a fixed portion of the address
+with a short branch history, we could use both
+more of the address and more of the branch history.
+
+But I couldn't help but think how do we know this is truly
+an improvement? Instead of researching,
+I decided to try to see if I could figure it out myself.
+
+## Proof by example
+
+### ghsare is better
+
+First, let's come up with some examples where gshare
+outperforms concatenation.
+
+Example 1: same branch history, different predictions.
+
+With gshares, two different addresses with the same branch history
+will always map to different keys: this is important
+for prediction accuracy when the two branches have
+different outcomes.
+```
+Branch   address history  gshare  concat  actual
+A        1010    1011     0001    1011    0
+B        1110    1011     0100    1011    1
+```
+
+So in this case, gshare disambiguates the two branches
+with different outcomes, while concatenation does not.
+
+
+Example 2: using more history bits for a fixed key size.
+
+Let's assume we have a branch history pattern like this:
+```
+1101 1101 1101 1101...
+```
+
+With a 1-bit prediction table, long-term gshare has a 100%
+prediction accuracy, but concatenation does not has 50% accuracy:
+
+```
+branch   address history  gshare  concat  actual
+A        1010    1101     0111    1001       1
+A        1010    1110     0100    1000       1
+A        1010    0111     1101    1011       0
+A        1010    1011     1000    1011       1
+```
+
+The reason is that the 0111 and 1011 histories alias.
+Working this through sequentially:
+
+Branch | Actual | Concat Key | Concat Pred | Gshare Key | Gshare Pred
+-----------------------------------------------------------------
+     0 |      1 | 1000       |           1 | 1010       |          1
+     1 |      1 | 1001       |           1 | 1011       |          1
+     2 |      0 | 1011       |           1 | 1001       |          1
+     3 |      1 | 1010       |           1 | 1100       |          1
+     4 |      1 | 1001       |           1 | 0111       |          1
+     5 |      1 | 1011       |           0 | 0001       |          1
+     6 |      0 | 1011       |           1 | 1101       |          1
+     7 |      1 | 1010       |           1 | 0100       |          1
+     8 |      1 | 1001       |           1 | 0111       |          1
+     9 |      1 | 1011       |           0 | 0001       |          1
+    10 |      0 | 1011       |           1 | 1101       |          0
+
+
+Because the actual result alternates between 0 and 1,
+the prediction bit alters as well.
+Even if we used 2-bit saturation counter, we would only improve
+the accuracy to 75%.
+
+### concatenation is better
+
+However, we can also come up with an example where gshare
+does *worse* than concatenation. Two keys in the branch
+prediction table will collide in gshare
+when the address of one equals the history of the other (and vice versa):
+
+```
+Branch   Address  History  Gshare  Concat  Actual
+A        0011     1100     0000    1100    1
+B        1100     0011     0000    0011    0
+```
+
+In this case, both branches map to the same prediction entry (000)
+even though they have different behaviors. Concatenation keeps them
+separate because it uses different bits from the address and history.
+
+So if the branch was running in a way where branch A was always executed
+before branch B, the prediction accuracy of gshare would be 0%!
+
+Branch Addr | History | Actual | Key  | Prediction
+-----------------------------------------------------------------
+0011       | 1001    |      1 | 1010 |         0
+-----------------------------------------------------------------
+1100       | 0110    |      0 | 1010 |         1
+-----------------------------------------------------------------
+0011       | 0011    |      0 | 0000 |         1
+-----------------------------------------------------------------
+1100       | 1100    |      1 | 0000 |         0
+-----------------------------------------------------------------
+0011       | 0110    |      0 | 0101 |         1
+-----------------------------------------------------------------
+1100       | 1001    |      1 | 0101 |         0
+-----------------------------------------------------------------
+0011       | 1100    |      1 | 1111 |         0
+-----------------------------------------------------------------
+1100       | 0011    |      0 | 1111 |         1
+-----------------------------------------------------------------
+0011       | 1001    |      1 | 1010 |         0
+-----------------------------------------------------------------
+1100       | 0110    |      0 | 1010 |         1
+-----------------------------------------------------------------
+
+To me, this feels like a contrived example, whereas the
+gshare examples feel like the more typical case.
+
+But how do we know?
+
+Reasoning abstractly:
+
+## Hacking gdb
+
+
+
+# Appendix
+
+## Collisions in a random program
+
+Let's suppose we have a program consisting
+of 16 unique 4-bit branch addresses.
+Each branch has a unique 4-bit branch history.
+
+Given our fixed 4-bit key size, we can only
+address 16 different keys.
+
+Key hashes are actually more likely in the XOR case
+for a random program.
