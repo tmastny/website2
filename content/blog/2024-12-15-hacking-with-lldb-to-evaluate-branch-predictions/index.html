@@ -28,6 +28,7 @@ output:
 <li><a href="#tracing-with-lldb" id="toc-tracing-with-lldb">Tracing with LLDB</a></li>
 <li><a href="#analyzing-branch-history" id="toc-analyzing-branch-history">Analyzing branch history</a></li>
 <li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
+<li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
 </ul></li>
 <li><a href="#appendix" id="toc-appendix">Appendix</a>
 <ul>
@@ -238,6 +239,13 @@ to gather less data), but the lldb scripting breaks</p>
 <h3>Comparing branch prediction accuracy</h3>
 <p>gshare worse than concatenation again! tree</p>
 <p>gshare better than concatenation! zip</p>
+</div>
+<div id="profiling-cpu-branch-prediction-performance" class="section level3">
+<h3>Profiling CPU branch prediction performance</h3>
+<p><a href="https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d" class="uri">https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d</a></p>
+<p>Try this on intel</p>
+<pre><code>sudo powermetrics --samplers cpu_power --sample-count 5</code></pre>
+<p>May have to download xcode :(</p>
 </div>
 </div>
 <div id="appendix" class="section level1">

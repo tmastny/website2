@@ -263,6 +263,17 @@ gshare worse than concatenation again! tree
 
 gshare better than concatenation! zip
 
+### Profiling CPU branch prediction performance
+
+https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d
+
+
+Try this on intel
+```
+sudo powermetrics --samplers cpu_power --sample-count 5
+```
+
+May have to download xcode :(
 
 # Appendix
 
