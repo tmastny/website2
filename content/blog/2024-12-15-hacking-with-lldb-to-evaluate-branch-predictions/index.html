@@ -24,11 +24,16 @@ output:
 <li><a href="#hacking-executables-to-gather-branch-history" id="toc-hacking-executables-to-gather-branch-history">Hacking executables to gather branch history</a>
 <ul>
 <li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a></li>
-<li><a href="#instruction-set" id="toc-instruction-set">Instruction set</a></li>
-<li><a href="#tracing-with-lldb" id="toc-tracing-with-lldb">Tracing with LLDB</a></li>
+<li><a href="#parsing-instructions" id="toc-parsing-instructions">Parsing instructions</a></li>
+<li><a href="#tracing-with-lldb" id="toc-tracing-with-lldb">Tracing with LLDB</a>
+<ul>
+<li><a href="#address-based-breakpoints" id="toc-address-based-breakpoints">Address-based breakpoints</a></li>
+<li><a href="#scripting-lldb" id="toc-scripting-lldb">Scripting LLDB</a></li>
+<li><a href="#instruction-stepping" id="toc-instruction-stepping">instruction stepping</a></li>
 <li><a href="#analyzing-branch-history" id="toc-analyzing-branch-history">Analyzing branch history</a></li>
 <li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
 <li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#appendix" id="toc-appendix">Appendix</a>
 <ul>
@@ -205,31 +210,196 @@ of “branch taken” can be 70% accurate!<a href="#fn2" class="footnote-ref" id
 <p>Instead, we need to gather empirical data on branches taken,
 analyze patterns, and compare algorithm performance.</p>
 </div>
-<div id="hacking-executables-to-gather-branch-history" class="section level2">
-<h2>Hacking executables to gather branch history</h2>
-<p>I’m sure there are standard benchmarks and I think
-there are much better tools to gather this type of data as well.
-But here’s my method using some of the basic tools on my 2020 Intel MacBook Air.</p>
-<div id="disassembling-executables" class="section level3">
-<h3>Disassembling executables</h3>
-<p>Which executables? system executables are off limits. SIP, crusutils, etc.</p>
-<p>I started out with wasting a bunch of time trying to disassemble
-with LLDB. It turns out you can only disassemble unit a function or frame,
-but I wanted the entire program.</p>
-<p>Luckily, otool does disassemble the entire program.</p>
+<div id="hacking-executables-to-gather-branch-history" class="section level1">
+<h1>Hacking executables to gather branch history</h1>
+<p>Here’s my plan:</p>
+<ul>
+<li>disassemble the binary executable to gather the addresses of all branch instructions</li>
+<li>use LLDB to trace the branch paths and gather the branch history</li>
+<li>calculate the branch prediction accuracy for both gshare and concatenation</li>
+<li>compare to the real CPU branch prediction accuracy</li>
+</ul>
+<p>I’m sure there are standard benchmarks for branch predictions
+algorithms, and I think there are better ways to gather the data as well
+(especially if you are on Linux and on Intel processors).
+But hacking is way more fun! Here’s my method using some of the basic tools
+on my 2020 Intel MacBook Air.</p>
+<div id="disassembling-executables" class="section level2">
+<h2>Disassembling executables</h2>
+<p>The easiest approach is <code>otool</code>:</p>
+<pre class="bash"><code>otool -tv /usr/local/bin/tree</code></pre>
+<p>This gives the disassembly of the entire program.</p>
+<p>You can also disassemble with LLDB, but it’s more complicated.
+By default, LLDB only disassembles a single function or frame
+rather than the entire program, even if you know the instruction
+address range.
+<code>otool</code> disassembles everything, so I didn’t spend any more time
+trying to figure out how to do it with LLDB.</p>
+<p>Here’s a snippet of a branch instruction we’ll be parsing
+from the assembly:</p>
+<pre class="asm"><code>0000000100007f03	movq	(%rbx), %rdi
+0000000100007f06	testq	%rdi, %rdi
+0000000100007f09	je	0x100008281</code></pre>
 </div>
-<div id="instruction-set" class="section level3">
-<h3>Instruction set</h3>
-<p>What instructions are branches? How do we know if they will be taken?</p>
+<div id="parsing-instructions" class="section level2">
+<h2>Parsing instructions</h2>
+<p>To parse the disassembly, we need to search for and save the address of
+all conditional branch instructions.</p>
+<p>This will depend on your CPU architecture.
+I did this on my 2020 MacBook Air with Intel Ice Lake, which is x86-64.
+If you want to run this analysis for yourself on a modern ARM MacBook,
+you’ll have to both filter for different instructions and
+tracing with LLDB will be different as well.</p>
 </div>
-<div id="tracing-with-lldb" class="section level3">
-<h3>Tracing with LLDB</h3>
-<p>Scripting with python and lldb commands.
-Should I be using more python scripting? <a href="https://lldb.llvm.org/use/python-reference.html" class="uri">https://lldb.llvm.org/use/python-reference.html</a></p>
-<p>Order of operations is incredibly important.</p>
-<p>Stepping through instructions seems like a good idea (avoid
+<div id="tracing-with-lldb" class="section level2">
+<h2>Tracing with LLDB</h2>
+<p>Next, we need to run LLDB on the executable, set breakpoints on all branch
+addresses, and log the branch history.</p>
+<p>I quickly discovered running LLDB on certain executables are off limits: Apple really
+doesn’t like you attaching a debugger even to something simple like the <code>ls</code> command
+in <code>/bin/ls</code>. I tinkered with SIP and csrutils, but couldn’t get anything to work.
+If there’s a way around this let me know!
+I ended up using <code>tree</code> and <code>bzip2</code> as my test executables, installed with Homebrew.</p>
+<p>Typically, you use LLDB on a binary compiled with debugging symbols,
+which let you set breakpoints on function names or line numbers.
+Even without debugging symbols, compiled binaries have externally available
+symbols like function names.
+For example, <code>tree</code> has <code>main</code> and
+<code>emit_tree</code> symbols.</p>
+<p>However, we need to break on addresses.</p>
+<div id="address-based-breakpoints" class="section level3">
+<h3>Address-based breakpoints</h3>
+<p>This is a typical branch instruction from the disassembled binary:</p>
+<pre class="asm"><code>0000000100007f09	je	0x100008281</code></pre>
+<p><code>0x100007f09</code> is where we want LLDB to break so we can trace the branch history.
+Just like we can set a breakpoint on a function name, we can set one
+directly on an address.</p>
+<pre><code>(lldb) target create /usr/local/bin/tree
+
+(lldb) breakpoint set --name main
+(lldb) breakpoint set -a 0x100007f09
+
+(lldb) breakpoint list
+Current breakpoints:
+1: name = &#39;main&#39;, locations = 1
+  1.1: where = tree`main, address = tree[0x0000000100004e08], unresolved, hit count = 0
+
+2: address = 0x0000000100007f09, locations = 1
+  2.1: address = 0x0000000100007f09, unresolved, hit count = 0</code></pre>
+<p>At this point, both breakpoints are <em>unresolved</em>.
+An unresolved breakpoint means LLDB knows where we want to break in theory,
+but doesn’t yet know where that instruction will actually be located when the program runs.</p>
+<p>We call the address written in the binary file (0x100007f09) the <em>file address</em>,
+and the address where the instruction is loaded into memory the <em>load address</em>.
+There are a few reasons why file and load addresses might differ:</p>
+<ul>
+<li>Address Space Layout Randomization (ASLR) randomly offsets memory addresses for security</li>
+<li>shared libraries often have overlapping file addresses that need to be relocated when loaded</li>
+</ul>
+<p>When we run <code>target create /usr/local/bin/tree</code>, the program isn’t yet loaded:
+rather LLDB gathers all the object and symbol files (called modules or images)
+associated with the executable, so we can set breakpoints before the program is running.
+Only when we run <code>process launch --stop-at-entry</code> or <code>run</code> is the program
+loaded into memory, the load addresses are set, and the breakpoints are resolved.</p>
+<p>For example, here’s the symbol table looking at the <code>emit_tree</code> in <code>tree</code>
+and <code>memcpy</code> in the dynamic linker <code>dyld</code>:</p>
+<pre><code># target modules dump symtab tree [/usr/lib/dyld]
+Index   UserID DSX Type            File Address/Value Load Address        Name
+------- ------ --- --------------- ------------------ ------------------  ---------
+[   67]     67   X Code            0x0000000100007ec7                     emit_tree
+[   87]     87     Code            0x00007ff80009a140                     memcpy
+
+# after `(lldb) process launch --stop-at-entry`
+[   67]     67   X Code            0x0000000100007ec7 0x0000000100007ec7  emit_tree
+[   87]     87     Code            0x00007ff80009a140 0x000000010001e140  memcpy</code></pre>
+<p>For the main executable, the file address and load address are the same.
+LLDB by default asks the operating system
+to disable ASLR. But even with ASLR disabled, shared libraries may have different
+file and load addresses, so LLDB does not resolve breakpoints until the program is loaded.</p>
+<p>Now we’ve set the stage for <a href="https://reviews.llvm.org/D109738">bug 38317</a>.
+If we set the file address breakpoint before the program is loaded, and <code>run</code>:</p>
+<pre><code>(lldb) run
+...
+(lldb) breakpoint list
+Current breakpoints:
+1: name = &#39;main&#39;, locations = 1, resolved = 1, hit count = 1
+  1.1: where = tree`main, address = 0x0000000100004e08, resolved, hit count = 1
+
+2: address = 0x0000000100007f09, locations = 1
+  2.1: address = 0x0000000100007f09, unresolved, hit count = 0</code></pre>
+<p>the breakpiont at 0x100007f09 remains unresolved, even though the program is loaded
+and the file and load address are the same! An unresolved breakpoint
+will <em>not</em> trigger when the program is running.</p>
+<p>On the other hand, if we set the breakpoint after the program is loaded
+the breakpoint is immediately resolved.</p>
+<pre><code>(lldb) breakpoint set -a 0x100007f09
+Breakpoint 2: where = tree`emit_tree + 66, address = 0x0000000100007f09
+(lldb) breakpoint list
+...
+2: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
+  2.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0</code></pre>
+<p>Alternatively, we can set the breakpoint with the <code>-s</code> flag to tell LLDB
+to resolve the address to the file. Then as with the main breakpoint,
+the breakpoint will resolve after the process is launched.</p>
+<pre><code>(lldb) breakpoint set -a 0x100007f09 -s tree
+...
+1: address = tree[0x0000000100007f09], locations = 1
+  1.1: where = tree`emit_tree + 66, address = tree[0x0000000100007f09], unresolved, hit count = 0
+
+(lldb) process launch --stop-at-entry
+...
+1: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
+  1.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0</code></pre>
+<p>Nothing we can’t work around, but I think it’s interesting to see how LLDB
+works a bit under-the-hood and how are tools often have some small bugs when
+we take a small step off the beaten path.</p>
+</div>
+<div id="scripting-lldb" class="section level3">
+<h3>Scripting LLDB</h3>
+<p>LLDB has two nice scripting interfaces: the Python module and LLDB commands.</p>
+<p>If you are familiar with the interactive LLDB shell, LLDB commands are the
+easiest way to start. All you need to do is to add the commands you would run
+interactively to a file and execute:</p>
+<pre class="bash"><code># commands.lldb
+target create /usr/local/bin/tree
+breakpoint set --name main
+run
+breakpoint set --address 0x100007f09
+breakpoint command add -o &#39;register read rflags&#39; -o &#39;continue&#39;
+continue
+# run the script
+lldb -s commands.lldb # with -o to run the script and exit</code></pre>
+<p>Python is also an option.
+You’ll either need to make sure that you are using the same
+Python as LLDB, or you’ll need to set the <code>PYTHONPATH</code>
+to the <a href="https://lldb.llvm.org/use/python-reference.html#using-the-lldb-py-module-in-python">LLDB Python module.</a></p>
+<pre class="python"><code># commands.py
+import lldb
+
+def run_commands(debugger, command=None, result=None, internal_dict=None):
+    target = debugger.CreateTarget(&quot;/usr/local/bin/tree&quot;)
+    main_bp = target.BreakpointCreateByName(&quot;main&quot;)
+    process = target.LaunchSimple(None, None, None)
+    addr_bp = target.BreakpointCreateByAddress(0x100007f09)
+
+    commands = lldb.SBStringList()
+    commands.AppendString(&quot;register read rflags&quot;)
+    commands.AppendString(&quot;process continue&quot;)
+    addr_bp.SetCommandLineCommands(commands)
+
+    process.Continue()</code></pre>
+<pre class="bash"><code>lldb -o &quot;script import commands; commands.run_commands(lldb.debugger)&quot;</code></pre>
+</div>
+<div id="instruction-stepping" class="section level3">
+<h3>instruction stepping</h3>
+<p>One way to depend a little less on the instruction set
+would be to step through the branch instruction and see
+where you end up!
+Stepping through instructions seems like a good idea (avoid
 having to know more details about the instruction set, have
 to gather less data), but the lldb scripting breaks</p>
+<p>Process continue?
+<a href="https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html" class="uri">https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html</a></p>
 </div>
 <div id="analyzing-branch-history" class="section level3">
 <h3>Analyzing branch history</h3>
@@ -246,6 +416,7 @@ to gather less data), but the lldb scripting breaks</p>
 <p>Try this on intel</p>
 <pre><code>sudo powermetrics --samplers cpu_power --sample-count 5</code></pre>
 <p>May have to download xcode :(</p>
+</div>
 </div>
 </div>
 <div id="appendix" class="section level1">
@@ -273,7 +444,7 @@ we can always find a 4-bit history <code>h</code> such that
 <pre><code>k = 0 ^ k = (a ^ a) ^ k = a ^ (a ^ k) = a ^ h</code></pre>
 <p>And for our address <code>a</code>, if two different histories
 map to the same key, they are the same history:</p>
-<pre><code>a ^ h1 =     k =      a ^ h2 
+<pre><code>a ^ h1 =     k =      a ^ h2
     h1 = a ^ k = a ^ (a ^ h2) = h2</code></pre>
 <p>Therefore, collisions must be possible, since
 any address can map to any key and we are randomly

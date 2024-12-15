@@ -28,26 +28,26 @@ If you are familiar with computational complexity,
 you'll know that quicksort has better average-case performance.
 That's a mathematical fact, but there quite a few assumptions
 built into that comparison. For starters, quicksort has the same
-worst-case performance as insertion sort. 
+worst-case performance as insertion sort.
 And insertion sort can even have better performance
 when the list is "almost sorted".
 
 Another example is iterating over array of structs versus a
 struct of arrays. In terms of computational complexity,
 they are the same. But struct of arrays might be significantly
-faster given the architecture of CPU cache memory. 
+faster given the architecture of CPU cache memory.
 Again, the comparison depends on the assumptions you make.
 
 So how do we compare branch prediction schemes?
 What assumptions do we have to make?
 Let's investigate these questions by analyzing the difference
 between two hashing methods in two-level adaptive branch prediction
-with global history. 
+with global history.
 
 I'm not going to cover the details of the algorithm, since
 Dan Luu provides a nice overview [here](https://danluu.com/branch-prediction/).
 The focus here is on two different methods to calculate the key
-for the branch prediction table, rather than comparing two distinct prediction algorithms. 
+for the branch prediction table, rather than comparing two distinct prediction algorithms.
 For an n-bit key, the two methods are:
 
 * concatenation: concatenates the last n/2 bits of the address and history
@@ -63,10 +63,10 @@ I'll try to answer the following questions:
 * can we mathematically prove that gshare is better than concatenation?
 * can we empirically verify that gshare is better than concatenation?
 
-For the last question, we'll do some fun hacking by 
+For the last question, we'll do some fun hacking by
 disassembling real programs, using LLDB to trace branch paths
-to gather branch history data, and then calculate branch 
-prediction accuracy for both schemes. 
+to gather branch history data, and then calculate branch
+prediction accuracy for both schemes.
 
 ## Reasons to think gshare is better
 
@@ -76,9 +76,9 @@ would give us better predictions and sometimes using more of the branch history
 would give us better predictions. The XOR hash in gshare uses more of both
 by hashing all n-bits of the address and history into the key!
 
-Compared concatenation where address and history have a predetermined 
+Compared concatenation where address and history have a predetermined
 contribution to the key, gshare seems like an obvious^[Turns out not be obvious.] improvement.
-We can even come up with some examples that demonstrate this argument. 
+We can even come up with some examples that demonstrate this argument.
 
 ### gshare is better
 
@@ -98,7 +98,7 @@ gshare disambiguates the two branches
 with different outcomes, while concatenation does not.
 
 
-#### Using more history bits 
+#### Using more history bits
 
 Let's assume we have a branch history pattern like this:
 ```
@@ -191,21 +191,21 @@ To me, this feels like a contrived example and ones
 in the previous section feel like the typical case.
 But how do we know? Can we prove it?
 
-## Mathematical proof that gshare is worse 
+## Mathematical proof that gshare is worse
 
 Like quicksort vs. insertion sort, maybe we can write
 a mathematical proof that gshare is better than concatenation.
 Let's come up with some assumptions and investigate.
 
 Let's define a "program" as a set branches, each with a unique n-bit address.
-Each address has a random n-bit history. 
+Each address has a random n-bit history.
 One dimension of poor branch prediction performance is key collisions.
 
 Can we show that gshare is less likely to have key collisions
 than concatenation? **No**. In fact, the opposite is true.
 gshare is slightly more likely to have key collisions
-than concatenation! [See the appendix](#appendix) for the proof 
-when the key size is 4-bits. 
+than concatenation! [See the appendix](#appendix) for the proof
+when the key size is 4-bits.
 
 What's going on here? We know gshare performs better in practice.
 The problem is our assumptions. We assumed that the branch history
@@ -213,45 +213,252 @@ for each address is random. That might be reasonable assumption
 when comparing sorting algorithms (although plenty of real world
 data is almost sorted), but this is a really bad assumption for branch prediction.
 Branch history is often very predictable, and even a simple algorithm
-of "branch taken" can be 70% accurate!^[We are also making the assumption 
+of "branch taken" can be 70% accurate!^[We are also making the assumption
 that key collisions are an indicator
-of poor branch prediction performance. That seems true, but who knows? 
+of poor branch prediction performance. That seems true, but who knows?
 Maybe there's a clever way to use key collisions to improve branch prediction,
 by making sure keys that alias have correlated predictions.]
 
 Instead, we need to gather empirical data on branches taken,
 analyze patterns, and compare algorithm performance.
 
-## Hacking executables to gather branch history
+# Hacking executables to gather branch history
 
-I'm sure there are standard benchmarks and I think
-there are much better tools to gather this type of data as well.
-But here's my method using some of the basic tools on my 2020 Intel MacBook Air.
+Here's my plan:
 
-### Disassembling executables
+* disassemble the binary executable to gather the addresses of all branch instructions
+* use LLDB to trace the branch paths and gather the branch history
+* calculate the branch prediction accuracy for both gshare and concatenation
+* compare to the real CPU branch prediction accuracy
 
-Which executables? system executables are off limits. SIP, crusutils, etc.
+I'm sure there are standard benchmarks for branch predictions
+algorithms, and I think there are better ways to gather the data as well
+(especially if you are on Linux and on Intel processors).
+But hacking is way more fun! Here's my method using some of the basic tools
+on my 2020 Intel MacBook Air.
 
-I started out with wasting a bunch of time trying to disassemble
-with LLDB. It turns out you can only disassemble unit a function or frame,
-but I wanted the entire program. 
+## Disassembling executables
 
-Luckily, otool does disassemble the entire program.
+The easiest approach is `otool`:
+```bash
+otool -tv /usr/local/bin/tree
+```
+This gives the disassembly of the entire program.
 
-### Instruction set 
+You can also disassemble with LLDB, but it's more complicated.
+By default, LLDB only disassembles a single function or frame
+rather than the entire program, even if you know the instruction
+address range.
+`otool` disassembles everything, so I didn't spend any more time
+trying to figure out how to do it with LLDB.
 
-What instructions are branches? How do we know if they will be taken?
+Here's a snippet of a branch instruction we'll be parsing
+from the assembly:
 
-### Tracing with LLDB
+```asm
+0000000100007f03	movq	(%rbx), %rdi
+0000000100007f06	testq	%rdi, %rdi
+0000000100007f09	je	0x100008281
+```
 
-Scripting with python and lldb commands. 
-Should I be using more python scripting? https://lldb.llvm.org/use/python-reference.html
+## Parsing instructions
 
-Order of operations is incredibly important.
+To parse the disassembly, we need to search for and save the address of
+all conditional branch instructions.
 
-Stepping through instructions seems like a good idea (avoid 
+This will depend on your CPU architecture.
+I did this on my 2020 MacBook Air with Intel Ice Lake, which is x86-64.
+If you want to run this analysis for yourself on a modern ARM MacBook,
+you'll have to both filter for different instructions and
+tracing with LLDB will be different as well.
+
+## Tracing with LLDB
+
+Next, we need to run LLDB on the executable, set breakpoints on all branch
+addresses, and log the branch history.
+
+I quickly discovered running LLDB on certain executables are off limits: Apple really
+doesn't like you attaching a debugger even to something simple like the `ls` command
+in `/bin/ls`. I tinkered with SIP and csrutils, but couldn't get anything to work.
+If there's a way around this let me know!
+I ended up using `tree` and `bzip2` as my test executables, installed with Homebrew.
+
+Typically, you use LLDB on a binary compiled with debugging symbols,
+which let you set breakpoints on function names or line numbers.
+Even without debugging symbols, compiled binaries have externally available
+symbols like function names.
+For example, `tree` has `main` and
+`emit_tree` symbols.
+
+However, we need to break on addresses.
+
+### Address-based breakpoints
+
+This is a typical branch instruction from the disassembled binary:
+```asm
+0000000100007f09	je	0x100008281
+```
+`0x100007f09` is where we want LLDB to break so we can trace the branch history.
+Just like we can set a breakpoint on a function name, we can set one
+directly on an address.
+```
+(lldb) target create /usr/local/bin/tree
+
+(lldb) breakpoint set --name main
+(lldb) breakpoint set -a 0x100007f09
+
+(lldb) breakpoint list
+Current breakpoints:
+1: name = 'main', locations = 1
+  1.1: where = tree`main, address = tree[0x0000000100004e08], unresolved, hit count = 0
+
+2: address = 0x0000000100007f09, locations = 1
+  2.1: address = 0x0000000100007f09, unresolved, hit count = 0
+```
+
+At this point, both breakpoints are *unresolved*.
+An unresolved breakpoint means LLDB knows where we want to break in theory,
+but doesn't yet know where that instruction will actually be located when the program runs.
+
+We call the address written in the binary file (0x100007f09) the *file address*,
+and the address where the instruction is loaded into memory the *load address*.
+There are a few reasons why file and load addresses might differ:
+
+- Address Space Layout Randomization (ASLR) randomly offsets memory addresses for security
+- shared libraries often have overlapping file addresses that need to be relocated when loaded
+
+When we run `target create /usr/local/bin/tree`, the program isn't yet loaded:
+rather LLDB gathers all the object and symbol files (called modules or images)
+associated with the executable, so we can set breakpoints before the program is running.
+Only when we run `process launch --stop-at-entry` or `run` is the program
+loaded into memory, the load addresses are set, and the breakpoints are resolved.
+
+For example, here's the symbol table looking at the `emit_tree` in `tree`
+and `memcpy` in the dynamic linker `dyld`:
+```
+# target modules dump symtab tree [/usr/lib/dyld]
+Index   UserID DSX Type            File Address/Value Load Address        Name
+------- ------ --- --------------- ------------------ ------------------  ---------
+[   67]     67   X Code            0x0000000100007ec7                     emit_tree
+[   87]     87     Code            0x00007ff80009a140                     memcpy
+
+# after `(lldb) process launch --stop-at-entry`
+[   67]     67   X Code            0x0000000100007ec7 0x0000000100007ec7  emit_tree
+[   87]     87     Code            0x00007ff80009a140 0x000000010001e140  memcpy
+```
+
+For the main executable, the file address and load address are the same.
+LLDB by default asks the operating system
+to disable ASLR. But even with ASLR disabled, shared libraries may have different
+file and load addresses, so LLDB does not resolve breakpoints until the program is loaded.
+
+Now we've set the stage for [bug 38317](https://reviews.llvm.org/D109738).
+If we set the file address breakpoint before the program is loaded, and `run`:
+```
+(lldb) run
+...
+(lldb) breakpoint list
+Current breakpoints:
+1: name = 'main', locations = 1, resolved = 1, hit count = 1
+  1.1: where = tree`main, address = 0x0000000100004e08, resolved, hit count = 1
+
+2: address = 0x0000000100007f09, locations = 1
+  2.1: address = 0x0000000100007f09, unresolved, hit count = 0
+```
+
+the breakpiont at 0x100007f09 remains unresolved, even though the program is loaded
+and the file and load address are the same! An unresolved breakpoint
+will *not* trigger when the program is running.
+
+On the other hand, if we set the breakpoint after the program is loaded
+the breakpoint is immediately resolved.
+```
+(lldb) breakpoint set -a 0x100007f09
+Breakpoint 2: where = tree`emit_tree + 66, address = 0x0000000100007f09
+(lldb) breakpoint list
+...
+2: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
+  2.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0
+```
+
+Alternatively, we can set the breakpoint with the `-s` flag to tell LLDB
+to resolve the address to the file. Then as with the main breakpoint,
+the breakpoint will resolve after the process is launched.
+```
+(lldb) breakpoint set -a 0x100007f09 -s tree
+...
+1: address = tree[0x0000000100007f09], locations = 1
+  1.1: where = tree`emit_tree + 66, address = tree[0x0000000100007f09], unresolved, hit count = 0
+
+(lldb) process launch --stop-at-entry
+...
+1: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
+  1.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0
+```
+
+Nothing we can't work around, but I think it's interesting to see how LLDB
+works a bit under-the-hood and how are tools often have some small bugs when
+we take a small step off the beaten path.
+
+### Scripting LLDB
+
+LLDB has two nice scripting interfaces: the Python module and LLDB commands.
+
+If you are familiar with the interactive LLDB shell, LLDB commands are the
+easiest way to start. All you need to do is to add the commands you would run
+interactively to a file and execute:
+```bash
+# commands.lldb
+target create /usr/local/bin/tree
+breakpoint set --name main
+run
+breakpoint set --address 0x100007f09
+breakpoint command add -o 'register read rflags' -o 'continue'
+continue
+# run the script
+lldb -s commands.lldb # with -o to run the script and exit
+```
+
+Python is also an option. 
+You'll either need to make sure that you are using the same
+Python as LLDB, or you'll need to set the `PYTHONPATH`
+to the [LLDB Python module.](https://lldb.llvm.org/use/python-reference.html#using-the-lldb-py-module-in-python)
+
+```python
+# commands.py
+import lldb
+
+def run_commands(debugger, command=None, result=None, internal_dict=None):
+    target = debugger.CreateTarget("/usr/local/bin/tree")
+    main_bp = target.BreakpointCreateByName("main")
+    process = target.LaunchSimple(None, None, None)
+    addr_bp = target.BreakpointCreateByAddress(0x100007f09)
+
+    commands = lldb.SBStringList()
+    commands.AppendString("register read rflags")
+    commands.AppendString("process continue")
+    addr_bp.SetCommandLineCommands(commands)
+
+    process.Continue()
+```
+
+```bash
+lldb -o "script import commands; commands.run_commands(lldb.debugger)"
+```
+
+### instruction stepping
+
+One way to depend a little less on the instruction set
+would be to step through the branch instruction and see
+where you end up. 
+
+Stepping through instructions seems like a good idea (avoid
 having to know more details about the instruction set, have
 to gather less data), but the lldb scripting breaks
+
+
+Process continue?
+https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html
 
 ### Analyzing branch history
 
@@ -284,7 +491,7 @@ of 16 unique branch addresses, each with a random 4-bit branch history.
 And let's suppose our branch prediction table has a fixed 4-bit key size,
 allowing 16 different keys.
 
-The surprising result is that the XOR 
+The surprising result is that the XOR
 is more likely to have key collisions
 than concatenation!
 
@@ -309,7 +516,7 @@ And for our address `a`, if two different histories
 map to the same key, they are the same history:
 
 ```
-a ^ h1 =     k =      a ^ h2 
+a ^ h1 =     k =      a ^ h2
     h1 = a ^ k = a ^ (a ^ h2) = h2
 ```
 
@@ -339,8 +546,8 @@ So about 4 collisions are expected.
 Now let's think about concatenation.
 
 This one is a little more complicated and also changes
-depending on the concatenation scheme (for example, 
-we could use a concatenation ratio of 2:1 instead of 1:1). 
+depending on the concatenation scheme (for example,
+we could use a concatenation ratio of 2:1 instead of 1:1).
 But to show the general process, let's just analyze the case
 where we have 16 unique addresses with a random 4-bit history,
 and we concatenate 2 bits from the address and 2 bits from the history
@@ -354,7 +561,7 @@ into 4 bins.
 knitr::include_graphics("addr-key.svg")
 ```
 
-For example, the addresses that end in `00` can only be mapped 
+For example, the addresses that end in `00` can only be mapped
 to the keys that start with `00`.
 
 Using the same formula as before, the expected number of bins
@@ -369,4 +576,4 @@ So concatenation is less likely to have key collisions
 than XOR! So why does gshare work better than concatenation
 in practice? Because branch history is not random.
 The only way to really know which performs better is to
-analyze empirical branching data. 
+analyze empirical branching data.
