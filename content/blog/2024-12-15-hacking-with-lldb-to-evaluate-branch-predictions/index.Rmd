@@ -236,7 +236,7 @@ algorithms, and I think there are better ways to gather the data as well
 (especially if you are on Linux and on Intel processors).
 But hacking is way more fun!
 
-The full code is available on Github.
+The full code is available on [Github](https://github.com/tmastny/gshare/tree/main/extract_branch_data).
 Below, I'll share my method and some of the interesting
 discoveries I made.
 
