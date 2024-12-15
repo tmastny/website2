@@ -234,8 +234,11 @@ Here's my plan:
 I'm sure there are standard benchmarks for branch predictions
 algorithms, and I think there are better ways to gather the data as well
 (especially if you are on Linux and on Intel processors).
-But hacking is way more fun! Here's my method using some of the basic tools
-on my 2020 Intel MacBook Air.
+But hacking is way more fun!
+
+The full code is available on Github.
+Below, I'll share my method and some of the interesting
+discoveries I made.
 
 ## Disassembling executables
 
