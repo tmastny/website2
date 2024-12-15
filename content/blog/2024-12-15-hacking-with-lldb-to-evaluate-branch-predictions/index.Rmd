@@ -419,7 +419,7 @@ continue
 lldb -s commands.lldb # with -o to run the script and exit
 ```
 
-Python is also an option. 
+Python is also an option.
 You'll either need to make sure that you are using the same
 Python as LLDB, or you'll need to set the `PYTHONPATH`
 to the [LLDB Python module.](https://lldb.llvm.org/use/python-reference.html#using-the-lldb-py-module-in-python)
@@ -446,31 +446,45 @@ def run_commands(debugger, command=None, result=None, internal_dict=None):
 lldb -o "script import commands; commands.run_commands(lldb.debugger)"
 ```
 
-### instruction stepping
+### Instruction stepping
 
 One way to depend a little less on the instruction set
 would be to step through the branch instruction and see
-where you end up. 
+where you end up. This was a my first attempt,
+but I ran into another bug.
 
-Stepping through instructions seems like a good idea (avoid
-having to know more details about the instruction set, have
-to gather less data), but the lldb scripting breaks
+As you saw in the last section, the basic plan is to
+set a breakpoint on each branch instruction, and then set a
+breakpoint command to log the data.
+When looking at the instruction set, we saw that we can
+figure out the branch behavior by looking at the flags register,
+which we configured LLDB to log:
 
+```
+breakpoint command add -o 'read register rflags' -o 'continue'
+```
 
-Process continue?
-https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html
+If we didn't want to parse rflags, another approach might be
+something like this:
+```
+breakpoint command add -o 'step instruction' -o 'p\x $pc' -o 'continue'
+```
 
-### Analyzing branch history
+This works great running interactively in LLDB,
+I couldn't get it to work in an automated script, with
+LLDB commands or in Python.
+
+## Analyzing branch history
 
 Global vs local. Looking at n-bit runs.
 
-### Comparing branch prediction accuracy
+## Comparing branch prediction accuracy
 
 gshare worse than concatenation again! tree
 
 gshare better than concatenation! zip
 
-### Profiling CPU branch prediction performance
+## Profiling CPU branch prediction performance
 
 https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d
 

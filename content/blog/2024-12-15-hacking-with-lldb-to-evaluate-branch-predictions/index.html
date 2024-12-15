@@ -29,11 +29,11 @@ output:
 <ul>
 <li><a href="#address-based-breakpoints" id="toc-address-based-breakpoints">Address-based breakpoints</a></li>
 <li><a href="#scripting-lldb" id="toc-scripting-lldb">Scripting LLDB</a></li>
-<li><a href="#instruction-stepping" id="toc-instruction-stepping">instruction stepping</a></li>
+<li><a href="#instruction-stepping" id="toc-instruction-stepping">Instruction stepping</a></li>
+</ul></li>
 <li><a href="#analyzing-branch-history" id="toc-analyzing-branch-history">Analyzing branch history</a></li>
 <li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
 <li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
-</ul></li>
 </ul></li>
 <li><a href="#appendix" id="toc-appendix">Appendix</a>
 <ul>
@@ -391,32 +391,41 @@ def run_commands(debugger, command=None, result=None, internal_dict=None):
 <pre class="bash"><code>lldb -o &quot;script import commands; commands.run_commands(lldb.debugger)&quot;</code></pre>
 </div>
 <div id="instruction-stepping" class="section level3">
-<h3>instruction stepping</h3>
+<h3>Instruction stepping</h3>
 <p>One way to depend a little less on the instruction set
 would be to step through the branch instruction and see
-where you end up!
-Stepping through instructions seems like a good idea (avoid
-having to know more details about the instruction set, have
-to gather less data), but the lldb scripting breaks</p>
-<p>Process continue?
-<a href="https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html" class="uri">https://developer.apple.com/library/archive/documentation/General/Conceptual/lldb-guide/chapters/C3-Breakpoints.html</a></p>
+where you end up. This was a my first attempt,
+but I ran into another bug.</p>
+<p>As you saw in the last section, the basic plan is to
+set a breakpoint on each branch instruction, and then set a
+breakpoint command to log the data.
+When looking at the instruction set, we saw that we can
+figure out the branch behavior by looking at the flags register,
+which we configured LLDB to log:</p>
+<pre><code>breakpoint command add -o &#39;read register rflags&#39; -o &#39;continue&#39;</code></pre>
+<p>If we didn’t want to parse rflags, another approach might be
+something like this:</p>
+<pre><code>breakpoint command add -o &#39;step instruction&#39; -o &#39;p\x $pc&#39; -o &#39;continue&#39;</code></pre>
+<p>This works great running interactively in LLDB,
+I couldn’t get it to work in an automated script, with
+LLDB commands or in Python.</p>
 </div>
-<div id="analyzing-branch-history" class="section level3">
-<h3>Analyzing branch history</h3>
+</div>
+<div id="analyzing-branch-history" class="section level2">
+<h2>Analyzing branch history</h2>
 <p>Global vs local. Looking at n-bit runs.</p>
 </div>
-<div id="comparing-branch-prediction-accuracy" class="section level3">
-<h3>Comparing branch prediction accuracy</h3>
+<div id="comparing-branch-prediction-accuracy" class="section level2">
+<h2>Comparing branch prediction accuracy</h2>
 <p>gshare worse than concatenation again! tree</p>
 <p>gshare better than concatenation! zip</p>
 </div>
-<div id="profiling-cpu-branch-prediction-performance" class="section level3">
-<h3>Profiling CPU branch prediction performance</h3>
+<div id="profiling-cpu-branch-prediction-performance" class="section level2">
+<h2>Profiling CPU branch prediction performance</h2>
 <p><a href="https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d" class="uri">https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d</a></p>
 <p>Try this on intel</p>
 <pre><code>sudo powermetrics --samplers cpu_power --sample-count 5</code></pre>
 <p>May have to download xcode :(</p>
-</div>
 </div>
 </div>
 <div id="appendix" class="section level1">
