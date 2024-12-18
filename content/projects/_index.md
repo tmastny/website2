@@ -38,6 +38,11 @@ title: "Projects"
 
 * [browse](https://github.com/tmastny/browse): tool to open a local file in Github
 * [feat](https://github.com/tmastny/feat): python library to manage column features in scikit learn
+  * this library had little adoption, but I'm proud of this one. In R, the output of statistical and 
+    machine learning models are in the context of the input feature *names*: for example, R 
+    will say "location" is significant. 
+    Scikit learn does not carry this data forward, so you have to manually remap
+    outcomes and feature importances back to the input feature names. This library fixes that.
 * [leadr](https://github.com/tmastny/leadr): R package to manage machine learning model metadata
 * [sagemaker](https://github.com/tmastny/sagemaker): R package to manage AWS Sagemaker
 

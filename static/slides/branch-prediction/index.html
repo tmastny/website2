@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Branch Prediction</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.28/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Branch Prediction
+]
+.subtitle[
+## Security and Performance
+]
+
+---
+
+
+![](zen-die-shot.jpg)&lt;!-- --&gt;
+
+Die shot of a Zen CPU core by AMD (~1,400,000,000 transistors)
+
+source: https://en.algorithmica.org/hpc/complexity/hardware/
+
+
+???
+AMD architecture created in 2017 and still used by AMD CPUs.
+
+Branch prediction unit takes up 15-20% of the die!
+So it must be critical for performance. 
+The size rivals L1 cache.
+
+Why?
+
+---
+
+CPU mental model: one step at a time
+
+&lt;div id="nonpipeline-container"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('nonpipeline-container');
+  container.innerHTML = createPipelineHTML('nonpipelineViz');
+  
+  window.nonpipelineViz = new PipelineVisualization(
+    document.getElementById('nonpipelineViz'),
+    {
+      instructions: [
+        "add $t1",
+        "sub $t2",
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "add $t1" },
+        { pc: 1, id: "add $t1" },
+        { pc: 1, ex: "add $t1" },
+        { pc: 1, mem: "add $t1" },
+        { pc: 1, wb: "add $t1" },
+        { pc: 2, if: "sub $t2" },
+        { pc: 2, id: "sub $t2" },
+        { pc: 2, ex: "sub $t2" },
+        { pc: 2, mem: "sub $t2" },
+        { pc: 2, wb: "sub $t2" },
+        { pc: null }
+      ]
+    }
+  );
+});
+&lt;/script&gt;
+
+???
+So at the top are instructions the CPU needs to process
+and each bottom is a stage. Don't worry about the details,
+but you should know that an instruction needs to go through
+each stage. 
+
+But this process is really inefficient, because
+those hardware units are just sitting there idle.
+
+What is want is an assembly line!
+
+---
+
+CPU mental model: assembly line 
+
+&lt;div id="pipeline1-container"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('pipeline1-container');
+  container.innerHTML = createPipelineHTML('pipelineViz1');
+  
+  window.pipelineViz1 = new PipelineVisualization(
+    document.getElementById('pipelineViz1'),
+    {
+      instructions: [
+        "add $t1",
+        "sub $t2",
+        "lw $t3",
+        "add $t5",
+        "and $t4"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "add $t1" },
+        { pc: 2, if: "sub $t2", id: "add $t1" },
+        { pc: 3, if: "lw $t3", id: "sub $t2", ex: "add $t1" },
+        { pc: 4, if: "add $t5", id: "lw $t3", ex: "sub $t2", mem: "add $t1" },
+        { pc: null, if: "and $t4", id: "add $t5", ex: "lw $t3", mem: "sub $t2", wb: "add $t1" },
+        { pc: null, id: "and $t4", ex: "add $t5", mem: "lw $t3", wb: "sub $t2" },
+        { pc: null, ex: "and $t4", mem: "add $t5", wb: "lw $t3" },
+        { pc: null, mem: "and $t4", wb: "add $t5" },
+        { pc: null, wb: "and $t4" },
+        { pc: null }
+      ]
+    }
+  );
+});
+&lt;/script&gt;
+
+
+???
+
+Now each operates at the same time,
+which makes the CPU much, much faster. 
+
+So much faster, CPU manufactures are willing
+to use 20% of the die space to make this happen.
+
+---
+
+But what do you do about branches?
+
+&lt;div id="branchpipeline-container"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('branchpipeline-container');
+  container.innerHTML = createPipelineHTML('branchpipeline');
+
+  window.branchpipeline = new PipelineVisualization(
+    document.getElementById('branchpipeline'),
+    {
+      instructions: [
+        "beq r1, r2, br",
+        "add r7, r1, r4",
+        "lw r8, 0(t6)",
+        "add r8, r8, r9",
+        "sw r8, 0(t6)",
+        "sw r7, 4(t6)",
+        "add r3, r1, r4",
+        "br: and r9, r10, r11",
+//        "sub r5, r3, r6"
+      ],
+      sequence: [
+        { pc: 0 },
+        { pc: 1, if: "beq r1, r2, br" },
+        { pc: 2, if: "add r7, r1, r4", id: "beq r1, r2, br" },
+        { pc: 3, if: "lw r8, 0(r7)", id: "add r7, r1, r4", ex: "beq r1, r2, br" },
+        { pc: 4, if: "add r8, r8, r9", id: "lw r8, 0(r7)", ex: "add r7, r1, r4", mem: "beq r1, r2, br" },
+        { pc: 7, if: "and r9, r10, r11", wb: "beq r1, r2, br" },
+        { pc: null, if: "sub r5, r3, r6", id: "and r9, r10, r11" },
+        { pc: null, id: "sub r5, r3, r6", ex: "and r9, r10, r11" },
+        { pc: null, ex: "sub r5, r3, r6", mem: "and r9, r10, r11" },
+        { pc: null, mem: "sub r5, r3, r6", wb: "and r9, r10, r11" },
+        { pc: null, wb: "sub r5, r3, r6" },
+        { pc: null }
+      ]
+    }
+  );
+});
+&lt;/script&gt;
+
+???
+
+At this point, the CPU knows it should have taken the branch.
+
+The CPU doesn't just have to pause the assembly line:
+it has to throw away all the work it's already done!
+
+So what do you do?
+
+---
+
+Add hardware!
+
+
+.left-column[
+.small-image[
+![](branch-die.jpg)
+]
+]
+
+--
+.left-column[
+.small-image[
+* memory
+![](branch-mem.jpg)
+]
+]
+--
+.left-column[
+.small-image[
+* logic
+![](branch-logic.jpg)
+]
+]
+--
+
+
+.right-column[
+![](dynamic-branch.svg)
+]
+
+
+&lt;style&gt;
+.left-column {
+  width: 30%;
+  float: left;
+}
+
+.right-column {
+  width: 65%;
+  float: right;
+}
+
+.small-image img {
+  width: 200px;
+  height: auto;
+}
+&lt;/style&gt;
+--
+
+# What could go wrong?
+
+???
+
+This makes up 20% of the die space! That's crazy:
+That means we are giving us L1 cache, which makes
+things like iterating over arrays 100x faster.
+
+We are giving up floating point operations i.e. FLOPS,
+the primary measure of performance.
+
+All to predict branches.
+
+What is the hardware?
+
+Memory: SRAM, same as the L1 cache.
+This stores the branch history, which is
+critical for prediction.
+
+Logic: this is the complicated feedback
+mechanism to predict and recover from branches.  
+
+What could go wrong?
+
+---
+
+What was the performance impact?
+
+.right-column[
+![](spectre-logo.png)
+]
+
+&lt;style&gt;
+.right-column {
+  width: 35%;
+  float: right;
+}
+
+.right-column img {
+  width: 100%;
+  height: auto;
+}
+&lt;/style&gt;
+--
+
+* software patches saw 5-30% performance degradation
+
+--
+
+* CPU were only improving 5-10% YoY
+
+--
+
+* lost 3-6 years of progress 
+
+---
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+<style>
+/* Your existing CSS with updated sizes */
+.pipeline-viz {
+  font-family: monospace;
+  margin: 0.5em 0;
+  padding: 0.5em;
+  width: 750px;
+  overflow-x: visible;
+}
+
+.controls {
+  margin-bottom: 1em;
+}
+
+.control-button {
+  padding: 0.5em 1em;
+  margin-right: 0.5em;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+}
+
+.control-button:hover {
+  background: #e9ecef;
+}
+
+.instructions-list {
+  margin-bottom: 2em;
+}
+
+.instruction {
+  padding: 0.5em;
+  margin: 0.25em 0;
+  background: #f8f9fa;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.instruction.active {
+  background: #e6f3ff;
+  opacity: 1;
+  font-weight: bold;
+}
+
+.pipeline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em;
+  margin-top: 1em;
+}
+
+.stage-container {
+  flex: 1;
+  text-align: center;
+}
+
+.stage-name {
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.stage {
+  height: 50px;
+  width: 120px;
+  padding: 0.5em;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+}
+
+.stage.active {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+</style>
+
+<script>
+// Fixed createPipelineHTML function with correct button handlers
+function createPipelineHTML(id) {
+  return `
+    <div class="pipeline-viz" id="${id}">
+      <div class="controls">
+        <button onclick="window.${id}.stepBack()" class="control-button">◀ Previous</button>
+        <button onclick="window.${id}.stepForward()" class="control-button">Next ▶</button>
+        <button onclick="window.${id}.reset()" class="control-button">Reset</button>
+      </div>
+      
+      <div class="instructions-list">
+        <div id="${id}-instructions"></div>
+      </div>
+      
+      <div class="pipeline">
+        <div class="stage-container">
+          <div class="stage-name">IF</div>
+          <div class="stage" data-stage="if"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">ID</div>
+          <div class="stage" data-stage="id"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">EX</div>
+          <div class="stage" data-stage="ex"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">MEM</div>
+          <div class="stage" data-stage="mem"></div>
+        </div>
+        <div class="stage-container">
+          <div class="stage-name">WB</div>
+          <div class="stage" data-stage="wb"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Your existing PipelineVisualization class stays exactly the same
+class PipelineVisualization {
+  constructor(container, config) {
+    this.container = container;
+    this.config = config;
+    this.currentStep = 0;
+    this.initialize();
+  }
+
+  initialize() {
+    const instructionContainer = this.container.querySelector('[id$="-instructions"]');
+    this.config.instructions.forEach(inst => {
+      const div = document.createElement('div');
+      div.className = 'instruction';
+      div.textContent = inst;
+      instructionContainer.appendChild(div);
+    });
+    this.render();
+  }
+
+  render() {
+    const stages = this.container.querySelectorAll('.stage');
+    const instructions = this.container.querySelectorAll('.instruction');
+    
+    stages.forEach(stage => {
+      stage.textContent = '';
+      stage.classList.remove('active');
+    });
+    
+    instructions.forEach(inst => inst.classList.remove('active'));
+
+    const state = this.config.sequence[this.currentStep] || {};
+    
+    Object.entries(state).forEach(([stage, instruction]) => {
+      if (instruction && stage !== 'pc') {
+        const stageElement = this.container.querySelector(
+          `.stage[data-stage="${stage.toLowerCase()}"]`
+        );
+        if (stageElement) {
+          stageElement.textContent = instruction;
+          stageElement.classList.add('active');
+        }
+      }
+    });
+
+    if (state.pc !== null && state.pc !== undefined && state.pc < instructions.length) {
+      instructions[state.pc].classList.add('active');
+    }
+  }
+
+  stepForward() {
+    if (this.currentStep < this.config.sequence.length - 1) {
+      this.currentStep++;
+      this.render();
+    }
+  }
+
+  stepBack() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+      this.render();
+    }
+  }
+
+  reset() {
+    this.currentStep = 0;
+    this.render();
+  }
+}
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
