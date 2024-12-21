@@ -33,6 +33,175 @@ output:
 </ul>
 </div>
 
+<style>
+    .simulation-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0;
+    }
+
+    .slider-container {
+        width: 400px;
+        padding: 0 10px;
+    }
+
+    input[type="range"] {
+        width: 100%;
+    }
+
+    canvas {
+        width: 400px;
+        height: 120px;
+    }
+</style>
+
+<script>
+    function initBallBinSim(container) {
+        const groupColors = [
+            "#4CAF50", // green
+            "#FF6B6B", // red
+            "#45B7D1", // blue
+            "#FFB347", // orange
+        ];
+
+        // Pre-generate 100 random states
+        const states = Array(100)
+            .fill()
+            .map(() => {
+                const xorBins = new Array(16).fill(0);
+                const concatBins = new Array(16).fill(0);
+
+                for (let i = 0; i < 16; i++) {
+                    const addressGroup = Math.floor(i / 4);
+                    xorBins[Math.floor(Math.random() * 16)]++;
+                    concatBins[
+                        addressGroup * 4 + Math.floor(Math.random() * 4)
+                    ]++;
+                }
+                return { xorBins, concatBins };
+            });
+
+        function createBallBinViz(isXOR) {
+            const canvas = document.createElement("canvas");
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = 400 * dpr;
+            canvas.height = 120 * dpr;
+
+            const ctx = canvas.getContext("2d");
+            ctx.scale(dpr, dpr);
+
+            function drawBins() {
+                const numBins = 16;
+                const binWidth = (400 - 20) / numBins;
+                const binHeight = 70;
+                const startY = 20;
+
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+
+                if (!isXOR) {
+                    for (let group = 0; group < 4; group++) {
+                        const x = 10 + group * (binWidth * 4);
+                        ctx.fillStyle = groupColors[group] + "20";
+                        ctx.fillRect(x, startY, binWidth * 4, binHeight);
+                    }
+                }
+
+                for (let i = 0; i < numBins; i++) {
+                    ctx.beginPath();
+                    const x = 10 + i * binWidth;
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, startY + binHeight);
+                    ctx.lineTo(x + binWidth, startY + binHeight);
+                    ctx.lineTo(x + binWidth, startY);
+                    ctx.stroke();
+                }
+            }
+
+            function drawBall(binIndex, ballsInBin, addressGroup) {
+                const numBins = 16;
+                const binWidth = (400 - 20) / numBins;
+                const startY = 20;
+                const binHeight = 70;
+                const ballRadius = 8;
+                const ballSpacing = ballRadius * 2;
+
+                const x = 10 + binIndex * binWidth + binWidth / 2;
+                const y =
+                    startY +
+                    binHeight -
+                    ballRadius -
+                    ballSpacing * (ballsInBin - 1);
+
+                ctx.beginPath();
+                ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+                ctx.fillStyle = isXOR ? "#4CAF50" : groupColors[addressGroup];
+                ctx.fill();
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+            }
+
+            function draw(stateIndex) {
+                ctx.clearRect(0, 0, 400, 120);
+                drawBins();
+
+                const bins = isXOR
+                    ? states[stateIndex].xorBins
+                    : states[stateIndex].concatBins;
+
+                for (let i = 0; i < 16; i++) {
+                    const addressGroup = Math.floor(i / 4);
+                    for (let ball = 0; ball < bins[i]; ball++) {
+                        drawBall(i, ball + 1, addressGroup);
+                    }
+                }
+            }
+
+            return { canvas, draw };
+        }
+
+        const simContainer = document.createElement("div");
+        simContainer.className = "simulation-container";
+
+        const xorViz = createBallBinViz(true);
+        const concatViz = createBallBinViz(false);
+
+        const sliderContainer = document.createElement("div");
+        sliderContainer.className = "slider-container";
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = "99";
+        slider.value = "0";
+
+        slider.oninput = function () {
+            const stateIndex = parseInt(this.value);
+            xorViz.draw(stateIndex);
+            concatViz.draw(stateIndex);
+        };
+
+        sliderContainer.appendChild(slider);
+
+        simContainer.appendChild(xorViz.canvas);
+        simContainer.appendChild(concatViz.canvas);
+        simContainer.appendChild(sliderContainer);
+
+        container.appendChild(simContainer);
+
+        // Initial draw
+        xorViz.draw(0);
+        concatViz.draw(0);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const containers = document.querySelectorAll(".ballbin-container");
+        containers.forEach((container) => initBallBinSim(container));
+    });
+</script>
 <blockquote>
 <p>This is part of my branch prediction series.</p>
 <ol style="list-style-type: decimal">
@@ -191,6 +360,25 @@ analyze patterns, and compare algorithm performance.</p>
 <p>Before we dive into a mathematical proof,
 here’s some intuition why concatenation is more likely
 to have <em>fewer</em> key collisions.</p>
+<p>Let’s start with the extreme case: what’s the maximum
+number of key collisions?
+For gshare, since we are assuming the history is random,
+there a chance that each history maps to the inverse
+of the address. That would mean each key would be <code>0000</code>
+in the 4-bit case.
+If this happens <em>all</em> keys would collide.</p>
+<p>On the other hand, with a 4-bit concatenation scheme,
+addresses with the same last 2 bits will always map
+to the same set of 4 keys.</p>
+<p><img src="addr-key.svg" /><!-- --></p>
+<p>So any key can have at most 4 collisions.</p>
+<p>But maximum number of collisions isn’t the full story.
+The probability of 16 collisions is extremely low.
+If we simulate 100 cases, XOR usually has no more than 4
+(and rarely 5).
+The next section will compare the average number
+of collisions, not just the worst case.</p>
+<div class="ballbin-container"></div>
 <div id="collisions-in-a-random-program" class="section level2">
 <h2>Collisions in a random program</h2>
 <p>Let’s suppose we have a program consisting
@@ -246,7 +434,6 @@ to form the key.</p>
 <p>Because we are only using the last 2 bits of the address,
 we can treat this problem as 4 separate cases of 4 balls
 into 4 bins.</p>
-<p><img src="addr-key.svg" /><!-- --></p>
 <p>For example, the addresses that end in <code>00</code> can only be mapped
 to the keys that start with <code>00</code>.</p>
 <p>Using the same formula as before, the expected number of bins
