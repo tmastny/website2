@@ -1,8 +1,8 @@
 ---
-title: 'Hacking with LLDB to Evaluate Branch Predictions'
+title: 'Hacking with LLDB to Trace Branch History'
 author: ~
 date: '2024-12-15'
-slug: hacking-with-lldb-to-evaluate-branch-predictions
+slug: hacking-with-lldb-to-trace-branch-history
 categories: []
 tags: []
 description: 'Hacking with LLDB to Evaluate Branch Predictions'
@@ -15,12 +15,6 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#reasons-to-think-gshare-is-better" id="toc-reasons-to-think-gshare-is-better">Reasons to think gshare is better</a>
-<ul>
-<li><a href="#gshare-is-better" id="toc-gshare-is-better">gshare is better</a></li>
-<li><a href="#gshare-is-worse" id="toc-gshare-is-worse">gshare is worse</a></li>
-</ul></li>
-<li><a href="#mathematical-proof-that-gshare-is-worse" id="toc-mathematical-proof-that-gshare-is-worse">Mathematical proof that gshare is worse</a></li>
 <li><a href="#hacking-executables-to-gather-branch-history" id="toc-hacking-executables-to-gather-branch-history">Hacking executables to gather branch history</a>
 <ul>
 <li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a></li>
@@ -35,167 +29,32 @@ output:
 <li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
 <li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
 </ul></li>
-<li><a href="#appendix" id="toc-appendix">Appendix</a>
-<ul>
-<li><a href="#collisions-in-a-random-program" id="toc-collisions-in-a-random-program">Collisions in a random program</a>
-<ul>
-<li><a href="#xor" id="toc-xor">XOR</a></li>
-<li><a href="#concatenation" id="toc-concatenation">Concatenation</a></li>
-<li><a href="#conclusion" id="toc-conclusion">Conclusion</a></li>
-</ul></li>
-</ul></li>
 </ul>
 </div>
 
-<p>How do we know if one branch prediction scheme is better than another?
-Comparing algorithms comes up all the time in computer science,
-and on the assumptions behind better.</p>
-<p>For example, is quicksort better than insertion sort?
-If you are familiar with computational complexity,
-you’ll know that quicksort has better average-case performance.
-That’s a mathematical fact, but there quite a few assumptions
-built into that comparison. For starters, quicksort has the same
-worst-case performance as insertion sort.
-And insertion sort can even have better performance
-when the list is “almost sorted”.</p>
-<p>Another example is iterating over array of structs versus a
-struct of arrays. In terms of computational complexity,
-they are the same. But struct of arrays might be significantly
-faster given the architecture of CPU cache memory.
-Again, the comparison depends on the assumptions you make.</p>
-<p>So how do we compare branch prediction schemes?
-What assumptions do we have to make?
-Let’s investigate these questions by analyzing the difference
-between two hashing methods in two-level adaptive branch prediction
-with global history.</p>
-<p>I’m not going to cover the details of the algorithm, since
-Dan Luu provides a nice overview <a href="https://danluu.com/branch-prediction/">here</a>.
-The focus here is on two different methods to calculate the key
-for the branch prediction table, rather than comparing two distinct prediction algorithms.
-For an n-bit key, the two methods are:</p>
-<ul>
-<li>concatenation: concatenates the last n/2 bits of the address and history</li>
-<li>gshare: takes the XOR of the last n-bits of the address and history</li>
-</ul>
-<p><img src="concat-gshare.svg" /><!-- --></p>
-<p>I’ll try to answer the following questions:</p>
-<ul>
-<li>why would we think gshare is better than concatenation?</li>
-<li>can we mathematically prove that gshare is better than concatenation?</li>
-<li>can we empirically verify that gshare is better than concatenation?</li>
-</ul>
-<p>For the last question, we’ll do some fun hacking by
-disassembling real programs, using LLDB to trace branch paths
-to gather branch history data, and then calculate branch
-prediction accuracy for both schemes.</p>
-<div id="reasons-to-think-gshare-is-better" class="section level2">
-<h2>Reasons to think gshare is better</h2>
-<p>The basic argument why gshare is superior goes like this:
-sometimes using more than n/2 address bits
-would give us better predictions and sometimes using more of the branch history
-would give us better predictions. The XOR hash in gshare uses more of both
-by hashing all n-bits of the address and history into the key!</p>
-<p>Compared concatenation where address and history have a predetermined
-contribution to the key, gshare seems like an obvious<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> improvement.
-We can even come up with some examples that demonstrate this argument.</p>
-<div id="gshare-is-better" class="section level3">
-<h3>gshare is better</h3>
-<div id="same-branch-history-different-predictions" class="section level4">
-<h4>Same branch history, different predictions</h4>
-<p>With gshare, two different addresses with the same branch history
-will always map to different keys: this is important
-for prediction accuracy when the two branches have
-different outcomes.</p>
-<pre><code>Branch   address history  gshare  concat  actual
-A        1010    1011     0001    1011    0
-B        1110    1011     0100    1011    1</code></pre>
-<p>gshare disambiguates the two branches
-with different outcomes, while concatenation does not.</p>
-</div>
-<div id="using-more-history-bits" class="section level4">
-<h4>Using more history bits</h4>
-<p>Let’s assume we have a branch history pattern like this:</p>
-<pre><code>1101 1101 1101 1101...</code></pre>
-<p>With a 1-bit prediction table, long-term gshare has a 100%
-prediction accuracy, but concatenation does not has 50% accuracy:</p>
-<pre><code>address history  gshare  concat  actual
-1010    1101     0111    1001    1
-1010    1110     0100    1000    1
-1010    0111     1101    1011    0
-1010    1011     1000    1011    1</code></pre>
-<p>The reason is that the 0111 and 1011 histories alias.
-Because the actual result alternates between 0 and 1,
-the prediction bit alters as well.
-Even if we used 2-bit saturation counter, we would only improve
-the accuracy to 75%.</p>
-</div>
-</div>
-<div id="gshare-is-worse" class="section level3">
-<h3>gshare is worse</h3>
-<p>However, we can also come up with an example where gshare
-does <em>worse</em> than concatenation. Two keys in the branch
-prediction table will collide in gshare
-when the address of one equals the history of the other (and vice versa):</p>
-<pre><code>Branch   Address  History  Gshare  Concat  Actual
-A        0011     1100     0000    1100    1
-B        1100     0011     0000    0011    0</code></pre>
-<p>In this case, both branches map to the same prediction entry (0000)
-even though they have different behaviors. Concatenation keeps them
-separate because it uses different bits from the address and history.</p>
-<p>So if the branch was running in a way where branch A was always executed
-before branch B, the prediction accuracy of gshare would be 0%!</p>
-<p>(TODO: let’s say we have best case scenario with separate branch histories,
-even then gshare is zero. Worse)</p>
-<pre><code>Branch Addr | History | Actual | Key  | Prediction
------------------------------------------------------------------
-0011       | 1001    |      1 | 1010 |         0
------------------------------------------------------------------
-1100       | 0110    |      0 | 1010 |         1
------------------------------------------------------------------
-0011       | 0011    |      0 | 0000 |         1
------------------------------------------------------------------
-1100       | 1100    |      1 | 0000 |         0
------------------------------------------------------------------
-0011       | 0110    |      0 | 0101 |         1
------------------------------------------------------------------
-1100       | 1001    |      1 | 0101 |         0
------------------------------------------------------------------
-0011       | 1100    |      1 | 1111 |         0
------------------------------------------------------------------
-1100       | 0011    |      0 | 1111 |         1
------------------------------------------------------------------
-0011       | 1001    |      1 | 1010 |         0
------------------------------------------------------------------
-1100       | 0110    |      0 | 1010 |         1
------------------------------------------------------------------</code></pre>
-<p>To me, this feels like a contrived example and ones
-in the previous section feel like the typical case.
-But how do we know? Can we prove it?</p>
-</div>
-</div>
-<div id="mathematical-proof-that-gshare-is-worse" class="section level2">
-<h2>Mathematical proof that gshare is worse</h2>
-<p>Like quicksort vs. insertion sort, maybe we can write
-a mathematical proof that gshare is better than concatenation.
-Let’s come up with some assumptions and investigate.</p>
-<p>Let’s define a “program” as a set branches, each with a unique n-bit address.
-Each address has a random n-bit history.
-One dimension of poor branch prediction performance is key collisions.</p>
-<p>Can we show that gshare is less likely to have key collisions
-than concatenation? <strong>No</strong>. In fact, the opposite is true.
-gshare is slightly more likely to have key collisions
-than concatenation! <a href="#appendix">See the appendix</a> for the proof
-when the key size is 4-bits.</p>
-<p>What’s going on here? We know gshare performs better in practice.
-The problem is our assumptions. We assumed that the branch history
-for each address is random. That might be reasonable assumption
-when comparing sorting algorithms (although plenty of real world
-data is almost sorted), but this is a really bad assumption for branch prediction.
-Branch history is often very predictable, and even a simple algorithm
-of “branch taken” can be 70% accurate!<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>Instead, we need to gather empirical data on branches taken,
-analyze patterns, and compare algorithm performance.</p>
-</div>
+<blockquote>
+<p>This is part of my branch prediction series.</p>
+<ol style="list-style-type: decimal">
+<li><a href="/blog/visualizing-cpu-pipelining/">Visualizng CPU Pipelining</a></li>
+<li><a href="/blog/evaluating-branch-predictions/">Evaluating Branch Predictions</a></li>
+<li>Hacking LLDB to Trace Branch History</li>
+</ol>
+</blockquote>
+<p>As we saw in the previous post, we need a way to evaluate
+branch prediction algorithms empirically: in real world programs,
+how accurate are the predictions?
+There are well-know benchmarks and advanced CPU tooling to track
+branch predictions, but I wanted to approach this problem
+with a hacker mentality: how can I use the tools I have
+in creative ways to investigate this for myself?</p>
+<p>My goal is to share some of the details around:
+* disassembling executables
+* handling binary executables and shared libraries
+* exploring the LLDB API and dealing with bugs</p>
+<p>If you are interested in LLDB, debugging, and implementations
+challenges, this article is for you. If you want the results
+and visualizations
+check out the next article in the series.</p>
 <div id="hacking-executables-to-gather-branch-history" class="section level1">
 <h1>Hacking executables to gather branch history</h1>
 <p>Here’s my plan:</p>
@@ -377,6 +236,15 @@ def run_commands(debugger, command=None, result=None, internal_dict=None):
 
     process.Continue()</code></pre>
 <pre class="bash"><code>lldb -o &quot;script import commands; commands.run_commands(lldb.debugger)&quot;</code></pre>
+<p>Lastly, there’s the C++ API. The Python API is just a thin wrapper around the C++ API,
+so once you are comfortable there it’s not hard to move to C++.
+You need to install <code>llvm</code> to get access to the library and headers.</p>
+<p>However, don’t expect much of a performance boost. I implemented branch tracing
+with all three methods and performance was about the same for a trace with
+with about 1000 branches about 20,000 branch predictions:</p>
+<pre><code>./branch_data_cpp.py  83.095 ± 0.452 seconds
+./branch_data_py.py   95.014 ± 0.460 seconds
+./branch_data_lldb.py 98.909 ± 0.271 seconds</code></pre>
 </div>
 <div id="instruction-stepping" class="section level3">
 <h3>Instruction stepping</h3>
@@ -402,6 +270,10 @@ LLDB commands or in Python.</p>
 <div id="analyzing-branch-history" class="section level2">
 <h2>Analyzing branch history</h2>
 <p>Global vs local. Looking at n-bit runs.</p>
+<p>Add visualizations, showing global branch history,
+number of branches from each address, and
+an analysis of branch prediction table density
+by looking at Gini coefficient.</p>
 </div>
 <div id="comparing-branch-prediction-accuracy" class="section level2">
 <h2>Comparing branch prediction accuracy</h2>
@@ -411,95 +283,8 @@ LLDB commands or in Python.</p>
 <div id="profiling-cpu-branch-prediction-performance" class="section level2">
 <h2>Profiling CPU branch prediction performance</h2>
 <p><a href="https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d" class="uri">https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d</a></p>
-<p>Try this on intel</p>
-<pre><code>sudo powermetrics --samplers cpu_power --sample-count 5</code></pre>
-<p>May have to download xcode :(</p>
+<p>Use CPU counter in instruments.</p>
+<p>Show how accurate branch prediction is in the modern CPU, and compare
+to our gshare and concatenation.</p>
 </div>
-</div>
-<div id="appendix" class="section level1">
-<h1>Appendix</h1>
-<div id="collisions-in-a-random-program" class="section level2">
-<h2>Collisions in a random program</h2>
-<p>Let’s suppose we have a program consisting
-of 16 unique branch addresses, each with a random 4-bit branch history.
-And let’s suppose our branch prediction table has a fixed 4-bit key size,
-allowing 16 different keys.</p>
-<p>The surprising result is that the XOR
-is more likely to have key collisions
-than concatenation!</p>
-<div id="xor" class="section level3">
-<h3>XOR</h3>
-<p>Our goal is to show that for 16 unique 4-bit addresses,
-with a random 4-bit history, XOR will randomly map the addresses
-to any of the 16 keys.</p>
-<p>To start, we’ll first show that it’s possible to map any address
-to any key.
-Suppose <code>k</code> is any possible 4-bit key.
-Then if we have a fixed 4-bit address <code>a</code>,
-we can always find a 4-bit history <code>h</code> such that
-<code>k = a ^ h</code>:</p>
-<pre><code>k = 0 ^ k = (a ^ a) ^ k = a ^ (a ^ k) = a ^ h</code></pre>
-<p>And for our address <code>a</code>, if two different histories
-map to the same key, they are the same history:</p>
-<pre><code>a ^ h1 =     k =      a ^ h2
-    h1 = a ^ k = a ^ (a ^ h2) = h2</code></pre>
-<p>Therefore, collisions must be possible, since
-any address can map to any key and we are randomly
-choosing the history.</p>
-<p>Now let’s reframe the question into a standard combinatorial problem:
-imagine our 16 unique
-addresses are 16 different balls and our 16 keys are 16 different
-bins. What’s the expected number of bins with 2 or more balls?</p>
-<p>A good approach is to use the complement probability:
-i.e. what’s the probability that a bin is empty
-and what’s the probability that a bin has 1 ball?
-Then the probability that a bin has 2 or more balls is</p>
-<p><span class="math display">\[
-1 - \left( \frac{15}{16} \right)^{16} - \binom{16}{1} \frac{1}{16} \left( \frac{15}{16} \right)^{15} \simeq 0.26
-\]</span></p>
-<p>Therefore, 16 * 0.26 = 4.23 bins are expected to have 2 or more balls.
-So about 4 collisions are expected.</p>
-</div>
-<div id="concatenation" class="section level3">
-<h3>Concatenation</h3>
-<p>Now let’s think about concatenation.</p>
-<p>This one is a little more complicated and also changes
-depending on the concatenation scheme (for example,
-we could use a concatenation ratio of 2:1 instead of 1:1).
-But to show the general process, let’s just analyze the case
-where we have 16 unique addresses with a random 4-bit history,
-and we concatenate 2 bits from the address and 2 bits from the history
-to form the key.</p>
-<p>Because we are only using the last 2 bits of the address,
-we can treat this problem as 4 separate cases of 4 balls
-into 4 bins.</p>
-<p><img src="addr-key.svg" /><!-- --></p>
-<p>For example, the addresses that end in <code>00</code> can only be mapped
-to the keys that start with <code>00</code>.</p>
-<p>Using the same formula as before, the expected number of bins
-with 2 or more balls is about 0.267 * 4 = 1.05.
-Since there are 4 independent cases of the 4 balls, 4 bins,
-the expected number of bins with 2 or more balls is about
-4.19.</p>
-</div>
-<div id="conclusion" class="section level3">
-<h3>Conclusion</h3>
-<p>So concatenation is less likely to have key collisions
-than XOR! So why does gshare work better than concatenation
-in practice? Because branch history is not random.
-The only way to really know which performs better is to
-analyze empirical branching data.</p>
-</div>
-</div>
-</div>
-<div class="footnotes footnotes-end-of-document">
-<hr />
-<ol>
-<li id="fn1"><p>Turns out not be obvious.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>We are also making the assumption
-that key collisions are an indicator
-of poor branch prediction performance. That seems true, but who knows?
-Maybe there’s a clever way to use key collisions to improve branch prediction,
-by making sure keys that alias have correlated predictions.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
-</ol>
 </div>

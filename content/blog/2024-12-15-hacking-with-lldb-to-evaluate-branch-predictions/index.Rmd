@@ -19,9 +19,10 @@ knitr::opts_chunk$set(
 )
 ```
 > This is part of my branch prediction series.
-1. [Visualizng CPU Pipelining](/blog/visualizing-cpu-pipelining/)
-2. [Evaluating Branch Predictions](/blog/evaluating-branch-predictions/)
-3. Hacking LLDB to Evaluate Branch Predictions
+>
+> 1. [Visualizng CPU Pipelining](/blog/visualizing-cpu-pipelining/)
+> 2. [Evaluating Branch Predictions](/blog/evaluating-branch-predictions/)
+> 3. Hacking LLDB to Trace Branch History
 
 As we saw in the previous post, we need a way to evaluate
 branch prediction algorithms empirically: in real world programs,

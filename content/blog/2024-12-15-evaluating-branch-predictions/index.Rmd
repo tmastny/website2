@@ -2,7 +2,7 @@
 title: 'Evaluating Branch Predictions'
 author: ~
 date: '2024-12-15'
-slug: evaluating-branch-predictions 
+slug: evaluating-branch-predictions
 categories: []
 tags: []
 description: 'Evaluation Branch Predictions'
@@ -18,10 +18,12 @@ knitr::opts_chunk$set(
   results = "show", cache = FALSE, autodep = FALSE, error = TRUE
 )
 ```
+
 > This is part of my branch prediction series.
-1. [Visualizng CPU Pipelining](/blog/visualizing-cpu-pipelining/)
-2. Evaluating Branch Predictions
-3. [Hacking LLDB to Evaluate Branch Predictions](/blog/hacking-lldb-to-evaluate-branch-predictions/)
+>
+> 1. [Visualizng CPU Pipelining](/blog/visualizing-cpu-pipelining/)
+> 2. Evaluating Branch Predictions
+> 3. [Hacking LLDB to Evaluate Branch Predictions](/blog/hacking-lldb-to-evaluate-branch-predictions/)
 
 How do we know if one branch prediction scheme is better than another?
 Comparing algorithms comes up all the time in computer science,
@@ -65,7 +67,7 @@ I'll try to answer the following questions:
 
 * why would we think gshare is better than concatenation?
 * can we mathematically prove that gshare is better than concatenation?
-* what *should* convince us that gshare is better than concatenation? 
+* what *should* convince us that gshare is better than concatenation?
 
 ## Reasons to think gshare is better
 
@@ -205,9 +207,9 @@ analyze patterns, and compare algorithm performance.
 
 # Proving concatenation has fewer key collisions
 
-Before we dive into a mathematical proof, 
+Before we dive into a mathematical proof,
 here's some intuition why concatenation is more likely
-to have *fewer* key collisions. 
+to have *fewer* key collisions.
 
 ## Collisions in a random program
 

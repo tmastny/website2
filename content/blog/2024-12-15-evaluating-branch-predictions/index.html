@@ -1,11 +1,11 @@
 ---
-title: 'Hacking with LLDB to Evaluate Branch Predictions'
+title: 'Evaluating Branch Predictions'
 author: ~
 date: '2024-12-15'
-slug: hacking-with-lldb-to-evaluate-branch-predictions
+slug: evaluating-branch-predictions
 categories: []
 tags: []
-description: 'Hacking with LLDB to Evaluate Branch Predictions'
+description: 'Evaluation Branch Predictions'
 draft: true
 output:
   blogdown::html_page:
@@ -21,21 +21,7 @@ output:
 <li><a href="#gshare-is-worse" id="toc-gshare-is-worse">gshare is worse</a></li>
 </ul></li>
 <li><a href="#mathematical-proof-that-gshare-is-worse" id="toc-mathematical-proof-that-gshare-is-worse">Mathematical proof that gshare is worse</a></li>
-<li><a href="#hacking-executables-to-gather-branch-history" id="toc-hacking-executables-to-gather-branch-history">Hacking executables to gather branch history</a>
-<ul>
-<li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a></li>
-<li><a href="#parsing-instructions" id="toc-parsing-instructions">Parsing instructions</a></li>
-<li><a href="#tracing-with-lldb" id="toc-tracing-with-lldb">Tracing with LLDB</a>
-<ul>
-<li><a href="#address-based-breakpoints" id="toc-address-based-breakpoints">Address-based breakpoints</a></li>
-<li><a href="#scripting-lldb" id="toc-scripting-lldb">Scripting LLDB</a></li>
-<li><a href="#instruction-stepping" id="toc-instruction-stepping">Instruction stepping</a></li>
-</ul></li>
-<li><a href="#analyzing-branch-history" id="toc-analyzing-branch-history">Analyzing branch history</a></li>
-<li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
-<li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
-</ul></li>
-<li><a href="#appendix" id="toc-appendix">Appendix</a>
+<li><a href="#proving-concatenation-has-fewer-key-collisions" id="toc-proving-concatenation-has-fewer-key-collisions">Proving concatenation has fewer key collisions</a>
 <ul>
 <li><a href="#collisions-in-a-random-program" id="toc-collisions-in-a-random-program">Collisions in a random program</a>
 <ul>
@@ -47,6 +33,14 @@ output:
 </ul>
 </div>
 
+<blockquote>
+<p>This is part of my branch prediction series.</p>
+<ol style="list-style-type: decimal">
+<li><a href="/blog/visualizing-cpu-pipelining/">Visualizng CPU Pipelining</a></li>
+<li>Evaluating Branch Predictions</li>
+<li><a href="/blog/hacking-lldb-to-evaluate-branch-predictions/">Hacking LLDB to Evaluate Branch Predictions</a></li>
+</ol>
+</blockquote>
 <p>How do we know if one branch prediction scheme is better than another?
 Comparing algorithms comes up all the time in computer science,
 and on the assumptions behind better.</p>
@@ -82,12 +76,8 @@ For an n-bit key, the two methods are:</p>
 <ul>
 <li>why would we think gshare is better than concatenation?</li>
 <li>can we mathematically prove that gshare is better than concatenation?</li>
-<li>can we empirically verify that gshare is better than concatenation?</li>
+<li>what <em>should</em> convince us that gshare is better than concatenation?</li>
 </ul>
-<p>For the last question, we’ll do some fun hacking by
-disassembling real programs, using LLDB to trace branch paths
-to gather branch history data, and then calculate branch
-prediction accuracy for both schemes.</p>
 <div id="reasons-to-think-gshare-is-better" class="section level2">
 <h2>Reasons to think gshare is better</h2>
 <p>The basic argument why gshare is superior goes like this:
@@ -196,228 +186,11 @@ of “branch taken” can be 70% accurate!<a href="#fn2" class="footnote-ref" id
 <p>Instead, we need to gather empirical data on branches taken,
 analyze patterns, and compare algorithm performance.</p>
 </div>
-<div id="hacking-executables-to-gather-branch-history" class="section level1">
-<h1>Hacking executables to gather branch history</h1>
-<p>Here’s my plan:</p>
-<ul>
-<li>disassemble the binary executable to gather the addresses of all branch instructions</li>
-<li>use LLDB to trace the branch paths and gather the branch history</li>
-<li>calculate the branch prediction accuracy for both gshare and concatenation</li>
-<li>compare to the real CPU branch prediction accuracy</li>
-</ul>
-<p>I’m sure there are standard benchmarks for branch predictions
-algorithms, and I think there are better ways to gather the data as well
-(especially if you are on Linux and on Intel processors).
-But hacking is way more fun!</p>
-<p>The full code is available on <a href="https://github.com/tmastny/gshare/tree/main/extract_branch_data">Github</a>.
-Below, I’ll share my method and some of the interesting
-discoveries I made.</p>
-<div id="disassembling-executables" class="section level2">
-<h2>Disassembling executables</h2>
-<p>The easiest approach is <code>otool</code>:</p>
-<pre class="bash"><code>otool -tv /usr/local/bin/tree</code></pre>
-<p>This gives the disassembly of the entire program.</p>
-<p>You can also disassemble with LLDB, but it’s more complicated.
-By default, LLDB only disassembles a single function or frame
-rather than the entire program, even if you know the instruction
-address range.
-<code>otool</code> disassembles everything, so I didn’t spend any more time
-trying to figure out how to do it with LLDB.</p>
-<p>Here’s a snippet of a branch instruction we’ll be parsing
-from the assembly:</p>
-<pre class="asm"><code>0000000100007f03	movq	(%rbx), %rdi
-0000000100007f06	testq	%rdi, %rdi
-0000000100007f09	je	0x100008281</code></pre>
-</div>
-<div id="parsing-instructions" class="section level2">
-<h2>Parsing instructions</h2>
-<p>To parse the disassembly, we need to search for and save the address of
-all conditional branch instructions.</p>
-<p>This will depend on your CPU architecture.
-I did this on my 2020 MacBook Air with Intel Ice Lake, which is x86-64.
-If you want to run this analysis for yourself on a modern ARM MacBook,
-you’ll have to both filter for different instructions and
-tracing with LLDB will be different as well.</p>
-</div>
-<div id="tracing-with-lldb" class="section level2">
-<h2>Tracing with LLDB</h2>
-<p>Next, we need to run LLDB on the executable, set breakpoints on all branch
-addresses, and log the branch history.</p>
-<p>I quickly discovered running LLDB on certain executables are off limits: Apple really
-doesn’t like you attaching a debugger even to something simple like the <code>ls</code> command
-in <code>/bin/ls</code>. I tinkered with SIP and csrutils, but couldn’t get anything to work.
-If there’s a way around this let me know!
-I ended up using <code>tree</code> and <code>bzip2</code> as my test executables, installed with Homebrew.</p>
-<p>Typically, you use LLDB on a binary compiled with debugging symbols,
-which let you set breakpoints on function names or line numbers.
-Even without debugging symbols, compiled binaries have externally available
-symbols like function names.
-For example, <code>tree</code> has <code>main</code> and
-<code>emit_tree</code> symbols.</p>
-<p>However, we need to break on addresses.</p>
-<div id="address-based-breakpoints" class="section level3">
-<h3>Address-based breakpoints</h3>
-<p>This is a typical branch instruction from the disassembled binary:</p>
-<pre class="asm"><code>0000000100007f09	je	0x100008281</code></pre>
-<p><code>0x100007f09</code> is where we want LLDB to break so we can trace the branch history.
-Just like we can set a breakpoint on a function name, we can set one
-directly on an address.</p>
-<pre><code>(lldb) target create /usr/local/bin/tree
-
-(lldb) breakpoint set --name main
-(lldb) breakpoint set -a 0x100007f09
-
-(lldb) breakpoint list
-Current breakpoints:
-1: name = &#39;main&#39;, locations = 1
-  1.1: where = tree`main, address = tree[0x0000000100004e08], unresolved, hit count = 0
-
-2: address = 0x0000000100007f09, locations = 1
-  2.1: address = 0x0000000100007f09, unresolved, hit count = 0</code></pre>
-<p>At this point, both breakpoints are <em>unresolved</em>.
-An unresolved breakpoint means LLDB knows where we want to break in theory,
-but doesn’t yet know where that instruction will actually be located when the program runs.</p>
-<p>We call the address written in the binary file (0x100007f09) the <em>file address</em>,
-and the address where the instruction is loaded into memory the <em>load address</em>.
-There are a few reasons why file and load addresses might differ:</p>
-<ul>
-<li>Address Space Layout Randomization (ASLR) randomly offsets memory addresses for security</li>
-<li>shared libraries often have overlapping file addresses that need to be relocated when loaded</li>
-</ul>
-<p>When we run <code>target create /usr/local/bin/tree</code>, the program isn’t yet loaded:
-rather LLDB gathers all the object and symbol files (called modules or images)
-associated with the executable, so we can set breakpoints before the program is running.
-Only when we run <code>process launch --stop-at-entry</code> or <code>run</code> is the program
-loaded into memory, the load addresses are set, and the breakpoints are resolved.</p>
-<p>For example, here’s the symbol table looking at the <code>emit_tree</code> in <code>tree</code>
-and <code>memcpy</code> in the dynamic linker <code>dyld</code>:</p>
-<pre><code># target modules dump symtab tree [/usr/lib/dyld]
-Index   UserID DSX Type            File Address/Value Load Address        Name
-------- ------ --- --------------- ------------------ ------------------  ---------
-[   67]     67   X Code            0x0000000100007ec7                     emit_tree
-[   87]     87     Code            0x00007ff80009a140                     memcpy
-
-# after `(lldb) process launch --stop-at-entry`
-[   67]     67   X Code            0x0000000100007ec7 0x0000000100007ec7  emit_tree
-[   87]     87     Code            0x00007ff80009a140 0x000000010001e140  memcpy</code></pre>
-<p>For the main executable, the file address and load address are the same.
-LLDB by default asks the operating system
-to disable ASLR. But even with ASLR disabled, shared libraries may have different
-file and load addresses, so LLDB does not resolve breakpoints until the program is loaded.</p>
-<p>Now we’ve set the stage for <a href="https://reviews.llvm.org/D109738">bug 38317</a>.
-If we set the file address breakpoint before the program is loaded, and <code>run</code>:</p>
-<pre><code>(lldb) run
-...
-(lldb) breakpoint list
-Current breakpoints:
-1: name = &#39;main&#39;, locations = 1, resolved = 1, hit count = 1
-  1.1: where = tree`main, address = 0x0000000100004e08, resolved, hit count = 1
-
-2: address = 0x0000000100007f09, locations = 1
-  2.1: address = 0x0000000100007f09, unresolved, hit count = 0</code></pre>
-<p>the breakpiont at 0x100007f09 remains unresolved, even though the program is loaded
-and the file and load address are the same! An unresolved breakpoint
-will <em>not</em> trigger when the program is running.</p>
-<p>On the other hand, if we set the breakpoint after the program is loaded
-the breakpoint is immediately resolved.</p>
-<pre><code>(lldb) breakpoint set -a 0x100007f09
-Breakpoint 2: where = tree`emit_tree + 66, address = 0x0000000100007f09
-(lldb) breakpoint list
-...
-2: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
-  2.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0</code></pre>
-<p>Alternatively, we can set the breakpoint with the <code>-s</code> flag to tell LLDB
-to resolve the address to the file. Then as with the main breakpoint,
-the breakpoint will resolve after the process is launched.</p>
-<pre><code>(lldb) breakpoint set -a 0x100007f09 -s tree
-...
-1: address = tree[0x0000000100007f09], locations = 1
-  1.1: where = tree`emit_tree + 66, address = tree[0x0000000100007f09], unresolved, hit count = 0
-
-(lldb) process launch --stop-at-entry
-...
-1: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
-  1.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0</code></pre>
-<p>Nothing we can’t work around, but I think it’s interesting to see how LLDB
-works a bit under-the-hood and how are tools often have some small bugs when
-we take a small step off the beaten path.</p>
-</div>
-<div id="scripting-lldb" class="section level3">
-<h3>Scripting LLDB</h3>
-<p>LLDB has two nice scripting interfaces: the Python module and LLDB commands.</p>
-<p>If you are familiar with the interactive LLDB shell, LLDB commands are the
-easiest way to start. All you need to do is to add the commands you would run
-interactively to a file and execute:</p>
-<pre class="bash"><code># commands.lldb
-target create /usr/local/bin/tree
-breakpoint set --name main
-run
-breakpoint set --address 0x100007f09
-breakpoint command add -o &#39;register read rflags&#39; -o &#39;continue&#39;
-continue
-# run the script
-lldb -s commands.lldb # with -o to run the script and exit</code></pre>
-<p>Python is also an option.
-You’ll either need to make sure that you are using the same
-Python as LLDB, or you’ll need to set the <code>PYTHONPATH</code>
-to the <a href="https://lldb.llvm.org/use/python-reference.html#using-the-lldb-py-module-in-python">LLDB Python module.</a></p>
-<pre class="python"><code># commands.py
-import lldb
-
-def run_commands(debugger, command=None, result=None, internal_dict=None):
-    target = debugger.CreateTarget(&quot;/usr/local/bin/tree&quot;)
-    main_bp = target.BreakpointCreateByName(&quot;main&quot;)
-    process = target.LaunchSimple(None, None, None)
-    addr_bp = target.BreakpointCreateByAddress(0x100007f09)
-
-    commands = lldb.SBStringList()
-    commands.AppendString(&quot;register read rflags&quot;)
-    commands.AppendString(&quot;process continue&quot;)
-    addr_bp.SetCommandLineCommands(commands)
-
-    process.Continue()</code></pre>
-<pre class="bash"><code>lldb -o &quot;script import commands; commands.run_commands(lldb.debugger)&quot;</code></pre>
-</div>
-<div id="instruction-stepping" class="section level3">
-<h3>Instruction stepping</h3>
-<p>One way to depend a little less on the instruction set
-would be to step through the branch instruction and see
-where you end up. This was a my first attempt,
-but I ran into another bug.</p>
-<p>As you saw in the last section, the basic plan is to
-set a breakpoint on each branch instruction, and then set a
-breakpoint command to log the data.
-When looking at the instruction set, we saw that we can
-figure out the branch behavior by looking at the flags register,
-which we configured LLDB to log:</p>
-<pre><code>breakpoint command add -o &#39;read register rflags&#39; -o &#39;continue&#39;</code></pre>
-<p>If we didn’t want to parse rflags, another approach might be
-something like this:</p>
-<pre><code>breakpoint command add -o &#39;step instruction&#39; -o &#39;p\x $pc&#39; -o &#39;continue&#39;</code></pre>
-<p>This works great running interactively in LLDB,
-I couldn’t get it to work in an automated script, with
-LLDB commands or in Python.</p>
-</div>
-</div>
-<div id="analyzing-branch-history" class="section level2">
-<h2>Analyzing branch history</h2>
-<p>Global vs local. Looking at n-bit runs.</p>
-</div>
-<div id="comparing-branch-prediction-accuracy" class="section level2">
-<h2>Comparing branch prediction accuracy</h2>
-<p>gshare worse than concatenation again! tree</p>
-<p>gshare better than concatenation! zip</p>
-</div>
-<div id="profiling-cpu-branch-prediction-performance" class="section level2">
-<h2>Profiling CPU branch prediction performance</h2>
-<p><a href="https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d" class="uri">https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d</a></p>
-<p>Try this on intel</p>
-<pre><code>sudo powermetrics --samplers cpu_power --sample-count 5</code></pre>
-<p>May have to download xcode :(</p>
-</div>
-</div>
-<div id="appendix" class="section level1">
-<h1>Appendix</h1>
+<div id="proving-concatenation-has-fewer-key-collisions" class="section level1">
+<h1>Proving concatenation has fewer key collisions</h1>
+<p>Before we dive into a mathematical proof,
+here’s some intuition why concatenation is more likely
+to have <em>fewer</em> key collisions.</p>
 <div id="collisions-in-a-random-program" class="section level2">
 <h2>Collisions in a random program</h2>
 <p>Let’s suppose we have a program consisting
