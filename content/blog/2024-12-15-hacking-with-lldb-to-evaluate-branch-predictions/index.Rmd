@@ -431,6 +431,21 @@ def run_commands(debugger, command=None, result=None, internal_dict=None):
 lldb -o "script import commands; commands.run_commands(lldb.debugger)"
 ```
 
+Lastly, there's the C++ API. The Python API is just a thin wrapper around the C++ API,
+so once you are comfortable there it's not hard to move to C++.
+You need to install `llvm` to get access to the library and headers.
+
+However, don't expect much of a performance boost. I implemented branch tracing
+with all three methods and performance was about the same for a trace with
+with about 1000 branches about 20,000 branch predictions:
+
+```
+./branch_data_cpp.py  83.095 ± 0.452 seconds
+./branch_data_py.py   95.014 ± 0.460 seconds
+./branch_data_lldb.py 98.909 ± 0.271 seconds
+```
+
+
 ### Instruction stepping
 
 One way to depend a little less on the instruction set
