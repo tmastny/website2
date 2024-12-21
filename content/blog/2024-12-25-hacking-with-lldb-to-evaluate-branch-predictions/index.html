@@ -17,7 +17,10 @@ output:
 <ul>
 <li><a href="#hacking-executables-to-gather-branch-history" id="toc-hacking-executables-to-gather-branch-history">Hacking executables to gather branch history</a>
 <ul>
-<li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a></li>
+<li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a>
+<ul>
+<li><a href="#linked-libraries" id="toc-linked-libraries">Linked Libraries</a></li>
+</ul></li>
 <li><a href="#parsing-instructions" id="toc-parsing-instructions">Parsing instructions</a></li>
 <li><a href="#tracing-with-lldb" id="toc-tracing-with-lldb">Tracing with LLDB</a>
 <ul>
@@ -87,6 +90,31 @@ from the assembly:</p>
 <pre class="asm"><code>0000000100007f03	movq	(%rbx), %rdi
 0000000100007f06	testq	%rdi, %rdi
 0000000100007f09	je	0x100008281</code></pre>
+<div id="linked-libraries" class="section level3">
+<h3>Linked Libraries</h3>
+<p>The binary executable is just a portion of the total branches of the problem.
+An executable may also rely on shared libraries: code that is compiled and lives
+on the operating system. Most commonly these are things in the standard C
+such as memory allocation and file I/O.</p>
+<pre class="bash"><code>% otool -L /usr/local/bin/tree
+
+/usr/local/bin/tree:
+        /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1319.100.3)</code></pre>
+<p>We get a fuller story with LLDB:</p>
+<pre class="bash"><code>(lldb) target modules list
+[  0] 73B8A897-9703-340B-9105-3DA7C54F7231 0x0000000100000000 /usr/local/bin/tree
+[  1] BE14380C-5E18-3640-9FBE-851BEB014BBA 0x00007ff800098000 /usr/lib/dyld
+[  2] F2CA671C-5D32-3BBF-BCAD-CF23124D69F6 0x00007ff80c26e000 /usr/lib/libSystem.B.dylib
+[  3] FA6C4BA7-091E-3F12-BFE1-E51040E31C66 0x00007ff80c268000 /usr/lib/system/libcache.dylib
+...</code></pre>
+<p>The dynamic linker <code>/usr/lib/dyld</code> itself must be loaded into memory to manage the
+shared libraries <code>tree</code> needs. And <code>/usr/lib/libSystem.B.dylib</code> is better thought of as a
+collection of smaller libraries that might need to be loaded.</p>
+<p>The compiler stores all this information in the <code>tree</code> binary itself,
+in the <code>load commands</code> section.</p>
+<pre class="bash"><code>DYLD_PRINT_BINDINGS=1 /usr/local/bin/tree .
+(lldb) breakpoint set -f libsystem_platform.dylib -p &quot;je|jne|jg|jl&quot;</code></pre>
+</div>
 </div>
 <div id="parsing-instructions" class="section level2">
 <h2>Parsing instructions</h2>
