@@ -15,6 +15,7 @@ output:
 
 <div id="TOC">
 <ul>
+<li><a href="#algorithmic-analysis" id="toc-algorithmic-analysis">Algorithmic Analysis</a></li>
 <li><a href="#reasons-to-think-gshare-is-better" id="toc-reasons-to-think-gshare-is-better">Reasons to think gshare is better</a>
 <ul>
 <li><a href="#gshare-is-better" id="toc-gshare-is-better">gshare is better</a></li>
@@ -210,6 +211,39 @@ output:
 <li><a href="/blog/hacking-lldb-to-evaluate-branch-predictions/">Hacking LLDB to Evaluate Branch Predictions</a></li>
 </ol>
 </blockquote>
+<p>One way to extend the basic branch prediction algorithm
+I cover in <a href="/blog/visualizing-cpu-pipelining/">Visualizing CPU Pipelining</a>
+is to also save the <em>history</em> of whether the last n branches were taken or not.
+The main advantage is that any correlated patterns in the history
+can be used to predict the next branch.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>For example, if the instruction pointer is on branch 4, there are two possible
+histories: <code>NN</code> or <code>TT</code>. And based just on two-bits of history we can predict
+the branch with 100% accuracy.</p>
+<pre><code>  a   h1  h2
+              flag = False
+  1   N   T   if cond1:
+  2       T       if cond2:
+                    flag = True
+  3   N       elif cond3:
+                  ...
+&gt; 4   N   T   if flag:
+                  ...</code></pre>
+<p>The detail of this approach that has fascinated me is how to
+combine the address and history effectively to form a key
+into the branch prediction table. I’ll consider two approaches:</p>
+<ul>
+<li>concatenation: concatenates the last n/2 bits of the address and history</li>
+<li>gshare: takes the XOR of the last n-bits of the address and history</li>
+</ul>
+<p><img src="concat-gshare.svg" /><!-- --></p>
+<p>At first glance, it seems like gshare is the obvious choice
+since it uses more information from both the address and history.
+But how do we really know it’s better? Is this something we can mathematically prove?</p>
+<p>In this post, I’ll share how I explored the differences between the two methods,
+starting with algorithmic analysis more generally, examining concrete examples,
+and even proving mathematically that gshare might be <strong>worse</strong> than concatenation!</p>
+<div id="algorithmic-analysis" class="section level2">
+<h2>Algorithmic Analysis</h2>
 <p>How do we know if one branch prediction scheme is better than another?
 Comparing algorithms comes up all the time in computer science,
 and on the assumptions behind better.</p>
@@ -247,6 +281,7 @@ For an n-bit key, the two methods are:</p>
 <li>can we mathematically prove that gshare is better than concatenation?</li>
 <li>what <em>should</em> convince us that gshare is better than concatenation?</li>
 </ul>
+</div>
 <div id="reasons-to-think-gshare-is-better" class="section level2">
 <h2>Reasons to think gshare is better</h2>
 <p>The basic argument why gshare is superior goes like this:
@@ -255,7 +290,7 @@ would give us better predictions and sometimes using more of the branch history
 would give us better predictions. The XOR hash in gshare uses more of both
 by hashing all n-bits of the address and history into the key!</p>
 <p>Compared concatenation where address and history have a predetermined
-contribution to the key, gshare seems like an obvious<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> improvement.
+contribution to the key, gshare seems like an obvious<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> improvement.
 We can even come up with some examples that demonstrate this argument.</p>
 <div id="gshare-is-better" class="section level3">
 <h3>gshare is better</h3>
@@ -275,8 +310,8 @@ with different outcomes, while concatenation does not.</p>
 <h4>Using more history bits</h4>
 <p>Let’s assume we have a branch history pattern like this:</p>
 <pre><code>1101 1101 1101 1101...</code></pre>
-<p>With a 1-bit prediction table, long-term gshare has a 100%
-prediction accuracy, but concatenation does not has 50% accuracy:</p>
+<p>With a 1-bit prediction table, long-term gshare has 100%
+prediction accuracy, while concatenation has 50% accuracy.</p>
 <pre><code>address history  gshare  concat  actual
 1010    1101     0111    1001    1
 1010    1110     0100    1000    1
@@ -351,7 +386,7 @@ for each address is random. That might be reasonable assumption
 when comparing sorting algorithms (although plenty of real world
 data is almost sorted), but this is a really bad assumption for branch prediction.
 Branch history is often very predictable, and even a simple algorithm
-of “branch taken” can be 70% accurate!<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+of “branch taken” can be 70% accurate!<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <p>Instead, we need to gather empirical data on branches taken,
 analyze patterns, and compare algorithm performance.</p>
 </div>
@@ -455,11 +490,13 @@ analyze empirical branching data.</p>
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>Turns out not be obvious.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>We are also making the assumption
+<li id="fn1"><p>Check out Dan Luu’s <a href="https://danluu.com/branch-prediction/">post</a>
+for a great overview of branch prediction algorithms.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Turns out not be obvious.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>We are also making the assumption
 that key collisions are an indicator
 of poor branch prediction performance. That seems true, but who knows?
 Maybe there’s a clever way to use key collisions to improve branch prediction,
-by making sure keys that alias have correlated predictions.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+by making sure keys that alias have correlated predictions.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

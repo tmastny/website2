@@ -29,6 +29,50 @@ htmltools::includeHTML("ballbin.html")
 > 2. Evaluating Branch Predictions
 > 3. [Hacking LLDB to Evaluate Branch Predictions](/blog/hacking-lldb-to-evaluate-branch-predictions/)
 
+One way to extend the basic branch prediction algorithm
+I cover in [Visualizing CPU Pipelining](/blog/visualizing-cpu-pipelining/)
+is to also save the *history* of whether the last n branches were taken or not.
+The main advantage is that any correlated patterns in the history
+can be used to predict the next branch.^[Check out Dan Luu's [post](https://danluu.com/branch-prediction/)
+for a great overview of branch prediction algorithms.]
+
+For example, if the instruction pointer is on branch 4, there are two possible
+histories: `NN` or `TT`. And based just on two-bits of history we can predict
+the branch with 100% accuracy.
+
+```
+  a   h1  h2
+              flag = False
+  1   N   T   if cond1:
+  2       T       if cond2:
+                    flag = True
+  3   N       elif cond3:
+                  ...
+> 4   N   T   if flag:
+                  ...
+```
+
+The detail of this approach that has fascinated me is how to
+combine the address and history effectively to form a key
+into the branch prediction table. I'll consider two approaches:
+
+* concatenation: concatenates the last n/2 bits of the address and history
+* gshare: takes the XOR of the last n-bits of the address and history
+
+```{r, echo=FALSE}
+knitr::include_graphics("concat-gshare.svg")
+```
+
+At first glance, it seems like gshare is the obvious choice
+since it uses more information from both the address and history.
+But how do we really know it's better? Is this something we can mathematically prove?
+
+In this post, I'll share how I explored the differences between the two methods,
+starting with algorithmic analysis more generally, examining concrete examples,
+and even proving mathematically that gshare might be **worse** than concatenation!
+
+## Algorithmic Analysis
+
 How do we know if one branch prediction scheme is better than another?
 Comparing algorithms comes up all the time in computer science,
 and on the assumptions behind better.
@@ -110,8 +154,8 @@ Let's assume we have a branch history pattern like this:
 1101 1101 1101 1101...
 ```
 
-With a 1-bit prediction table, long-term gshare has a 100%
-prediction accuracy, but concatenation does not has 50% accuracy:
+With a 1-bit prediction table, long-term gshare has 100%
+prediction accuracy, while concatenation has 50% accuracy.
 
 ```
 address history  gshare  concat  actual
@@ -235,7 +279,7 @@ So any key can have at most 4 collisions.
 
 
 But maximum number of collisions isn't the full story.
-The probability of 16 collisions is extremely low. 
+The probability of 16 collisions is extremely low.
 If we simulate 100 cases, XOR usually has no more than 4
 (and rarely 5).
 The next section will compare the average number
