@@ -31,14 +31,14 @@ htmltools::includeHTML("ballbin.html")
 
 One way to extend the basic branch prediction algorithm
 I cover in [Visualizing CPU Pipelining](/blog/visualizing-cpu-pipelining/)
-is to also save the *history* of whether the last n branches were taken or not.
-The main advantage is that any correlated patterns in the history
-can be used to predict the next branch.^[Check out Dan Luu's [post](https://danluu.com/branch-prediction/)
-for a great overview of branch prediction algorithms.]
-
+is to save the *history* of whether the last n branches were taken or not.^[
+Check out Dan Luu's [post](https://danluu.com/branch-prediction/)
+for a great overview of this and other branch prediction algorithms.]
+The main advantage is that any consistent patterns in the history
+can be used to predict the next branch.
 For example, if the instruction pointer is on branch 4, there are two possible
 histories: `NN` or `TT`. And based just on two-bits of history we can predict
-the branch with 100% accuracy.
+the branch 4 with 100% accuracy.
 
 ```
   a   h1  h2
@@ -52,8 +52,8 @@ the branch with 100% accuracy.
                   ...
 ```
 
-The detail of this approach that has fascinated me is how to
-combine the address and history effectively to form a key
+One detail of this approach has particularly fascinated me:
+how to combine the address and history effectively to form a key
 into the branch prediction table. I'll consider two approaches:
 
 * concatenation: concatenates the last n/2 bits of the address and history
@@ -73,49 +73,20 @@ and even proving mathematically that gshare might be **worse** than concatenatio
 
 ## Algorithmic Analysis
 
-How do we know if one branch prediction scheme is better than another?
-Comparing algorithms comes up all the time in computer science,
-and on the assumptions behind better.
-
+In general, how do we compare any two algorithms?
 For example, is quicksort better than insertion sort?
-If you are familiar with computational complexity,
-you'll know that quicksort has better average-case performance.
-That's a mathematical fact, but there quite a few assumptions
-built into that comparison. For starters, quicksort has the same
-worst-case performance as insertion sort.
-And insertion sort can even have better performance
-when the list is "almost sorted".
+While quicksort has better average-case performance,
+it has the same worst-case performance as insertion sort.
+And insertion sort can even perform better when the list is "almost sorted"!
 
 Another example is iterating over array of structs versus a
 struct of arrays. In terms of computational complexity,
 they are the same. But struct of arrays might be significantly
 faster given the architecture of CPU cache memory.
-Again, the comparison depends on the assumptions you make.
 
-So how do we compare branch prediction schemes?
-What assumptions do we have to make?
-Let's investigate these questions by analyzing the difference
-between two hashing methods in two-level adaptive branch prediction
-with global history.
-
-I'm not going to cover the details of the algorithm, since
-Dan Luu provides a nice overview [here](https://danluu.com/branch-prediction/).
-The focus here is on two different methods to calculate the key
-for the branch prediction table, rather than comparing two distinct prediction algorithms.
-For an n-bit key, the two methods are:
-
-* concatenation: concatenates the last n/2 bits of the address and history
-* gshare: takes the XOR of the last n-bits of the address and history
-
-```{r, echo=FALSE}
-knitr::include_graphics("concat-gshare.svg")
-```
-
-I'll try to answer the following questions:
-
-* why would we think gshare is better than concatenation?
-* can we mathematically prove that gshare is better than concatenation?
-* what *should* convince us that gshare is better than concatenation?
+Whether one algorithm is better than another depends on the
+context and the assumptions you make when analyzing them.
+So let's make some assumptions and see how they hold up.
 
 ## Reasons to think gshare is better
 

@@ -213,12 +213,12 @@ output:
 </blockquote>
 <p>One way to extend the basic branch prediction algorithm
 I cover in <a href="/blog/visualizing-cpu-pipelining/">Visualizing CPU Pipelining</a>
-is to also save the <em>history</em> of whether the last n branches were taken or not.
-The main advantage is that any correlated patterns in the history
-can be used to predict the next branch.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
-<p>For example, if the instruction pointer is on branch 4, there are two possible
+is to save the <em>history</em> of whether the last n branches were taken or not.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
+The main advantage is that any consistent patterns in the history
+can be used to predict the next branch.
+For example, if the instruction pointer is on branch 4, there are two possible
 histories: <code>NN</code> or <code>TT</code>. And based just on two-bits of history we can predict
-the branch with 100% accuracy.</p>
+the branch 4 with 100% accuracy.</p>
 <pre><code>  a   h1  h2
               flag = False
   1   N   T   if cond1:
@@ -228,8 +228,8 @@ the branch with 100% accuracy.</p>
                   ...
 &gt; 4   N   T   if flag:
                   ...</code></pre>
-<p>The detail of this approach that has fascinated me is how to
-combine the address and history effectively to form a key
+<p>One detail of this approach has particularly fascinated me:
+how to combine the address and history effectively to form a key
 into the branch prediction table. I’ll consider two approaches:</p>
 <ul>
 <li>concatenation: concatenates the last n/2 bits of the address and history</li>
@@ -244,43 +244,18 @@ starting with algorithmic analysis more generally, examining concrete examples,
 and even proving mathematically that gshare might be <strong>worse</strong> than concatenation!</p>
 <div id="algorithmic-analysis" class="section level2">
 <h2>Algorithmic Analysis</h2>
-<p>How do we know if one branch prediction scheme is better than another?
-Comparing algorithms comes up all the time in computer science,
-and on the assumptions behind better.</p>
-<p>For example, is quicksort better than insertion sort?
-If you are familiar with computational complexity,
-you’ll know that quicksort has better average-case performance.
-That’s a mathematical fact, but there quite a few assumptions
-built into that comparison. For starters, quicksort has the same
-worst-case performance as insertion sort.
-And insertion sort can even have better performance
-when the list is “almost sorted”.</p>
+<p>In general, how do we compare any two algorithms?
+For example, is quicksort better than insertion sort?
+While quicksort has better average-case performance,
+it has the same worst-case performance as insertion sort.
+And insertion sort can even perform better when the list is “almost sorted”!</p>
 <p>Another example is iterating over array of structs versus a
 struct of arrays. In terms of computational complexity,
 they are the same. But struct of arrays might be significantly
-faster given the architecture of CPU cache memory.
-Again, the comparison depends on the assumptions you make.</p>
-<p>So how do we compare branch prediction schemes?
-What assumptions do we have to make?
-Let’s investigate these questions by analyzing the difference
-between two hashing methods in two-level adaptive branch prediction
-with global history.</p>
-<p>I’m not going to cover the details of the algorithm, since
-Dan Luu provides a nice overview <a href="https://danluu.com/branch-prediction/">here</a>.
-The focus here is on two different methods to calculate the key
-for the branch prediction table, rather than comparing two distinct prediction algorithms.
-For an n-bit key, the two methods are:</p>
-<ul>
-<li>concatenation: concatenates the last n/2 bits of the address and history</li>
-<li>gshare: takes the XOR of the last n-bits of the address and history</li>
-</ul>
-<p><img src="concat-gshare.svg" /><!-- --></p>
-<p>I’ll try to answer the following questions:</p>
-<ul>
-<li>why would we think gshare is better than concatenation?</li>
-<li>can we mathematically prove that gshare is better than concatenation?</li>
-<li>what <em>should</em> convince us that gshare is better than concatenation?</li>
-</ul>
+faster given the architecture of CPU cache memory.</p>
+<p>Whether one algorithm is better than another depends on the
+context and the assumptions you make when analyzing them.
+So let’s make some assumptions and see how</p>
 </div>
 <div id="reasons-to-think-gshare-is-better" class="section level2">
 <h2>Reasons to think gshare is better</h2>
@@ -490,8 +465,9 @@ analyze empirical branching data.</p>
 <div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
-<li id="fn1"><p>Check out Dan Luu’s <a href="https://danluu.com/branch-prediction/">post</a>
-for a great overview of branch prediction algorithms.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>
+Check out Dan Luu’s <a href="https://danluu.com/branch-prediction/">post</a>
+for a great overview of this and other branch prediction algorithms.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>Turns out not be obvious.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>We are also making the assumption
 that key collisions are an indicator
