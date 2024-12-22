@@ -1,0 +1,373 @@
+---
+title: 'Hacking with LLDB to Trace Branch History'
+author: ~
+date: '2024-12-25'
+slug: hacking-with-lldb-to-trace-branch-history
+categories: []
+tags: []
+description: 'Hacking with LLDB to Evaluate Branch Predictions'
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+> This is part of my branch prediction series.
+>
+> 1. [Visualizng CPU Pipelining](/blog/visualizing-cpu-pipelining/)
+> 2. [Evaluating Branch Predictions](/blog/evaluating-branch-predictions/)
+> 3. Hacking LLDB to Trace Branch History
+
+As we saw in the previous post, we need a way to evaluate
+branch prediction algorithms empirically: in real world programs,
+how accurate are the predictions?
+There are well-know benchmarks and advanced CPU tooling to track
+branch predictions, but I wanted to approach this problem
+with a hacker mentality: how can I use the tools I have
+in creative ways to investigate this for myself?
+
+My goal is to share some of the details around:
+* disassembling executables
+* handling binary executables and shared libraries
+* exploring the LLDB API and dealing with bugs
+
+If you are interested in LLDB, debugging, and implementations
+challenges, this article is for you. If you want the results
+and visualizations
+check out the next article in the series.
+
+# Hacking executables to gather branch history
+
+Here's my plan:
+
+* disassemble the binary executable to gather the addresses of all branch instructions
+* use LLDB to trace the branch paths and gather the branch history
+* calculate the branch prediction accuracy for both gshare and concatenation
+* compare to the real CPU branch prediction accuracy
+
+I'm sure there are standard benchmarks for branch predictions
+algorithms, and I think there are better ways to gather the data as well
+(especially if you are on Linux and on Intel processors).
+But hacking is way more fun!
+
+The full code is available on [Github](https://github.com/tmastny/gshare/tree/main/extract_branch_data).
+Below, I'll share my method and some of the interesting
+discoveries I made.
+
+## Disassembling executables
+
+The easiest approach is `otool`:
+```bash
+otool -tv /usr/local/bin/tree
+```
+This gives the disassembly of the entire program.
+
+You can also disassemble with LLDB, but it's more complicated.
+By default, LLDB only disassembles a single function or frame
+rather than the entire program, even if you know the instruction
+address range.
+`otool` disassembles everything, so I didn't spend any more time
+trying to figure out how to do it with LLDB.
+
+Here's a snippet of a branch instruction we'll be parsing
+from the assembly:
+
+```asm
+0000000100007f03	movq	(%rbx), %rdi
+0000000100007f06	testq	%rdi, %rdi
+0000000100007f09	je	0x100008281
+```
+
+### Linked Libraries
+
+The binary executable is just a portion of the total branches of the problem.
+An executable may also rely on shared libraries: code that is compiled and lives
+on the operating system. Most commonly these are things in the standard C
+such as memory allocation and file I/O.
+
+```bash
+% otool -L /usr/local/bin/tree
+
+/usr/local/bin/tree:
+        /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1319.100.3)
+```
+
+We get a fuller story with LLDB:
+```bash
+(lldb) target modules list
+[  0] 73B8A897-9703-340B-9105-3DA7C54F7231 0x0000000100000000 /usr/local/bin/tree
+[  1] BE14380C-5E18-3640-9FBE-851BEB014BBA 0x00007ff800098000 /usr/lib/dyld
+[  2] F2CA671C-5D32-3BBF-BCAD-CF23124D69F6 0x00007ff80c26e000 /usr/lib/libSystem.B.dylib
+[  3] FA6C4BA7-091E-3F12-BFE1-E51040E31C66 0x00007ff80c268000 /usr/lib/system/libcache.dylib
+...
+```
+The dynamic linker `/usr/lib/dyld` itself must be loaded into memory to manage the
+shared libraries `tree` needs. And `/usr/lib/libSystem.B.dylib` is better thought of as a
+collection of smaller libraries that might need to be loaded.
+
+The compiler stores all this information in the `tree` binary itself,
+in the `load commands` section.
+
+```bash
+DYLD_PRINT_BINDINGS=1 /usr/local/bin/tree .
+(lldb) breakpoint set -f libsystem_platform.dylib -p "je|jne|jg|jl"
+```
+
+
+## Parsing instructions
+
+To parse the disassembly, we need to search for and save the address of
+all conditional branch instructions.
+
+This will depend on your CPU architecture.
+I did this on my 2020 MacBook Air with Intel Ice Lake, which is x86-64.
+If you want to run this analysis for yourself on a modern ARM MacBook,
+you'll have to both filter for different instructions and
+tracing with LLDB will be different as well.
+
+## Tracing with LLDB
+
+Next, we need to run LLDB on the executable, set breakpoints on all branch
+addresses, and log the branch history.
+
+I quickly discovered running LLDB on certain executables are off limits: Apple really
+doesn't like you attaching a debugger even to something simple like the `ls` command
+in `/bin/ls`. I tinkered with SIP and csrutils, but couldn't get anything to work.
+If there's a way around this let me know!
+I ended up using `tree` and `bzip2` as my test executables, installed with Homebrew.
+
+Typically, you use LLDB on a binary compiled with debugging symbols,
+which let you set breakpoints on function names or line numbers.
+Even without debugging symbols, compiled binaries have externally available
+symbols like function names.
+For example, `tree` has `main` and
+`emit_tree` symbols.
+
+However, we need to break on addresses.
+
+### Address-based breakpoints
+
+This is a typical branch instruction from the disassembled binary:
+```asm
+0000000100007f09	je	0x100008281
+```
+`0x100007f09` is where we want LLDB to break so we can trace the branch history.
+Just like we can set a breakpoint on a function name, we can set one
+directly on an address.
+```
+(lldb) target create /usr/local/bin/tree
+
+(lldb) breakpoint set --name main
+(lldb) breakpoint set -a 0x100007f09
+
+(lldb) breakpoint list
+Current breakpoints:
+1: name = 'main', locations = 1
+  1.1: where = tree`main, address = tree[0x0000000100004e08], unresolved, hit count = 0
+
+2: address = 0x0000000100007f09, locations = 1
+  2.1: address = 0x0000000100007f09, unresolved, hit count = 0
+```
+
+At this point, both breakpoints are *unresolved*.
+An unresolved breakpoint means LLDB knows where we want to break in theory,
+but doesn't yet know where that instruction will actually be located when the program runs.
+
+We call the address written in the binary file (0x100007f09) the *file address*,
+and the address where the instruction is loaded into memory the *load address*.
+There are a few reasons why file and load addresses might differ:
+
+- Address Space Layout Randomization (ASLR) randomly offsets memory addresses for security
+- shared libraries often have overlapping file addresses that need to be relocated when loaded
+
+When we run `target create /usr/local/bin/tree`, the program isn't yet loaded:
+rather LLDB gathers all the object and symbol files (called modules or images)
+associated with the executable, so we can set breakpoints before the program is running.
+Only when we run `process launch --stop-at-entry` or `run` is the program
+loaded into memory, the load addresses are set, and the breakpoints are resolved.
+
+For example, here's the symbol table looking at the `emit_tree` in `tree`
+and `memcpy` in the dynamic linker `dyld`:
+```
+# target modules dump symtab tree [/usr/lib/dyld]
+Index   UserID DSX Type            File Address/Value Load Address        Name
+------- ------ --- --------------- ------------------ ------------------  ---------
+[   67]     67   X Code            0x0000000100007ec7                     emit_tree
+[   87]     87     Code            0x00007ff80009a140                     memcpy
+
+# after `(lldb) process launch --stop-at-entry`
+[   67]     67   X Code            0x0000000100007ec7 0x0000000100007ec7  emit_tree
+[   87]     87     Code            0x00007ff80009a140 0x000000010001e140  memcpy
+```
+
+For the main executable, the file address and load address are the same.
+LLDB by default asks the operating system
+to disable ASLR. But even with ASLR disabled, shared libraries may have different
+file and load addresses, so LLDB does not resolve breakpoints until the program is loaded.
+
+Now we've set the stage for [bug 38317](https://reviews.llvm.org/D109738).
+If we set the file address breakpoint before the program is loaded, and `run`:
+```
+(lldb) run
+...
+(lldb) breakpoint list
+Current breakpoints:
+1: name = 'main', locations = 1, resolved = 1, hit count = 1
+  1.1: where = tree`main, address = 0x0000000100004e08, resolved, hit count = 1
+
+2: address = 0x0000000100007f09, locations = 1
+  2.1: address = 0x0000000100007f09, unresolved, hit count = 0
+```
+
+the breakpiont at 0x100007f09 remains unresolved, even though the program is loaded
+and the file and load address are the same! An unresolved breakpoint
+will *not* trigger when the program is running.
+
+On the other hand, if we set the breakpoint after the program is loaded
+the breakpoint is immediately resolved.
+```
+(lldb) breakpoint set -a 0x100007f09
+Breakpoint 2: where = tree`emit_tree + 66, address = 0x0000000100007f09
+(lldb) breakpoint list
+...
+2: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
+  2.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0
+```
+
+Alternatively, we can set the breakpoint with the `-s` flag to tell LLDB
+to resolve the address to the file. Then as with the main breakpoint,
+the breakpoint will resolve after the process is launched.
+```
+(lldb) breakpoint set -a 0x100007f09 -s tree
+...
+1: address = tree[0x0000000100007f09], locations = 1
+  1.1: where = tree`emit_tree + 66, address = tree[0x0000000100007f09], unresolved, hit count = 0
+
+(lldb) process launch --stop-at-entry
+...
+1: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
+  1.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0
+```
+
+Nothing we can't work around, but I think it's interesting to see how LLDB
+works a bit under-the-hood and how are tools often have some small bugs when
+we take a small step off the beaten path.
+
+### Scripting LLDB
+
+LLDB has two nice scripting interfaces: the Python module and LLDB commands.
+
+If you are familiar with the interactive LLDB shell, LLDB commands are the
+easiest way to start. All you need to do is to add the commands you would run
+interactively to a file and execute:
+```bash
+# commands.lldb
+target create /usr/local/bin/tree
+breakpoint set --name main
+run
+breakpoint set --address 0x100007f09
+breakpoint command add -o 'register read rflags' -o 'continue'
+continue
+# run the script
+lldb -s commands.lldb # with -o to run the script and exit
+```
+
+Python is also an option.
+You'll either need to make sure that you are using the same
+Python as LLDB, or you'll need to set the `PYTHONPATH`
+to the [LLDB Python module.](https://lldb.llvm.org/use/python-reference.html#using-the-lldb-py-module-in-python)
+
+```python
+# commands.py
+import lldb
+
+def run_commands(debugger, command=None, result=None, internal_dict=None):
+    target = debugger.CreateTarget("/usr/local/bin/tree")
+    main_bp = target.BreakpointCreateByName("main")
+    process = target.LaunchSimple(None, None, None)
+    addr_bp = target.BreakpointCreateByAddress(0x100007f09)
+
+    commands = lldb.SBStringList()
+    commands.AppendString("register read rflags")
+    commands.AppendString("process continue")
+    addr_bp.SetCommandLineCommands(commands)
+
+    process.Continue()
+```
+
+```bash
+lldb -o "script import commands; commands.run_commands(lldb.debugger)"
+```
+
+Lastly, there's the C++ API. The Python API is just a thin wrapper around the C++ API,
+so once you are comfortable there it's not hard to move to C++.
+You need to install `llvm` to get access to the library and headers.
+
+However, don't expect much of a performance boost. I implemented branch tracing
+with all three methods and performance was about the same for a trace with
+with about 1000 branches about 20,000 branch predictions:
+
+```
+./branch_data_cpp.py  83.095 ± 0.452 seconds
+./branch_data_py.py   95.014 ± 0.460 seconds
+./branch_data_lldb.py 98.909 ± 0.271 seconds
+```
+
+
+### Instruction stepping
+
+One way to depend a little less on the instruction set
+would be to step through the branch instruction and see
+where you end up. This was a my first attempt,
+but I ran into another bug.
+
+As you saw in the last section, the basic plan is to
+set a breakpoint on each branch instruction, and then set a
+breakpoint command to log the data.
+When looking at the instruction set, we saw that we can
+figure out the branch behavior by looking at the flags register,
+which we configured LLDB to log:
+
+```
+breakpoint command add -o 'read register rflags' -o 'continue'
+```
+
+If we didn't want to parse rflags, another approach might be
+something like this:
+```
+breakpoint command add -o 'step instruction' -o 'p\x $pc' -o 'continue'
+```
+
+This works great running interactively in LLDB,
+I couldn't get it to work in an automated script, with
+LLDB commands or in Python.
+
+## Analyzing branch history
+
+Global vs local. Looking at n-bit runs.
+
+Add visualizations, showing global branch history,
+number of branches from each address, and
+an analysis of branch prediction table density
+by looking at Gini coefficient.
+
+## Comparing branch prediction accuracy
+
+gshare worse than concatenation again! tree
+
+gshare better than concatenation! zip
+
+## Profiling CPU branch prediction performance
+
+https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d
+
+Use CPU counter in instruments.
+
+Show how accurate branch prediction is in the modern CPU, and compare
+to our gshare and concatenation.

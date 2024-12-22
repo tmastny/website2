@@ -1,0 +1,436 @@
+---
+title: 'Why Branch Prediction Needs Real Data'
+author: ~
+date: '2024-12-22'
+slug: branch-prediction-real-data
+categories: []
+tags: []
+description: 'Why theoretical analysis of branch prediction algorithms can be misleading without empirical data'
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#reasons-to-think-gshare-is-better" id="toc-reasons-to-think-gshare-is-better">Reasons to think gshare is better</a>
+<ul>
+<li><a href="#gshare-is-better" id="toc-gshare-is-better">gshare is better</a></li>
+<li><a href="#gshare-is-worse" id="toc-gshare-is-worse">gshare is worse</a></li>
+</ul></li>
+<li><a href="#mathematical-proof-that-gshare-is-worse" id="toc-mathematical-proof-that-gshare-is-worse">Mathematical proof that gshare is worse</a>
+<ul>
+<li><a href="#intuitive-explanation-why-gshare-is-worse" id="toc-intuitive-explanation-why-gshare-is-worse">Intuitive explanation why gshare is worse</a></li>
+<li><a href="#xor" id="toc-xor">XOR</a></li>
+<li><a href="#concatenation" id="toc-concatenation">Concatenation</a></li>
+</ul></li>
+<li><a href="#conclusion" id="toc-conclusion">Conclusion</a></li>
+</ul>
+</div>
+
+<style>
+    .simulation-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0;
+    }
+
+    .slider-container {
+        width: 400px;
+        padding: 0 10px;
+    }
+
+    input[type="range"] {
+        width: 100%;
+    }
+
+    canvas {
+        width: 400px;
+        height: 120px;
+    }
+</style>
+
+<script>
+    function initBallBinSim(container) {
+        const groupColors = [
+            "#4CAF50", // green
+            "#FF6B6B", // red
+            "#45B7D1", // blue
+            "#FFB347", // orange
+        ];
+
+        // Pre-generate 100 random states
+        const states = Array(100)
+            .fill()
+            .map(() => {
+                const xorBins = new Array(16).fill(0);
+                const concatBins = new Array(16).fill(0);
+
+                for (let i = 0; i < 16; i++) {
+                    const addressGroup = Math.floor(i / 4);
+                    xorBins[Math.floor(Math.random() * 16)]++;
+                    concatBins[
+                        addressGroup * 4 + Math.floor(Math.random() * 4)
+                    ]++;
+                }
+                return { xorBins, concatBins };
+            });
+
+        function createBallBinViz(isXOR) {
+            const canvas = document.createElement("canvas");
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = 400 * dpr;
+            canvas.height = 120 * dpr;
+
+            const ctx = canvas.getContext("2d");
+            ctx.scale(dpr, dpr);
+
+            function drawBins() {
+                const numBins = 16;
+                const binWidth = (400 - 20) / numBins;
+                const binHeight = 70;
+                const startY = 20;
+
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 2;
+
+                if (!isXOR) {
+                    for (let group = 0; group < 4; group++) {
+                        const x = 10 + group * (binWidth * 4);
+                        ctx.fillStyle = groupColors[group] + "20";
+                        ctx.fillRect(x, startY, binWidth * 4, binHeight);
+                    }
+                }
+
+                for (let i = 0; i < numBins; i++) {
+                    ctx.beginPath();
+                    const x = 10 + i * binWidth;
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, startY + binHeight);
+                    ctx.lineTo(x + binWidth, startY + binHeight);
+                    ctx.lineTo(x + binWidth, startY);
+                    ctx.stroke();
+                }
+            }
+
+            function drawBall(binIndex, ballsInBin, addressGroup) {
+                const numBins = 16;
+                const binWidth = (400 - 20) / numBins;
+                const startY = 20;
+                const binHeight = 70;
+                const ballRadius = 8;
+                const ballSpacing = ballRadius * 2;
+
+                const x = 10 + binIndex * binWidth + binWidth / 2;
+                const y =
+                    startY +
+                    binHeight -
+                    ballRadius -
+                    ballSpacing * (ballsInBin - 1);
+
+                ctx.beginPath();
+                ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+                ctx.fillStyle = isXOR ? "#4CAF50" : groupColors[addressGroup];
+                ctx.fill();
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+            }
+
+            function draw(stateIndex) {
+                ctx.clearRect(0, 0, 400, 120);
+                drawBins();
+
+                const bins = isXOR
+                    ? states[stateIndex].xorBins
+                    : states[stateIndex].concatBins;
+
+                for (let i = 0; i < 16; i++) {
+                    const addressGroup = Math.floor(i / 4);
+                    for (let ball = 0; ball < bins[i]; ball++) {
+                        drawBall(i, ball + 1, addressGroup);
+                    }
+                }
+            }
+
+            return { canvas, draw };
+        }
+
+        const simContainer = document.createElement("div");
+        simContainer.className = "simulation-container";
+
+        const xorViz = createBallBinViz(true);
+        const concatViz = createBallBinViz(false);
+
+        const sliderContainer = document.createElement("div");
+        sliderContainer.className = "slider-container";
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = "99";
+        slider.value = "0";
+
+        slider.oninput = function () {
+            const stateIndex = parseInt(this.value);
+            xorViz.draw(stateIndex);
+            concatViz.draw(stateIndex);
+        };
+
+        sliderContainer.appendChild(slider);
+
+        simContainer.appendChild(xorViz.canvas);
+        simContainer.appendChild(concatViz.canvas);
+        simContainer.appendChild(sliderContainer);
+
+        container.appendChild(simContainer);
+
+        // Initial draw
+        xorViz.draw(0);
+        concatViz.draw(0);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const containers = document.querySelectorAll(".ballbin-container");
+        containers.forEach((container) => initBallBinSim(container));
+    });
+</script>
+<blockquote>
+<p>This is part of my branch prediction series.</p>
+<ol style="list-style-type: decimal">
+<li><a href="/blog/visualizing-cpu-pipelining/">Visualizing CPU Pipelining</a></li>
+<li>Why Branch Prediction Needs Real Data</li>
+<li>Hacking LLDB to Evaluate Branch Predictions (coming soon)</li>
+</ol>
+</blockquote>
+<p>One way to extend the basic branch prediction algorithm
+I cover in <a href="/blog/visualizing-cpu-pipelining/">Visualizing CPU Pipelining</a>
+is to save the <em>history</em> of whether the last n branches were taken or not.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
+The main advantage is that any consistent patterns in the history
+can be used to predict the next branch.
+For example, if the instruction pointer is on branch 4, there are two possible
+histories: <code>NN</code> or <code>TT</code>. And based just on two-bits of history we can predict
+the branch 4 with 100% accuracy.</p>
+<pre><code>  a   h1  h2
+              flag = False
+  1   N   T   if cond1:
+  2       T       if cond2:
+                    flag = True
+  3   N       elif cond3:
+                  ...
+&gt; 4   N   T   if flag:
+                  ...</code></pre>
+<p>One detail of this approach has particularly fascinated me:
+how to combine the address and history effectively to form a key
+into the branch prediction table. I’ll consider two approaches:</p>
+<ul>
+<li>concatenation: concatenates the last n/2 bits of the address and history</li>
+<li>gshare: takes the XOR of the last n-bits of the address and history</li>
+</ul>
+<p><img src="concat-gshare.svg" /><!-- --></p>
+<p>At first glance, it seems like gshare is the obvious choice
+since it uses more information from both the address and history.
+But how do we really know it’s better? Is this something we can mathematically prove?
+Let’s start by examining some concrete examples and move on to more
+rigorous analysis showing that gshare might be <strong>worse</strong> than concatenation!</p>
+<div id="reasons-to-think-gshare-is-better" class="section level2">
+<h2>Reasons to think gshare is better</h2>
+<p>The intuitive argument for why gshare is superior goes like this:
+sometimes we need more address bits for better predictions,
+and sometimes we need more branch history bits.
+The XOR hash in gshare uses more of both
+by hashing all n-bits of the address and history into the key!</p>
+<p>Concatenation, on the other hand, uses a fixed number of bits from
+both the address and history.
+At first glance, this makes gshare seem like improvement.
+And we can even come up with some examples to demonstrate this.</p>
+<div id="gshare-is-better" class="section level3">
+<h3>gshare is better</h3>
+<div id="same-branch-history-different-predictions" class="section level4">
+<h4>Same branch history, different predictions</h4>
+<p>With gshare, two different addresses with the same branch history
+will always map to different keys: this is important
+for prediction accuracy when the two branches have
+different outcomes.</p>
+<pre><code>Branch   address history  gshare  concat  actual
+A        1010    1011     0001    1011    0
+B        1110    1011     0100    1011    1</code></pre>
+<p>gshare disambiguates the two branches
+with different outcomes, while concatenation does not.</p>
+</div>
+<div id="using-more-history-bits" class="section level4">
+<h4>Using more history bits</h4>
+<p>Let’s assume we have a branch history pattern like this:</p>
+<pre><code>1101 1101 1101 1101...</code></pre>
+<p>With a 1-bit prediction table, long-term gshare has 100%
+prediction accuracy, while concatenation has 50% accuracy.</p>
+<pre><code>address history  gshare  concat  actual
+1010    1101     0111    1001    1
+1010    1110     0100    1000    1
+1010    0111     1101    1011    0
+1010    1011     1000    1011    1</code></pre>
+<p>The reason is that the 0111 and 1011 histories alias.
+Because the actual result alternates between 0 and 1,
+the prediction bit alternates as well.
+Even if we used 2-bit saturation counter, we would only improve
+the accuracy to 75%.</p>
+</div>
+</div>
+<div id="gshare-is-worse" class="section level3">
+<h3>gshare is worse</h3>
+<p>However, we can also come up with an example where gshare
+does <em>worse</em> than concatenation. Two keys in the branch
+prediction table will collide in gshare
+when the address of one equals the history of the other (and vice versa):</p>
+<pre><code>branch   address  history  gshare  concat  actual
+A        0011     1100     0000    1100    1
+B        1100     0011     0000    0011    0</code></pre>
+<p>In this case, both branches map to the same prediction entry (0000)
+even though they have different behaviors. Concatenation keeps them
+separate because it uses different bits from the address and history.</p>
+<p>So if the branch was running in a way where branch A was always executed
+before branch B, the prediction accuracy of gshare would be 0%!</p>
+<p>Given the intuitive argument for gshare,
+it might be surprising to see a case when gshare does worse.
+But should any of these examples really convince us that
+gshare is better or worse than concatenation?
+Are these examples typical or edge-cases?
+Let’s analyze this mathematically by starting with clear assumptions.</p>
+</div>
+</div>
+<div id="mathematical-proof-that-gshare-is-worse" class="section level2">
+<h2>Mathematical proof that gshare is worse</h2>
+<p>Let’s define a “program” as a set branches, each with a unique n-bit address.
+Each address has a random n-bit history.
+As we saw in the examples, one dimension of poor branch prediction performance is key collisions.</p>
+<p>Can we show that gshare is less likely to have key collisions
+than concatenation? <strong>No</strong>. In fact, the opposite is true.
+gshare is slightly more likely to have key collisions
+than concatenation!</p>
+<p>What’s going on here? Isn’t gshare supposed to be better?
+Well this analysis depends entirely on our assumptions. Here we assumed:</p>
+<ol style="list-style-type: decimal">
+<li>the branch history is random</li>
+<li>collisions indicate poor branch prediction performance</li>
+<li>we can ignore the sequential nature of branch history<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></li>
+</ol>
+<p>The first assumption is the most problematic. Branch history
+is not random, so the analysis here is not as informative
+as it is for sorting algorithms. Even a simple “branch taken” algorithm
+can achieve 70% accuracy!</p>
+<p>Let’s start with the intuition behind why concatenation has fewer
+collisions, then walk through a mathematical proof.</p>
+<div id="intuitive-explanation-why-gshare-is-worse" class="section level3">
+<h3>Intuitive explanation why gshare is worse</h3>
+<p>To build some intuition, let’s start with the extreme case:
+what’s the maximum number of key collisions for each scheme?</p>
+<p>For gshare, since we are assuming the history is random,
+there’s a chance that each history maps to the inverse
+of the address, mapping every address/history to the <code>0</code> key:
+a complete collision!</p>
+<p>On the other hand, with a 4-bit concatenation scheme for example,
+addresses with the same last 2 bits will always map
+to the same set of 4 keys.</p>
+<p><img src="addr-key.svg" /><!-- --></p>
+<p>So any key can have at most 4 collisions.</p>
+<p>But maximum collisions are extremely rare.
+The simulation below shows 100 random cases:
+XOR usually has no more than 4 collisions, and rarely 5.</p>
+<div class="ballbin-container"></div>
+<p>Intuitively, concatenation might have fewer collisions
+because no single key can be mapped to more than 4 address/branch
+pairs, while XOR could theoretically map all pairs to the same key.
+However, this is the worst case scenario: we need to prove
+this for the average case.</p>
+</div>
+<div id="xor" class="section level3">
+<h3>XOR</h3>
+<p>Let’s analyze a specific case:
+a program with 16 unique branch addresses,
+each with a random 4-bit branch history.
+And let’s suppose our branch prediction table has a fixed 4-bit key size,
+allowing 16 different keys.</p>
+<p>For XOR collisions, I’ll show that any address/branch pair can map to any key
+and that this feature means that
+XOR collisions is equivalent to a standard combinatorial problem
+with a well-known formula for collisions.</p>
+<p>To start, I’ll prove no key is “left out” of the mapping:
+some address/branch pair can map to any key of the table.
+Suppose <code>k</code> is any possible 4-bit key.
+Then if we have a fixed 4-bit address <code>a</code>,
+we can always find a 4-bit history <code>h</code> such that
+<code>k = a ^ h</code>:</p>
+<pre><code>k = 0 ^ k = (a ^ a) ^ k = a ^ (a ^ k) = a ^ h</code></pre>
+<p>And each address/branch pair maps uniquely to a single key.
+Given our address <code>a</code>, if two different histories
+map to the same key, they are the same history:</p>
+<pre><code>a ^ h1 =     k =      a ^ h2
+    h1 = a ^ k = a ^ (a ^ h2) = h2</code></pre>
+<p>Therefore, collisions must be possible, since
+any address can map to any key and we are randomly
+choosing the history.</p>
+<p>Now let’s reframe the question into a standard combinatorial problem:
+imagine we have 16 balls (our addresses) and 16 bins (our keys).
+When we randomly choose a history for an address, it’s like randomly
+throwing a ball into a bin.
+Our question becomes:
+what’s the expected number of bins with 2 or more balls?</p>
+<p>A good approach is to use the complement probability:
+i.e. what’s the probability that a bin is empty
+and what’s the probability that a bin has 1 ball?
+Then the probability that a bin has 2 or more balls is</p>
+<p><span class="math display">\[
+1 - \left( \frac{15}{16} \right)^{16} - \binom{16}{1} \frac{1}{16} \left( \frac{15}{16} \right)^{15} \simeq 0.26
+\]</span></p>
+<p>Therefore, 16 * 0.26 = 4.23 bins are expected to have 2 or more balls.
+So about 4 collisions are expected.</p>
+</div>
+<div id="concatenation" class="section level3">
+<h3>Concatenation</h3>
+<p>For concatenation, I’ll apply the balls and bins analysis again.
+As we pointed out in our intuitive explanation,
+addresses that end in <code>00</code> can only be mapped
+to the keys that start with <code>00</code>.</p>
+<p>This splits our problem into four independent cases of
+4 balls into 4 bins.
+For each case, the expected number of bins with 2 or more balls is
+0.267 * 4 = 1.05. With 4 independent cases, the expected number
+is about 4.19.</p>
+<p>So concatenation has fewer expected collisions than XOR!</p>
+<p>The exact margin is small and also depends on how you
+concatenate address and history. I’ve used half and half,
+but other ratios are also possible.</p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Comparing algorithms depends on assumptions.
+For example, quicksort has better average-case
+performance than insertion sort, but has the same worst-case complexity
+and performs worse when data is almost sorted! Similarly, iterating over an array
+of structs versus a struct of arrays might have identical computational
+complexity, but very different performance due to CPU cache behavior.</p>
+<p>In our case, assumptions that are reasonable in one context (like random
+data for sorting) can be unrealistic in another (like branch history).
+A basic theoretical analysis with simplified assumptions like mine
+does not really correlate with real-world performance. We need empirical
+data from real programs to understand which approach works better.</p>
+<p>The next post in this series will show how to gather and analyze
+this real-world data using LLDB.</p>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>
+Check out Dan Luu’s <a href="https://danluu.com/branch-prediction/">post</a>
+for a great overview of this and other branch prediction algorithms.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>
+For example, even if the next branch outcome is random, the branch history
+develops sequentially.
+If the last 4-bit history was <code>TNTT</code> the next history must start with
+<code>NTT</code>. So branch history is more accurately modeled as a Markov chain.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

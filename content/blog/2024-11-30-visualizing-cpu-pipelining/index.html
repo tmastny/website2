@@ -28,6 +28,14 @@ output:
 </ul>
 </div>
 
+<blockquote>
+<p>This is part of my branch prediction series.</p>
+<ol style="list-style-type: decimal">
+<li>Visualizing CPU Pipelining</li>
+<li><a href="/blog/branch-prediction-real-data/">Why Branch Prediction Needs Real Data</a></li>
+<li>Hacking LLDB to Evaluate Branch Predictions (coming soon)</li>
+</ol>
+</blockquote>
 <p>I want to share what I’ve learned about CPU pipelining.
 Thanks to Dan Luu’s branch <a href="https://danluu.com/branch-prediction/">prediction write-up</a>,
 I was vaguely aware how this worked conceptually,
@@ -53,7 +61,7 @@ is a nice, brief high-level summary), since our model CPU will be the 32-bit MIP
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('nonpipeline-container');
   container.innerHTML = createPipelineHTML('nonpipelineViz');
-  
+
   window.nonpipelineViz = new PipelineVisualization(
     document.getElementById('nonpipelineViz'),
     {
@@ -277,14 +285,13 @@ class PipelineVisualization {
   }
 }
 </script>
-
 <div id="pipeline1-container"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('pipeline1-container');
   container.innerHTML = createPipelineHTML('pipelineViz1');
-  
+
   window.pipelineViz1 = new PipelineVisualization(
     document.getElementById('pipelineViz1'),
     {
@@ -326,7 +333,7 @@ Say the instruction is</p>
 the ID stage register. Now the ID register contains
 fields that will be used by all the remaining stages.</p>
 <pre><code>pc: 0x014b4820
--&gt; 
+-&gt;
 Field   op      rs      rt      rd      shamt   funct
 Binary  000000  01010   01011   01001   00000   100000
 #       add     $s2     $s3     $t1</code></pre>
@@ -362,7 +369,7 @@ but the fields also turn out to be crucial to solve data hazards.</p>
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('pipelineblocked-container');
   container.innerHTML = createPipelineHTML('pipelineblocked');
-  
+
   window.pipelineblocked = new PipelineVisualization(
     document.getElementById('pipelineblocked'),
     {
@@ -414,7 +421,7 @@ allowing the <code>sub</code> instruction to continue.</p>
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('pipeline2-container');
   container.innerHTML = createPipelineHTML('pipelineViz2');
-  
+
   window.pipelineViz2 = new PipelineVisualization(
     document.getElementById('pipelineViz2'),
     {
@@ -480,7 +487,7 @@ For this particular case, the hazard resolves with zero stalls!
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('nostallpipeline-container');
   container.innerHTML = createPipelineHTML('nostallpipeline');
-  
+
   window.nostallpipeline = new PipelineVisualization(
     document.getElementById('nostallpipeline'),
     {
@@ -496,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { pc: null, ex: "sub r5, r3, r6", mem: "add r3, r1, r4" },
         { pc: null, mem: "sub r5, r3, r6", wb: "add r3, r1, r4" },
         { pc: null, wb: "sub r5, r3, r6" },
-        { pc: null } 
+        { pc: null }
       ]
     }
   );
@@ -510,7 +517,7 @@ ID/EX input registers and the MEM/WB output registers that
 I had for the HDU.</p>
 <p>The problem is that forwarding can’t handle this problem alone.
 Let’s look at this example:</p>
-<pre><code>lw  r1, 0(r2)  
+<pre><code>lw  r1, 0(r2)
 add r3, r1, r4</code></pre>
 <p>Our HDU handles this situation just fine: in fact, it’s identical
 to our previous example where we must stall until
@@ -526,12 +533,12 @@ to save 1 bubble.</p>
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('hdufupipeline-container');
   container.innerHTML = createPipelineHTML('hdufupipeline');
-  
+
   window.hdufupipeline = new PipelineVisualization(
     document.getElementById('hdufupipeline'),
     {
       instructions: [
-//lw  r1, 0(r2)  
+//lw  r1, 0(r2)
 //add r3, r1, r4
         "lw r1, 0(r2)",
         "add r3, r1, r4"
@@ -642,11 +649,11 @@ insert a <code>nop</code> anyway.</p>
 <p>Take a look at this example, where we iterate over an array
 until we find zero.</p>
 <pre><code>loop:
-    lw   t0, 0(s0)    
-    beq  t0, 0, done 
-    nop                 
-    add  s0, s0, 4      
-    j    loop           
+    lw   t0, 0(s0)
+    beq  t0, 0, done
+    nop
+    add  s0, s0, 4
+    j    loop
 done:</code></pre>
 <p><code>add</code> can not go into the branch delay slot, because if the branch
 was taken, we would have incorrectly modified <code>s0</code>. <code>s0</code> would no longer point to
