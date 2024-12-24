@@ -5,7 +5,7 @@ output:
   xaringan::moon_reader:
     lib_dir: libs
     includes:
-      after_body: ["pipeline.html"]
+      after_body: ["pipeline.html", "spectre.html"]
     nature:
       highlightStyle: github
       countIncrementalSlides: false
@@ -24,7 +24,7 @@ source: https://en.algorithmica.org/hpc/complexity/hardware/
 AMD architecture created in 2017 and still used by AMD CPUs.
 
 Branch prediction unit takes up 15-20% of the die!
-So it must be critical for performance. 
+So it must be critical for performance.
 The size rivals L1 cache.
 
 Why?
@@ -39,7 +39,7 @@ CPU mental model: one step at a time
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('nonpipeline-container');
   container.innerHTML = createPipelineHTML('nonpipelineViz');
-  
+
   window.nonpipelineViz = new PipelineVisualization(
     document.getElementById('nonpipelineViz'),
     {
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
 So at the top are instructions the CPU needs to process
 and each bottom is a stage. Don't worry about the details,
 but you should know that an instruction needs to go through
-each stage. 
+each stage.
 
 But this process is really inefficient, because
 those hardware units are just sitting there idle.
@@ -79,7 +79,7 @@ What is want is an assembly line!
 
 ---
 
-CPU mental model: assembly line 
+CPU mental model: assembly line
 
 <div id="pipeline1-container"></div>
 
@@ -87,7 +87,7 @@ CPU mental model: assembly line
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('pipeline1-container');
   container.innerHTML = createPipelineHTML('pipelineViz1');
-  
+
   window.pipelineViz1 = new PipelineVisualization(
     document.getElementById('pipelineViz1'),
     {
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
 ???
 
 Now each operates at the same time,
-which makes the CPU much, much faster. 
+which makes the CPU much, much faster.
 
 So much faster, CPU manufactures are willing
 to use 20% of the die space to make this happen.
@@ -249,7 +249,7 @@ This stores the branch history, which is
 critical for prediction.
 
 Logic: this is the complicated feedback
-mechanism to predict and recover from branches.  
+mechanism to predict and recover from branches.
 
 What could go wrong?
 
@@ -282,6 +282,18 @@ What was the performance impact?
 
 --
 
-* lost 3-6 years of progress 
+* lost 3-6 years of progress
+
+???
+
+So what is spectre?
 
 ---
+
+<div id="spectre-viz"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.initSpectreViz('spectre-viz');
+});
+</script>
