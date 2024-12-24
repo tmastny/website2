@@ -87,7 +87,7 @@ each stage.
 But this process is really inefficient, because
 those hardware units are just sitting there idle.
 
-What is want is an assembly line!
+What we want is an assembly line!
 
 ---
 
@@ -198,7 +198,7 @@ it has to throw away all the work it's already done!
 
 
 Throwing away work and starting over slows down the CPU:
-so how do you mitigation this?
+so how do you mitigate this?
 
 ---
 
@@ -222,7 +222,7 @@ The branch prediction unit makes up 20% of the die space!
 That is really substantial!
 
 * it's similiar in size to the L1 cache,
-which, among many improvements,
+which, among many improvements 
 makes iterating over arrays 100x faster.
 
 * We are giving up floating point operations i.e. FLOPS,
@@ -335,13 +335,13 @@ How was the Spectre mitigated?
 * hardware
 --
 
-  * it wasn't*
+  * it wasn't
 
 ???
 
 The fundamental exploit still exists.
-I'm able to exactly reproduce the the exploit on my
-2020 Intel MacBook Air. I'll share a link if anyone is interested.
+I'm able to reproduce the same demo released in 2018 on my
+2020 Intel MacBook Air. I'll share a link at the end of the talk.
 
 Let's walk through an example and see how it works,
 even on modern CPUs.
