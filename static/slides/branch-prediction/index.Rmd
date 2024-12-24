@@ -1,6 +1,20 @@
 ---
 title: "Branch Prediction"
-subtitle: "Security and Performance"
+subtitle: "How 20% of your CPU Became a Security Risk"
+description: >
+  Modern CPUs dedicate 20% of their silicon to branch prediction
+  - as much space as the L1 cache.
+  Why? Modern CPUs operate like an assembly line
+  and a mispredicted branch grinds the entire factory to a halt.
+  So to increase CPU performance, engineers created created
+  sophisticated prediction systems that try to keep the line running smoothly.
+  But this additional complexity comes with a trade-off:
+  there are fundamental security flaws with these techniques that remain unresolved to this day.
+
+  In this talk, we'll explore how branch prediction works,
+  why it's worth so much die space,
+  and how this critical performance feature
+  became one of the most significant security vulnerabilities in CPU history.
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -394,8 +408,12 @@ that could be exploited.
 # Where to learn more?
 
 * Branch prediction series on my blog
-  * timmastny.com/blog/visualizing-cpu-pipelining
+  * https://timmastny.com/blog/visualizing-cpu-pipelining
+
+
 * this slideshow with interactive animations
-  * timmastny.com/slides/branch-prediction
-* Github code for Spectre V1 on x86 processors
+  * https://timmastny.com/slides/branch-prediction
+
+
+* Github code for Spectre V1 demo x86 processors
   * https://github.com/tmastny/gshare/tree/main/spectre
