@@ -76,7 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 So at the top are instructions the CPU needs to process
-and each bottom is a stage. Don't worry about the details,
+and each box at the bottom is a stage that is an isolated
+hardware unit that can function independently.
+Don't worry about the details,
 but you should know that an instruction needs to go through
 each stage.
 
@@ -127,7 +129,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
-Now each operates at the same time,
+Now each stage operates at the same time,
+immediately starting work on the next
+instruction,
 which makes the CPU much, much faster.
 
 So much faster, CPU manufactures are willing
@@ -179,12 +183,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
-At this point, the CPU knows it should have taken the branch.
+The EX stage is part of the CPU that calculates the operands
+of the instruction:
+in this case, comparing if the r1 and r2 registers are equal.
+
+So when the branch instruction finishes this stage,
+the CPU knows it should have taken the branch
+and moved on the the br label.
 
 The CPU doesn't just have to pause the assembly line:
 it has to throw away all the work it's already done!
 
-So what do you do?
+
+Throwing away work and starting over slows down the CPU:
+so how do you mitigation this?
 
 ---
 
@@ -202,6 +214,30 @@ Add hardware!
 ![](branch-logic.jpg)
 ]
 ]
+???
+
+The branch prediction unit makes up 20% of the die space!
+That is really substantial!
+
+* it's similiar in size to the L1 cache,
+which, among many improvements,
+makes iterating over arrays 100x faster.
+
+* We are giving up floating point operations i.e. FLOPS,
+one of the primary measures of performance.
+
+All to predict branches.
+
+So what is the hardware in the branch prediction unit?
+
+* Memory: SRAM, same type as the L1 cache
+(with a less complicated implementation).
+The memory stores the branch history, which is
+critical for prediction.
+
+* Logic: this is the complicated feedback
+mechanism to predict and recover from branches.
+
 --
 
 
@@ -232,35 +268,25 @@ Add hardware!
   height: auto;
 }
 &lt;/style&gt;
+???
+While the memory is more straightforward compared to the L1 cache,
+the logic is very complicated. Here's a glimpse of the logic
+for a basic MIPs CPU, which is vastly more simple
+than modern CPUs which use superscalar pipelines.
 --
 
 # What could go wrong?
+---
+background-image: url(spectre.svg)
 
-???
+--
 
-This makes up 20% of the die space! That's crazy:
-That means we are giving us L1 cache, which makes
-things like iterating over arrays 100x faster.
+# Spectre Security Vulnerability
 
-We are giving up floating point operations i.e. FLOPS,
-the primary measure of performance.
-
-All to predict branches.
-
-What is the hardware?
-
-Memory: SRAM, same as the L1 cache.
-This stores the branch history, which is
-critical for prediction.
-
-Logic: this is the complicated feedback
-mechanism to predict and recover from branches.
-
-What could go wrong?
 
 ---
 
-What was the performance impact?
+How was the Spectre mitigated?
 
 .right-column2[
 ![](spectre-logo.png)
@@ -279,19 +305,33 @@ What was the performance impact?
 &lt;/style&gt;
 --
 
-* software patches saw 5-30% performance degradation
+* software
+--
+
+  * patches saw 5-30% performance degradation
+--
+
+  * CPU were only improving 5-10% YoY
+--
+
+  * lost 3-6 years of progress
 
 --
 
-* CPU were only improving 5-10% YoY
 
+* hardware
 --
 
-* lost 3-6 years of progress
+  * it wasn't*
 
 ???
 
-So what is spectre?
+The fundamental exploit still exists.
+I'm able to exactly reproduce the the exploit on my
+2020 Intel MacBook Air. I'll share a link if anyone is interested.
+
+Let's walk through an example and see how it works,
+even on modern CPUs.
 
 ---
 
@@ -302,6 +342,48 @@ document.addEventListener('DOMContentLoaded', function() {
     window.initSpectreViz('spectre-viz');
 });
 &lt;/script&gt;
+
+---
+
+# Should we still be worried?
+
+Yes and no.
+
+--
+
+**No**
+
+* Spectre targets sensitive data *within* the same user process
+
+???
+This vastly limits the scope of the attacks.
+--
+
+* key attack surface areas have already seen mitigations
+--
+
+  * browsers
+  * shared libraries
+  * user kernel mapping
+--
+
+
+* exploit is more difficult to execute
+--
+
+  * less accurate timing available to user processes
+  * compiler mitigations
+
+--
+
+**Yes**
+
+--
+
+* the fundamental exploit still exists
+???
+Maybe people will find more sensitive data in user space
+that could be exploited.
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
