@@ -186,19 +186,10 @@ Add hardware!
 .left-column[
 .small-image[
 ![](branch-die.jpg)
-]
-]
 
---
-.left-column[
-.small-image[
 * memory
 ![](branch-mem.jpg)
-]
-]
---
-.left-column[
-.small-image[
+
 * logic
 ![](branch-logic.jpg)
 ]
@@ -218,8 +209,14 @@ Add hardware!
 }
 
 .right-column {
-  width: 65%;
+  width: 65% !important;
   float: right;
+}
+
+.right-column img {
+  width: 100%;
+  height: auto;
+  margin-top: 20px; /* Optional: adjust vertical alignment */
 }
 
 .small-image img {
@@ -257,17 +254,17 @@ What could go wrong?
 
 What was the performance impact?
 
-.right-column[
+.right-column2[
 ![](spectre-logo.png)
 ]
 
 <style>
-.right-column {
+.right-column2 {
   width: 35%;
   float: right;
 }
 
-.right-column img {
+.right-column2 img {
   width: 100%;
   height: auto;
 }
