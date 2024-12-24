@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
 As we saw in the previous post, we need a way to evaluate
 branch prediction algorithms empirically: in real world programs,
 how accurate are the predictions?
-There are well-know benchmarks and advanced CPU tooling to track
+There are well-know benchmarks and advanced CPU tools to track
 branch predictions, but I wanted to approach this problem
 with a hacker mentality: how can I use the tools I have
 in creative ways to investigate this for myself?

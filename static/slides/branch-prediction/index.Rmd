@@ -407,7 +407,7 @@ that could be exploited.
 ---
 # Where to learn more?
 
-* Branch prediction series on my blog
+* branch prediction series on my blog
   * https://timmastny.com/blog/visualizing-cpu-pipelining
 
 
