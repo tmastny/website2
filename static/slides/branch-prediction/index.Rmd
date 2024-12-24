@@ -29,7 +29,7 @@ The size rivals L1 cache, which is critical for performance.
 
 Why does it take up so much space?
 To answer, we first need to understand at a basic level
-how the CPU works. 
+how the CPU works.
 
 ---
 
@@ -281,7 +281,7 @@ background-image: url(spectre.svg)
 # Spectre Security Vulnerability
 
 ???
-This was a massive security vulnerability 
+This was a massive security vulnerability
 shared in 2018 that impacted all modern CPUs.
 
 The core problem was branch prediction.
@@ -389,3 +389,13 @@ This vastly limits the scope of the attacks.
 ???
 Maybe people will find more sensitive data in user space
 that could be exploited.
+
+---
+# Where to learn more?
+
+* Branch prediction series on my blog
+  * timmastny.com/blog/visualizing-cpu-pipelining
+* this slideshow with interactive animations
+  * timmastny.com/slides/branch-prediction
+* Github code for Spectre V1 on x86 processors
+  * https://github.com/tmastny/gshare/tree/main/spectre
