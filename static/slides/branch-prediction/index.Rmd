@@ -415,5 +415,5 @@ that could be exploited.
   * https://timmastny.com/slides/branch-prediction
 
 
-* Github code for Spectre V1 demo x86 processors
+* Github code for Spectre V1 demo on x86 processors
   * https://github.com/tmastny/gshare/tree/main/spectre
