@@ -3,7 +3,7 @@
   <head>
     <title>Branch Prediction</title>
     <meta charset="utf-8" />
-    <script src="libs/header-attrs-2.28/header-attrs.js"></script>
+    <script src="libs/header-attrs-2.29/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
   </head>
@@ -15,7 +15,7 @@ class: center, middle, inverse, title-slide
 # Branch Prediction
 ]
 .subtitle[
-## Security and Performance
+## How 20% of your CPU Became a Security Risk
 ]
 
 ---
@@ -32,10 +32,12 @@ source: https://en.algorithmica.org/hpc/complexity/hardware/
 AMD architecture created in 2017 and still used by AMD CPUs.
 
 Branch prediction unit takes up 15-20% of the die!
-So it must be critical for performance. 
-The size rivals L1 cache.
+So it must be critical for performance.
+The size rivals L1 cache, which is critical for performance.
 
-Why?
+Why does it take up so much space?
+To answer, we first need to understand at a basic level
+how the CPU works.
 
 ---
 
@@ -47,7 +49,7 @@ CPU mental model: one step at a time
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('nonpipeline-container');
   container.innerHTML = createPipelineHTML('nonpipelineViz');
-  
+
   window.nonpipelineViz = new PipelineVisualization(
     document.getElementById('nonpipelineViz'),
     {
@@ -76,18 +78,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 So at the top are instructions the CPU needs to process
-and each bottom is a stage. Don't worry about the details,
+and each box at the bottom is a stage that is an isolated
+hardware unit that can function independently.
+Don't worry about the details,
 but you should know that an instruction needs to go through
-each stage. 
+each stage.
 
 But this process is really inefficient, because
 those hardware units are just sitting there idle.
 
-What is want is an assembly line!
+What we want is an assembly line!
 
 ---
 
-CPU mental model: assembly line 
+CPU mental model: assembly line
 
 &lt;div id="pipeline1-container"&gt;&lt;/div&gt;
 
@@ -95,7 +99,7 @@ CPU mental model: assembly line
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('pipeline1-container');
   container.innerHTML = createPipelineHTML('pipelineViz1');
-  
+
   window.pipelineViz1 = new PipelineVisualization(
     document.getElementById('pipelineViz1'),
     {
@@ -127,8 +131,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
-Now each operates at the same time,
-which makes the CPU much, much faster. 
+Now each stage operates at the same time,
+immediately starting work on the next
+instruction,
+which makes the CPU much, much faster.
 
 So much faster, CPU manufactures are willing
 to use 20% of the die space to make this happen.
@@ -179,12 +185,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
-At this point, the CPU knows it should have taken the branch.
+The EX stage is part of the CPU that calculates the operands
+of the instruction:
+in this case, comparing if the r1 and r2 registers are equal.
+
+So when the branch instruction finishes this stage,
+the CPU knows it should have taken the branch
+and moved on the the br label.
 
 The CPU doesn't just have to pause the assembly line:
 it has to throw away all the work it's already done!
 
-So what do you do?
+
+Throwing away work and starting over slows down the CPU:
+so how do you mitigate this?
 
 ---
 
@@ -194,23 +208,38 @@ Add hardware!
 .left-column[
 .small-image[
 ![](branch-die.jpg)
-]
-]
 
---
-.left-column[
-.small-image[
 * memory
 ![](branch-mem.jpg)
-]
-]
---
-.left-column[
-.small-image[
+
 * logic
 ![](branch-logic.jpg)
 ]
 ]
+???
+
+The branch prediction unit makes up 20% of the die space!
+That is really substantial!
+
+* it's similiar in size to the L1 cache,
+which, among many improvements 
+makes iterating over arrays 100x faster.
+
+* We are giving up floating point operations i.e. FLOPS,
+one of the primary measures of performance.
+
+All to predict branches.
+
+So what is the hardware in the branch prediction unit?
+
+* Memory: SRAM, same type as the L1 cache
+(with a less complicated implementation).
+The memory stores the branch history, which is
+critical for prediction.
+
+* Logic: this is the complicated feedback
+mechanism to predict and recover from branches.
+
 --
 
 
@@ -226,8 +255,14 @@ Add hardware!
 }
 
 .right-column {
-  width: 65%;
+  width: 65% !important;
   float: right;
+}
+
+.right-column img {
+  width: 100%;
+  height: auto;
+  margin-top: 20px; /* Optional: adjust vertical alignment */
 }
 
 .small-image img {
@@ -235,64 +270,147 @@ Add hardware!
   height: auto;
 }
 &lt;/style&gt;
+???
+While the memory is more straightforward compared to the L1 cache,
+the logic is very complicated. Here's a glimpse of the logic
+for a basic MIPs CPU, which is vastly more simple
+than modern CPUs which use superscalar pipelines.
 --
 
 # What could go wrong?
 
 ???
+With all this complexity, what could go wrong?
+---
+background-image: url(spectre.svg)
 
-This makes up 20% of the die space! That's crazy:
-That means we are giving us L1 cache, which makes
-things like iterating over arrays 100x faster.
+--
 
-We are giving up floating point operations i.e. FLOPS,
-the primary measure of performance.
+# Spectre Security Vulnerability
 
-All to predict branches.
+???
+This was a massive security vulnerability
+shared in 2018 that impacted all modern CPUs.
 
-What is the hardware?
+The core problem was branch prediction.
 
-Memory: SRAM, same as the L1 cache.
-This stores the branch history, which is
-critical for prediction.
-
-Logic: this is the complicated feedback
-mechanism to predict and recover from branches.  
-
-What could go wrong?
+Before we dive into how Spectre works,
+let's first look at what was done to mitigate it.
 
 ---
 
-What was the performance impact?
+How was the Spectre mitigated?
 
-.right-column[
+.right-column2[
 ![](spectre-logo.png)
 ]
 
 &lt;style&gt;
-.right-column {
+.right-column2 {
   width: 35%;
   float: right;
 }
 
-.right-column img {
+.right-column2 img {
   width: 100%;
   height: auto;
 }
 &lt;/style&gt;
 --
 
-* software patches saw 5-30% performance degradation
+* software
+--
+
+  * patches saw 5-30% performance degradation
+--
+
+  * CPU were only improving 5-10% YoY
+--
+
+  * lost 3-6 years of progress
 
 --
 
-* CPU were only improving 5-10% YoY
 
+* hardware
 --
 
-* lost 3-6 years of progress 
+  * it wasn't
+
+???
+
+The fundamental exploit still exists.
+I'm able to reproduce the same demo released in 2018 on my
+2020 Intel MacBook Air. I'll share a link at the end of the talk.
+
+Let's walk through an example and see how it works,
+even on modern CPUs.
 
 ---
+
+&lt;div id="spectre-viz"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+document.addEventListener('DOMContentLoaded', function() {
+    window.initSpectreViz('spectre-viz');
+});
+&lt;/script&gt;
+
+---
+
+# Should we still be worried?
+
+Yes and no.
+
+--
+
+**No**
+
+* Spectre targets sensitive data *within* the same user process
+
+???
+This vastly limits the scope of the attacks.
+--
+
+* key attack surface areas have already seen mitigations
+--
+
+  * browsers
+  * shared libraries
+  * user kernel mapping
+--
+
+
+* exploit is more difficult to execute
+--
+
+  * less accurate timing available to user processes
+  * compiler mitigations
+
+--
+
+**Yes**
+
+--
+
+* the fundamental exploit still exists
+???
+Maybe people will find more sensitive data in user space
+that could be exploited.
+
+---
+# Where to learn more?
+
+* Branch prediction series on my blog
+  * https://timmastny.com/blog/visualizing-cpu-pipelining
+
+
+* this slideshow with interactive animations
+  * https://timmastny.com/slides/branch-prediction
+
+
+* Github code for Spectre V1 demo on x86 processors
+  * https://github.com/tmastny/gshare/tree/main/spectre
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
@@ -571,6 +689,464 @@ class PipelineVisualization {
   }
 }
 </script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simplified Spectre Attack Demo</title>
+    <style>
+        .container {
+            padding: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .btn:not(:disabled):hover { background: #2563eb; }
+        .section {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .code {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            white-space: pre;
+            line-height: 1.4;
+        }
+        .highlight { background: #fef3c7; }
+        .speculative { background: #fee2e2; }
+        .grid {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        .cell {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .bg-gray { background: #f3f4f6; }
+        .bg-green { background: #bbf7d0; }
+        .bg-red { background: #fecaca; }
+        .phase {
+            font-weight: 600;
+            color: #4b5563;
+            margin-top: 0.5rem;
+        }
+        .explanation {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <button id="fastRewindBtn" class="btn">&lt;&lt;</button>
+            <button id="backBtn" class="btn">&lt;</button>
+            <button id="forwardBtn" class="btn">&gt;</button>
+            <button id="fastForwardBtn" class="btn">&gt;&gt;</button>
+            <button id="resetBtn" class="btn">Reset</button>
+        </div>
+
+        <div class="section">
+            <div class="title">Secret Index: <span id="secretValue">0x5</span></div>
+            <div class="explanation">We're trying to leak the value at this address through cache timing</div>
+        </div>
+
+        <div class="section">
+            <div id="code" class="code">
+for (int i = 0; i < 3; i++) {
+    index = switch(i, secret_index);
+    if (index < 3) {
+        temp = array_cache[array_secret[index]];
+    }
+}</div>
+            <div id="iteration" class="explanation">Iteration: 0/3</div>
+            <div id="explanation" class="explanation">Training the branch predictor...</div>
+        </div>
+
+        <div class="section">
+            <div class="title">array_cache Cache State</div>
+            <div id="cacheGrid" class="grid"></div>
+            <div class="explanation">Shows which values are currently in cache (green = cached)</div>
+        </div>
+
+        <div class="section">
+            <div class="title">array_cache Probe</div>
+            <div id="probeGrid" class="grid"></div>
+            <div class="explanation">Number of cache hits detected for each value</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const SECRET = 2;
+        const CACHE_SIZE = 8;
+        const TRAINING_CYCLES = 2;
+        const STEPS_PER_CYCLE = 3;
+
+        // State management
+        class State {
+            constructor(phase, step, cacheState, probeScores) {
+                this.phase = phase;
+                this.step = step;
+                this.cacheState = [...cacheState];
+                this.probeScores = [...probeScores];
+            }
+        }
+
+        let history = [];
+        let currentStateIndex = -1;
+
+        function createInitialState() {
+            return new State(
+                'training',
+                0,
+                new Array(CACHE_SIZE).fill(false),
+                new Array(CACHE_SIZE).fill(0)
+            );
+        }
+
+        function getCurrentState() {
+            return history[currentStateIndex];
+        }
+
+        function pushState(state) {
+            history = history.slice(0, currentStateIndex + 1);
+            history.push(new State(state.phase, state.step, state.cacheState, state.probeScores));
+            currentStateIndex = history.length - 1;
+        }
+
+        function computeNextState(current) {
+            const next = new State(
+                current.phase,
+                current.step,
+                [...current.cacheState],
+                [...current.probeScores]
+            );
+
+            if (next.phase === 'training') {
+                // Only update cache state on the last line of the last iteration
+                const iteration = Math.floor(next.step / STEPS_PER_CYCLE);
+                const stepInCycle = next.step % STEPS_PER_CYCLE;
+
+                if (iteration === 2 && stepInCycle === 2) {
+                    next.cacheState[SECRET] = true;
+                }
+
+                next.step++;
+                if (next.step >= 9) { // 3 iterations * 3 steps
+                    next.phase = 'probing';
+                    next.step = 0;
+                }
+            } else {
+                const probeValue = Math.floor(next.step / STEPS_PER_CYCLE);
+                if (next.step % STEPS_PER_CYCLE === 2 && next.cacheState[probeValue]) {
+                    next.probeScores[probeValue]++;
+                }
+
+                next.step++;
+                if (next.step >= CACHE_SIZE * STEPS_PER_CYCLE) {
+                    next.phase = 'training';
+                    next.step = 0;
+                    next.cacheState = new Array(CACHE_SIZE).fill(false);
+                }
+            }
+
+            return next;
+        }
+
+        function updateUI() {
+            const state = getCurrentState();
+
+            // Update cache state grid
+            document.getElementById('cacheGrid').innerHTML = state.cacheState
+                .map((isCached, i) => `
+                    <div class="cell ${isCached ? 'bg-green' : 'bg-red'}">
+                        ${i}
+                    </div>
+                `)
+                .join('');
+
+            // Update probe results grid with highlighting
+            const currentProbeValue = state.phase === 'probing' ?
+                Math.floor(state.step / STEPS_PER_CYCLE) : -1;
+            document.getElementById('probeGrid').innerHTML = state.probeScores
+                .map((score, i) => `
+                    <div class="cell ${i === currentProbeValue ? 'highlight' : 'bg-gray'}">
+                        ${score}
+                    </div>
+                `)
+                .join('');
+
+            document.getElementById('cacheGrid').innerHTML = state.cacheState
+                .map((isCached, i) => `
+                    <div class="cell ${isCached ? 'bg-green' : 'bg-red'}" 
+                         onclick="toggleCache(${i})" 
+                         style="cursor: pointer"
+                         title="Click to toggle cache state">
+                        ${i}
+                    </div>
+                `)
+                .join('');
+            
+            // Update explanation text
+            let explanation = '';
+            if (state.phase === 'training') {
+                const iteration = Math.floor(state.step / STEPS_PER_CYCLE);
+                if (iteration === 0) {
+                    explanation = `Training the branch predictor: index = 0`;
+                } else if (iteration === 1) {
+                    explanation = `Training the branch predictor: index = 1`;
+                } else {
+                    if (state.step % 3 === 2) {
+                        explanation = `array_cached[array_secret[0x5]] loaded into cache!`;
+                    } else {
+                        explanation = `Tricking the branch predictor: index = 0x5`;
+                    }
+                }
+            } else {
+                const probeValue = Math.floor(state.step / STEPS_PER_CYCLE);
+                explanation = `Measured if value ${probeValue} was cached`;
+            }
+            document.getElementById('explanation').textContent = explanation;
+
+            // Update code highlights
+            const code = document.getElementById('code');
+            const lines = code.textContent.split('\n');
+
+            if (state.phase === 'training') {
+                const iteration = Math.floor(state.step / STEPS_PER_CYCLE);
+                const stepInCycle = state.step % STEPS_PER_CYCLE;
+
+                document.getElementById('iteration').textContent =
+                    `Iteration: ${iteration + 1}/3`;
+
+                // Reset all highlights
+                code.innerHTML = lines.join('\n');
+
+                // Add highlight based on current step
+                if (stepInCycle === 0) {
+                    lines[2] = `<span class="highlight">${lines[2]}</span>`;
+                } else if (stepInCycle === 1) {
+                    lines[3] = `<span class="highlight">${lines[3]}</span>`;
+                } else if (stepInCycle === 2) {
+                    // On the last step of the last iteration, show speculative execution
+                    if (iteration === 2) {
+                        lines[4] = `<span class="speculative">${lines[4]}</span>`;
+                    } else {
+                        lines[4] = `<span class="highlight">${lines[4]}</span>`;
+                    }
+                }
+                code.innerHTML = lines.join('\n');
+            }
+
+            // Update button states
+            document.getElementById('fastRewindBtn').disabled = currentStateIndex <= 0;
+            document.getElementById('backBtn').disabled = currentStateIndex <= 0;
+            document.getElementById('forwardBtn').disabled = false;
+            document.getElementById('fastForwardBtn').disabled = false;
+        }
+
+        function isKeyEvent(state) {
+            // Start of each iteration in training
+            if (state.phase === 'training' && state.step % STEPS_PER_CYCLE === 0) return true;
+
+            // Speculative execution in final iteration
+            if (state.phase === 'training' &&
+                Math.floor(state.step / STEPS_PER_CYCLE) === 2 &&
+                state.step % STEPS_PER_CYCLE === 2) return true;
+
+            // Start of probing
+            if (state.phase === 'probing' && state.step === 0) return true;
+
+            // Cache hits during probing
+            if (state.phase === 'probing' && state.step % STEPS_PER_CYCLE === 2) {
+                const probeValue = Math.floor(state.step / STEPS_PER_CYCLE);
+                if (state.cacheState[probeValue]) return true;
+            }
+
+            // End of probing
+            if (state.phase === 'training' && state.step === 0 && currentStateIndex > 0) return true;
+
+            return false;
+        }
+
+        function findNextKeyEvent() {
+            let searchIndex = currentStateIndex + 1;
+            while (searchIndex < history.length) {
+                if (isKeyEvent(history[searchIndex])) return searchIndex;
+                searchIndex++;
+            }
+
+            // If no key event found in history, generate new states until we find one
+            let currentState = getCurrentState();
+            while (!isKeyEvent(currentState = computeNextState(currentState))) {
+                pushState(currentState);
+            }
+            pushState(currentState);
+            return history.length - 1;
+        }
+
+        function findPreviousKeyEvent() {
+            let searchIndex = currentStateIndex - 1;
+            while (searchIndex >= 0) {
+                if (isKeyEvent(history[searchIndex])) return searchIndex;
+                searchIndex--;
+            }
+            return 0;
+        }
+
+        function forward() {
+            if (currentStateIndex < history.length - 1) {
+                // If in probing phase, skip to next probe value
+                const state = history[currentStateIndex];
+                if (state.phase === 'probing') {
+                    const currentProbe = Math.floor(state.step / STEPS_PER_CYCLE);
+                    const nextProbe = currentProbe + 1;
+                    let targetIndex = currentStateIndex + 1;
+
+                    // Find the state for the next probe value
+                    while (targetIndex < history.length) {
+                        const nextState = history[targetIndex];
+                        if (nextState.phase !== 'probing' ||
+                            Math.floor(nextState.step / STEPS_PER_CYCLE) >= nextProbe) {
+                            break;
+                        }
+                        targetIndex++;
+                    }
+                    currentStateIndex = targetIndex;
+                } else {
+                    currentStateIndex++;
+                }
+            } else {
+                // Generate next state(s)
+                const currentState = getCurrentState();
+                if (currentState.phase === 'probing') {
+                    // Skip to next probe value
+                    const currentProbe = Math.floor(currentState.step / STEPS_PER_CYCLE);
+                    const nextProbe = currentProbe + 1;
+                    let nextState = computeNextState(currentState);
+                    pushState(nextState);
+
+                    while (nextState.phase === 'probing' &&
+                           Math.floor(nextState.step / STEPS_PER_CYCLE) < nextProbe) {
+                        nextState = computeNextState(nextState);
+                        pushState(nextState);
+                    }
+                } else {
+                    pushState(computeNextState(currentState));
+                }
+            }
+            updateUI();
+        }
+
+        function back() {
+            if (currentStateIndex > 0) {
+                const state = getCurrentState();
+                if (state.phase === 'probing') {
+                    // Skip back to previous probe value
+                    const currentProbe = Math.floor(state.step / STEPS_PER_CYCLE);
+                    let targetIndex = currentStateIndex - 1;
+
+                    while (targetIndex >= 0) {
+                        const prevState = history[targetIndex];
+                        if (prevState.phase !== 'probing' ||
+                            Math.floor(prevState.step / STEPS_PER_CYCLE) < currentProbe) {
+                            break;
+                        }
+                        targetIndex--;
+                    }
+                    currentStateIndex = targetIndex;
+                } else {
+                    currentStateIndex--;
+                }
+                updateUI();
+            }
+        }
+
+        function fastForward() {
+            const nextEventIndex = findNextKeyEvent();
+            currentStateIndex = nextEventIndex;
+            updateUI();
+        }
+
+        function fastRewind() {
+            const prevEventIndex = findPreviousKeyEvent();
+            currentStateIndex = prevEventIndex;
+            updateUI();
+        }
+
+        function reset() {
+            history = [createInitialState()];
+            currentStateIndex = 0;
+            updateUI();
+        }
+        
+        function toggleCache(index) {
+            const state = getCurrentState();
+            state.cacheState[index] = !state.cacheState[index];
+            updateUI();
+        }
+
+        window.initSpectreViz = function(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = document.querySelector('.container').outerHTML;
+            
+            // Update all the element IDs to include the containerId
+            const newContainer = container.querySelector('.container');
+            const buttons = newContainer.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.id = containerId + '-' + button.id;
+            });
+
+            // Add event listeners with updated IDs
+            document.getElementById(containerId + '-fastRewindBtn').addEventListener('click', fastRewind);
+            document.getElementById(containerId + '-backBtn').addEventListener('click', back);
+            document.getElementById(containerId + '-forwardBtn').addEventListener('click', forward);
+            document.getElementById(containerId + '-fastForwardBtn').addEventListener('click', fastForward);
+            document.getElementById(containerId + '-resetBtn').addEventListener('click', reset);
+            
+            reset();
+        }
+
+        // Only initialize immediately if not being included in another page
+        if (!window.isBeingIncluded) {
+            initSpectreViz('spectre-container');
+        }
+    </script>
+</body>
+</html>
 
 <script>
 slideshow._releaseMath = function(el) {

@@ -1,11 +1,25 @@
 ---
 title: "Branch Prediction"
-subtitle: "Security and Performance"
+subtitle: "How 20% of your CPU Became a Security Risk"
+description: >
+  Modern CPUs dedicate 20% of their silicon to branch prediction
+  - as much space as the L1 cache.
+  Why? Modern CPUs operate like an assembly line
+  and a mispredicted branch grinds the entire factory to a halt.
+  So to increase CPU performance, engineers created
+  sophisticated prediction systems that try to keep the line running smoothly.
+  But this additional complexity comes with a trade-off:
+  there are fundamental security flaws with these techniques that remain unresolved to this day.
+
+  In this talk, we'll explore how branch prediction works,
+  why it's worth so much die space,
+  and how this critical performance feature
+  became one of the most significant security vulnerabilities in CPU history.
 output:
   xaringan::moon_reader:
     lib_dir: libs
     includes:
-      after_body: ["pipeline.html"]
+      after_body: ["pipeline.html", "spectre.html"]
     nature:
       highlightStyle: github
       countIncrementalSlides: false
@@ -24,10 +38,12 @@ source: https://en.algorithmica.org/hpc/complexity/hardware/
 AMD architecture created in 2017 and still used by AMD CPUs.
 
 Branch prediction unit takes up 15-20% of the die!
-So it must be critical for performance. 
-The size rivals L1 cache.
+So it must be critical for performance.
+The size rivals L1 cache, which is critical for performance.
 
-Why?
+Why does it take up so much space?
+To answer, we first need to understand at a basic level
+how the CPU works.
 
 ---
 
@@ -39,7 +55,7 @@ CPU mental model: one step at a time
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('nonpipeline-container');
   container.innerHTML = createPipelineHTML('nonpipelineViz');
-  
+
   window.nonpipelineViz = new PipelineVisualization(
     document.getElementById('nonpipelineViz'),
     {
@@ -68,18 +84,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 So at the top are instructions the CPU needs to process
-and each bottom is a stage. Don't worry about the details,
+and each box at the bottom is a stage that is an isolated
+hardware unit that can function independently.
+Don't worry about the details,
 but you should know that an instruction needs to go through
-each stage. 
+each stage.
 
 But this process is really inefficient, because
 those hardware units are just sitting there idle.
 
-What is want is an assembly line!
+What we want is an assembly line!
 
 ---
 
-CPU mental model: assembly line 
+CPU mental model: assembly line
 
 <div id="pipeline1-container"></div>
 
@@ -87,7 +105,7 @@ CPU mental model: assembly line
 document.addEventListener('DOMContentLoaded', function() {
   const container = document.getElementById('pipeline1-container');
   container.innerHTML = createPipelineHTML('pipelineViz1');
-  
+
   window.pipelineViz1 = new PipelineVisualization(
     document.getElementById('pipelineViz1'),
     {
@@ -119,8 +137,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
-Now each operates at the same time,
-which makes the CPU much, much faster. 
+Now each stage operates at the same time,
+immediately starting work on the next
+instruction,
+which makes the CPU much, much faster.
 
 So much faster, CPU manufactures are willing
 to use 20% of the die space to make this happen.
@@ -171,12 +191,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
-At this point, the CPU knows it should have taken the branch.
+The EX stage is part of the CPU that calculates the operands
+of the instruction:
+in this case, comparing if the r1 and r2 registers are equal.
+
+So when the branch instruction finishes this stage,
+the CPU knows it should have taken the branch
+and moved on the the br label.
 
 The CPU doesn't just have to pause the assembly line:
 it has to throw away all the work it's already done!
 
-So what do you do?
+
+Throwing away work and starting over slows down the CPU:
+so how do you mitigate this?
 
 ---
 
@@ -186,23 +214,38 @@ Add hardware!
 .left-column[
 .small-image[
 ![](branch-die.jpg)
-]
-]
 
---
-.left-column[
-.small-image[
 * memory
 ![](branch-mem.jpg)
-]
-]
---
-.left-column[
-.small-image[
+
 * logic
 ![](branch-logic.jpg)
 ]
 ]
+???
+
+The branch prediction unit makes up 20% of the die space!
+That is really substantial!
+
+* it's similiar in size to the L1 cache,
+which, among many improvements 
+makes iterating over arrays 100x faster.
+
+* We are giving up floating point operations i.e. FLOPS,
+one of the primary measures of performance.
+
+All to predict branches.
+
+So what is the hardware in the branch prediction unit?
+
+* Memory: SRAM, same type as the L1 cache
+(with a less complicated implementation).
+The memory stores the branch history, which is
+critical for prediction.
+
+* Logic: this is the complicated feedback
+mechanism to predict and recover from branches.
+
 --
 
 
@@ -218,8 +261,14 @@ Add hardware!
 }
 
 .right-column {
-  width: 65%;
+  width: 65% !important;
   float: right;
+}
+
+.right-column img {
+  width: 100%;
+  height: auto;
+  margin-top: 20px; /* Optional: adjust vertical alignment */
 }
 
 .small-image img {
@@ -227,61 +276,144 @@ Add hardware!
   height: auto;
 }
 </style>
+???
+While the memory is more straightforward compared to the L1 cache,
+the logic is very complicated. Here's a glimpse of the logic
+for a basic MIPs CPU, which is vastly more simple
+than modern CPUs which use superscalar pipelines.
 --
 
 # What could go wrong?
 
 ???
+With all this complexity, what could go wrong?
+---
+background-image: url(spectre.svg)
 
-This makes up 20% of the die space! That's crazy:
-That means we are giving us L1 cache, which makes
-things like iterating over arrays 100x faster.
+--
 
-We are giving up floating point operations i.e. FLOPS,
-the primary measure of performance.
+# Spectre Security Vulnerability
 
-All to predict branches.
+???
+This was a massive security vulnerability
+shared in 2018 that impacted all modern CPUs.
 
-What is the hardware?
+The core problem was branch prediction.
 
-Memory: SRAM, same as the L1 cache.
-This stores the branch history, which is
-critical for prediction.
-
-Logic: this is the complicated feedback
-mechanism to predict and recover from branches.  
-
-What could go wrong?
+Before we dive into how Spectre works,
+let's first look at what was done to mitigate it.
 
 ---
 
-What was the performance impact?
+How was the Spectre mitigated?
 
-.right-column[
+.right-column2[
 ![](spectre-logo.png)
 ]
 
 <style>
-.right-column {
+.right-column2 {
   width: 35%;
   float: right;
 }
 
-.right-column img {
+.right-column2 img {
   width: 100%;
   height: auto;
 }
 </style>
 --
 
-* software patches saw 5-30% performance degradation
+* software
+--
+
+  * patches saw 5-30% performance degradation
+--
+
+  * CPU were only improving 5-10% YoY
+--
+
+  * lost 3-6 years of progress
 
 --
 
-* CPU were only improving 5-10% YoY
 
+* hardware
 --
 
-* lost 3-6 years of progress 
+  * it wasn't
+
+???
+
+The fundamental exploit still exists.
+I'm able to reproduce the same demo released in 2018 on my
+2020 Intel MacBook Air. I'll share a link at the end of the talk.
+
+Let's walk through an example and see how it works,
+even on modern CPUs.
 
 ---
+
+<div id="spectre-viz"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.initSpectreViz('spectre-viz');
+});
+</script>
+
+---
+
+# Should we still be worried?
+
+Yes and no.
+
+--
+
+**No**
+
+* Spectre targets sensitive data *within* the same user process
+
+???
+This vastly limits the scope of the attacks.
+--
+
+* key attack surface areas have already seen mitigations
+--
+
+  * browsers
+  * shared libraries
+  * user kernel mapping
+--
+
+
+* exploit is more difficult to execute
+--
+
+  * less accurate timing available to user processes
+  * compiler mitigations
+
+--
+
+**Yes**
+
+--
+
+* the fundamental exploit still exists
+???
+Maybe people will find more sensitive data in user space
+that could be exploited.
+
+---
+# Where to learn more?
+
+* Branch prediction series on my blog
+  * https://timmastny.com/blog/visualizing-cpu-pipelining
+
+
+* this slideshow with interactive animations
+  * https://timmastny.com/slides/branch-prediction
+
+
+* Github code for Spectre V1 demo on x86 processors
+  * https://github.com/tmastny/gshare/tree/main/spectre
