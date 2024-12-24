@@ -33,9 +33,11 @@ AMD architecture created in 2017 and still used by AMD CPUs.
 
 Branch prediction unit takes up 15-20% of the die!
 So it must be critical for performance.
-The size rivals L1 cache.
+The size rivals L1 cache, which is critical for performance.
 
-Why?
+Why does it take up so much space?
+To answer, we first need to understand at a basic level
+how the CPU works. 
 
 ---
 
@@ -276,6 +278,9 @@ than modern CPUs which use superscalar pipelines.
 --
 
 # What could go wrong?
+
+???
+With all this complexity, what could go wrong?
 ---
 background-image: url(spectre.svg)
 
@@ -283,6 +288,14 @@ background-image: url(spectre.svg)
 
 # Spectre Security Vulnerability
 
+???
+This was a massive security vulnerability 
+shared in 2018 that impacted all modern CPUs.
+
+The core problem was branch prediction.
+
+Before we dive into how Spectre works,
+let's first look at what was done to mitigate it.
 
 ---
 
