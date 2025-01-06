@@ -117,6 +117,13 @@ The answer is that there is a independent hardware feature
 called prefetching that recognizes load patterns and
 independently loads cache lines before the next load instruction.
 
+
+- https://safari.ethz.ch/architecture/fall2020/lib/exe/fetch.php?media=onur-comparch-fall2020-lecture18-prefetching-afterlecture.pdf
+
+### Applications
+
+Matrix multiplication: https://github.com/tmastny/6.172/commit/e322a616402ac675770a84c6bcbafffb32f584dc
+
 ### Simple example
 
 Let's look at a simple program that sums the elements of an array `A`.
@@ -194,6 +201,11 @@ as both L1 and L2 caches have prefetchers that can detect sequential patterns.
 | L1D_TLB_ACCESS              | 179,618    | 1,101,607  | 9,530,427 |
 | L1D_TLB_MISS                | 4,972      | 25,636     | 587,602   |
 | L2_TLB_MISS_DATA            | 192        | 619        | 11,853    |
+
+Miss rates (L1D_CACHE_MISS_LD_NONSPEC/INST_INT_LD):
+- 80K: 7,804 / 114,944 = 6.79%
+- 800K: 99,954 / 912,726 = 10.95%
+- 8M: 2,322,599 / 7,995,648 = 29.05%
 
 | Events                      | 80000        | 800000       | 8000000      |
 |----------------------------|--------------|--------------|--------------|
