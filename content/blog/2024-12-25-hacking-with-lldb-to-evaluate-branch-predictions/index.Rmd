@@ -38,27 +38,12 @@ My goal is to share some of the details around:
 * exploring the LLDB API and dealing with bugs
 
 If you are interested in LLDB, debugging, and implementations
-challenges, this article is for you. If you want the results
+challenges, this article is for you. 
+The full code is available on [Github](https://github.com/tmastny/gshare/tree/main/extract_branch_data).
+
+If you want the results
 and visualizations
 check out the next article in the series.
-
-# Hacking executables to gather branch history
-
-Here's my plan:
-
-* disassemble the binary executable to gather the addresses of all branch instructions
-* use LLDB to trace the branch paths and gather the branch history
-* calculate the branch prediction accuracy for both gshare and concatenation
-* compare to the real CPU branch prediction accuracy
-
-I'm sure there are standard benchmarks for branch predictions
-algorithms, and I think there are better ways to gather the data as well
-(especially if you are on Linux and on Intel processors).
-But hacking is way more fun!
-
-The full code is available on [Github](https://github.com/tmastny/gshare/tree/main/extract_branch_data).
-Below, I'll share my method and some of the interesting
-discoveries I made.
 
 ## Disassembling executables
 
