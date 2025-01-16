@@ -27,12 +27,12 @@ This has been my starting point: https://ocw.mit.edu/courses/6-172-performance-e
 
 ## Random Access and Cache
 
-Let's say we have an array of 10,000,000 `uint32_t`s. 
+Let's say we have an array of 10,000,000 `uint32_t`s.
 That's 40MB. If we have a 8MB cache, we can only fit 20% of the
 array in the cache.
 
 That means if we are randomly selecting an element from the array,
-we should should have a 80% miss rate. 
+we should should have a 80% miss rate.
 
 I'll be simulating the programs with cachegrind:
 ```bash
@@ -55,7 +55,7 @@ for (i = 0; i < N; i++) {
 
 ### Cache lines
 
-Data is added to the cache is 64 byte lines, 
+Data is added to the cache is 64 byte lines,
 or 64 / 4 = 16 `uint32_t`s.
 If we do a random lookup, and then read the next
 7 elements, what is the overall miss rate?
@@ -63,13 +63,13 @@ If we do a random lookup, and then read the next
 ```
 Cache line (16 elements)
 [0 |1 |2 |3 |4 |5 |6 |7 |8 |9 |10|11|12|13|14|15]
-                            ^     
-                            R     
-                         1  2  3  4  5  6  7  8  
+                            ^
+                            R
+                         1  2  3  4  5  6  7  8
 ```
 
 If the random lookup is element 9-15, we will have to
-fetch a second cache line. The chance of that is 
+fetch a second cache line. The chance of that is
 7 / 16 = 43.75%. That gives us an expected number of misses
 as 0.8 + 0.4375 = 1.2375, with an overall miss rate of 1.2375 / 8 = 15.46875%.
 
@@ -93,19 +93,19 @@ for (int i = 0; i < NUM_SEQUENCES; i++) {
 
     for (int j = 0; j < SEQUENCE_LENGTH; j++) {
         sum += data[pos + j];
-        // ^ Data reads (Dr):  100,000,000 
-        // ^ LL misses (DLmr):  14,207,661 
+        // ^ Data reads (Dr):  100,000,000
+        // ^ LL misses (DLmr):  14,207,661
     }
 }
 ```
 
 Simulated miss rate of about 14.2%. This is pretty close to
-our napkin math estimate! 
+our napkin math estimate!
 
 ## Prefetching
 
 This is an interesting one, because we can only measure
-the impact of pre-fetching indirectly. 
+the impact of pre-fetching indirectly.
 
 Confoudning example:
 - `A` and `B` are separated by many cache lines
@@ -229,12 +229,12 @@ Page table walk memory accesses:
 The virtual address contains 4 page table indices, let's call them L3, L2, L1, L0.
 
 The first load gets the PTE from the the page_table_directory[L3].
-From the we extract the next page table address pt2. 
-Then we load the next PTE pt2[L2]. 
-Continuning the process we load pt1[L1] 
+From the we extract the next page table address pt2.
+Then we load the next PTE pt2[L2].
+Continuning the process we load pt1[L1]
 and finally pt0[L0] which gives the physical address that will be cached in the TLB.
 
-So that's 4 data loads. 
+So that's 4 data loads.
 
 ##### ideas on measuring cache size
 
@@ -244,3 +244,58 @@ https://pages.cs.wisc.edu/%7Eremzi/OSTEP/vm-tlbs.pdf
 page table walks are cached: https://electronics.stackexchange.com/questions/21469/are-page-table-walks-cached/67985#67985
 
 https://lwn.net/Articles/252125/
+
+## Parallelism and cache
+
+False sharing!
+
+Recall cache coherency policies:
+* CPU-0 writes to a byte in a cache line.
+* that cache line is marked as M, modified.
+* the memory controller marks that cache line as I, invalid
+  for all other CPUs.
+* Later, CPU-1 reads the same cache line and sees it as invalid.
+* the memory controll then requests the cache line from
+  CPU-0 and both are marked as S for shared.
+
+Problem: two separate threads working on independent pieces of
+data in the same cache line. Even though there is no mutex sync,
+they have to wait for the cache coherency policy each write.
+Example:
+* thread A writes to cache line, becomes M
+* thread B reads the same cache line sees line as I
+* thread B has to wait for the cache line to be synced
+  from CPU-0 to CPU-1
+
+Assume that a mutex is 40 bytes. One idea is to pad the mutexes,
+so each is on a separate cache line. So instead of 16 * 40 = 640 bytes,
+we use 16 * 64 = 1024 bytes, but each mutex is separate,
+separate threads locking on different mutexes never have to wait for
+cache coherency.
+
+One interesting note: if we used `rowlock` how many mutexes would we get for
+1024 bytes? 1024 / 40 = 25. So the extra memory from padding isn't even that much,
+especially since those mutexes could still be false sharing.
+
+### false sharing benchmark
+
+```bash
+clang -o mutex_bench mutex_bench.c -fopenmp -lpthread
+./mutex_bench
+
+# w/0 CPU affinity
+Testing with 2 threads:
+Average time with regular locks: 0.698022 seconds
+Average time with padded locks: 0.631817 seconds
+Difference: 0.066205 seconds
+
+Testing with 4 threads:
+Average time with regular locks: 0.752809 seconds
+Average time with padded locks: 0.712890 seconds
+Difference: 0.039919 seconds
+
+Testing with 8 threads:
+Average time with regular locks: 1.614843 seconds
+Average time with padded locks: 1.600959 seconds
+Difference: 0.013884 seconds
+```
