@@ -247,6 +247,8 @@ https://lwn.net/Articles/252125/
 
 ## Parallelism and cache
 
+https://github.com/tmastny/6.172/blob/main/hw9/mutex_bench.c
+
 False sharing!
 
 Recall cache coherency policies:
