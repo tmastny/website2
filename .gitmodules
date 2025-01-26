@@ -10,3 +10,6 @@
 [submodule "blogdown/submodules/tsrecipes"]
 	path = blogdown/submodules/tsrecipes
 	url = https://github.com/tmastny/tsrecipes.git
+[submodule "external/rga"]
+	path = external/rga
+	url = https://github.com/tmastny/rga
