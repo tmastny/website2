@@ -357,8 +357,8 @@ because they combine random and sequential access patterns.
 Within a node, keys are stored in sorted order and scanned sequentially.
 Each node also has pointers to child nodes, which require a random access
 to follow.</p>
-<p>I liked <a href="https://cs186berkeley.net/notes/note4/">This resource</a>
-as an overview of B+ tree properties and implementation.</p>
+<p>Check out <a href="https://cs186berkeley.net/notes/note4/">this resource</a>
+for more details on the properties and implementation of B+ trees.</p>
 <p>For our purposes, let’s find the order with the optimal search performance
 for a B+ tree with 1,000,000 keys.
 The minimum number of keys in a node is called the order of the B+ tree
@@ -372,11 +372,11 @@ deletes, and scans. Searching is only one of them, so you
 wouldn’t want to over-optimize it.</p>
 </blockquote>
 <p>Let’s say we have a B+ tree with 1,000,000 keys. Let’s estimate the number of
-random accesses. Let <span class="math inline">\(b\)</span> be 2 times the order.</p>
+random accesses. Let <span class="math inline">\(b\)</span> be the order.</p>
 <p><span class="math display">\[
 \begin{align*}
-\text{Height} &amp;= \log_b(1,000,000) \\
-\text{Time} &amp;= (\text{Height} \times \text{pointer_chase_cost}) + (\text{Height} \times b / 2 \times \text{comparison_cost})
+\text{Height} &amp;= \log_{2b}(1,000,000) \\
+\text{Time} &amp;= (\text{Height} \times \text{pointer_chase_cost}) + (\text{Height} \times b \times \text{comparison_cost})
 \end{align*}
 \]</span></p>
 <p>I implemented a subset of the B+ tree data structure in C
