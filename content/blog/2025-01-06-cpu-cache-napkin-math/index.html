@@ -383,5 +383,18 @@ random accesses. Let <span class="math inline">\(b\)</span> be the order.</p>
 <a href="https://github.com/tmastny/cache/tree/main/bptree">here</a>.</p>
 <p>I wanted to see how the order of the B+ tree affected the
 search performance.</p>
+<pre><code>## # A tibble: 10 × 5
+##    order actual expected height  time
+##    &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+##  1     2   1.85     1.15   9.97 1.02 
+##  2     3   0.72     1.02   7.71 0.794
+##  3    10   0.46     0.73   4.61 0.507
+##  4    15   0.44     0.67   4.06 0.467
+##  5    60   0.41     0.58   2.89 0.462
+##  6   100   0.45     0.7    2.61 0.522
+##  7   120   0.5      0.76   2.52 0.555
+##  8   240   0.75     0.93   2.24 0.761
+##  9   500   1.09     1.59   2    1.2  
+## 10  1000   1.97     2.27   1.82 2.00</code></pre>
 <p><img src="figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 </div>

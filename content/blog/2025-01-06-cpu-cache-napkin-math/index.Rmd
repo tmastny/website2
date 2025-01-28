@@ -351,6 +351,7 @@ search performance.
 ```{r}
 library(readr)
 library(ggplot2)
+library(dplyr)
 
 btree_results <- read_csv("order,actual,expected
 2,1.85,1.15
@@ -363,6 +364,11 @@ btree_results <- read_csv("order,actual,expected
 240,0.75,0.93
 500,1.09,1.59
 1000,1.97,2.27")
+
+
+btree_results %>%
+  mutate(height = log(1000000) / log(2 * order)) %>%
+  mutate(time = (height * 100 + height * order * 1) / 1000)
 
 ggplot(btree_results, aes(x = order, y = actual)) +
   geom_point() +
