@@ -4,7 +4,7 @@ languageCode = "en-US"
 title = "Tim Mastny"
 #disqusshortname = "https-timmastny-netlify-com"
 googleAnalytics = "UA-110017486-1"
-ignoreFiles = ["\\.Rmd$", "_files$", "_cache$", "\\.dta$", "blogdown$", "external_data$", "\\.csv$"]
+ignoreFiles = ["\\.Rmd$", "_files$", "_cache$", "\\.dta$", "blogdown$", "external_data$", "\\.csv$", "external/*"]
 
 [permalinks]
 blog = "blog/:slug/"

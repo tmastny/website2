@@ -1,0 +1,303 @@
+---
+title: 'CPU Cache Napkin Math with cachegrind'
+author: ~
+date: '2025-01-06'
+slug: cpu-cache-napkin-math
+categories: []
+tags: []
+description: 'CPU Cache Napkin Math'
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE
+)
+```
+
+Over the last month, I've been taking some time to learn about
+CPUs and I've started to develop some intuition on how they work.
+
+This has been my starting point: https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/
+
+
+## Random Access and Cache
+
+Let's say we have an array of 10,000,000 `uint32_t`s.
+That's 40MB. If we have a 8MB cache, we can only fit 20% of the
+array in the cache.
+
+That means if we are randomly selecting an element from the array,
+we should should have a 80% miss rate.
+
+I'll be simulating the programs with cachegrind:
+```bash
+cachegrind --tool=cachegrind \
+  --I1=32768,8,64 \
+  --D1=32768,8,64 \
+  --LL=8388608,16,64 \
+  ./sum
+cg_annotate --show=Dr,DLmr cachegrind.out.*
+```
+
+```c
+for (i = 0; i < N; i++) {
+    int l = rand_r(&seed) % U;
+    val = (val + data[l]);
+    // Data reads (Dr): 100,000,000
+    // LL misses (DLmr): 79,104,010
+}
+```
+
+### Cache lines
+
+Data is added to the cache is 64 byte lines,
+or 64 / 4 = 16 `uint32_t`s.
+If we do a random lookup, and then read the next
+7 elements, what is the overall miss rate?
+
+```
+Cache line (16 elements)
+[0 |1 |2 |3 |4 |5 |6 |7 |8 |9 |10|11|12|13|14|15]
+                            ^
+                            R
+                         1  2  3  4  5  6  7  8
+```
+
+If the random lookup is element 9-15, we will have to
+fetch a second cache line. The chance of that is
+7 / 16 = 43.75%. That gives us an expected number of misses
+as 0.8 + 0.4375 = 1.2375, with an overall miss rate of 1.2375 / 8 = 15.46875%.
+
+Another way to think about it: if we do 100,000,000 lookups,
+we can expect:
+- Number of 8-lookup sequences = 12,500,000
+- First lookups that miss = 12,500,000 * 0.80 = 10,000,000 misses
+- Second cache line fetches = 12,500,000 * 7 * 0.4375 = 38,281,250 * 0.8 = 5,468,750 misses
+- Total misses = 15,468,750
+- Miss rate = 15,468,750 / 100,000,000 = 15.47%
+
+That's a huge improvement compared to 80%. That's why linear probing
+hash tables might perform better than the linked list implementation,
+which might trigger a cache miss every time it follows a pointer.
+
+Let's simulate this with cachegrind: (TODO: add link)
+
+```c
+for (int i = 0; i < NUM_SEQUENCES; i++) {
+    uint32_t pos = rand_r(&seed) % (ARRAY_SIZE - SEQUENCE_LENGTH);
+
+    for (int j = 0; j < SEQUENCE_LENGTH; j++) {
+        sum += data[pos + j];
+        // ^ Data reads (Dr):  100,000,000
+        // ^ LL misses (DLmr):  14,207,661
+    }
+}
+```
+
+Simulated miss rate of about 14.2%. This is pretty close to
+our napkin math estimate!
+
+## Prefetching
+
+This is an interesting one, because we can only measure
+the impact of pre-fetching indirectly.
+
+Confoudning example:
+- `A` and `B` are separated by many cache lines
+- if we do sampling profiling, most of the time will be spent
+  loading values from `A` and almost nothing in `B`
+- Why doesn't `B` ever cause a cache miss?
+
+The answer is that there is a independent hardware feature
+called prefetching that recognizes load patterns and
+independently loads cache lines before the next load instruction.
+
+
+- https://safari.ethz.ch/architecture/fall2020/lib/exe/fetch.php?media=onur-comparch-fall2020-lecture18-prefetching-afterlecture.pdf
+
+### Applications
+
+Matrix multiplication: https://github.com/tmastny/6.172/commit/e322a616402ac675770a84c6bcbafffb32f584dc
+
+### Simple example
+
+Let's look at a simple program that sums the elements of an array `A`.
+Let's use some napkin math to estimate cache misses and execution time.
+
+> apple m3 cache sizes (from sysctl)
+> - L1i: 128KB (instruction)
+> - L1d: 64KB (data)
+> - L2: 4MB
+> - Cache line: 128 bytes
+
+For example: 8 million uint64_ts
+- Size = 8,000,000 * 8 bytes = 64MB
+- 16x larger than L2 (4MB)
+- For sequential access, each element should be read once
+
+For sequential access:
+- Cache line = 128 bytes = 16 uint64_ts (since each is 8 bytes)
+- Number of cache lines = 8,000,000/16 = 500,000
+- Expected L1 misses without prefetching = 500,000 (one miss per cache line)
+- Expected L2 misses without prefetching = 500,000 (one miss per cache line)
+- Miss rate without prefetching = 1/16 = 6.25% for both L1 and L2
+- L1 miss costs ~4ns when it hits in L2
+- L2 miss costs ~50-100ns when it does occur
+
+
+However, actual misses will likely be much lower due to hardware prefetching,
+as both L1 and L2 caches have prefetchers that can detect sequential patterns.
+
+
+```
+12.00 ms   6.1%	15,881,444  12.1%	1,279,139  11.7%	21,500   9.8%	    sum_array
+```
+
+```asm
++0x00	sub                 sp, sp, #0x10
++0x04	str                 xzr, [sp, #0x8]
++0x08	cbz                 x1, "sum_array+0x24"
++0x0c	ldr                 x8, [x0], #0x8
++0x10	ldr                 x9, [sp, #0x8]
++0x14	add                 x8, x9, x8
++0x18	str                 x8, [sp, #0x8]
++0x1c	subs                x1, x1, #0x1
++0x20	b.ne                "sum_array+0x0c"
++0x24	ldr                 x0, [sp, #0x8]
++0x28	add                 sp, sp, #0x10
++0x2c	ret
+```
+
+```
+6.00 ms   3.6%	7,762,916   6.5%	3,276,278  26.2%	    sum_array
+```
+
+```asm
++0x00	mov                 x8, #0x0                        ; =0
++0x04	cbz                 x1, "sum_array+0x18"
++0x08	ldr                 x9, [x0], #0x8
++0x0c	add                 x8, x9, x8
++0x10	subs                x1, x1, #0x1
++0x14	b.ne                "sum_array+0x08"
++0x18	mov                 x0, x8
++0x1c	ret
+```
+
+
+
+80000: results, 6.8% miss rate
+
+| Events                      | 80000      | 800,000    | 8,000,000 |
+|-----------------------------|------------|------------|-----------|
+| Total                       | 100.00 µs  | 500.00 µs  | 5000.00 µs|
+| INST_INT_LD                 | 114,944    | 912,726    | 7,995,648 |
+| L1D_CACHE_MISS_LD           | 15,316     | 202,310    | 3,239,248 |
+| L1D_CACHE_MISS_LD_NONSPEC   | 7,804      | 99,954     | 2,322,599 |
+| L1D_TLB_ACCESS              | 179,618    | 1,101,607  | 9,530,427 |
+| L1D_TLB_MISS                | 4,972      | 25,636     | 587,602   |
+| L2_TLB_MISS_DATA            | 192        | 619        | 11,853    |
+
+Miss rates (L1D_CACHE_MISS_LD_NONSPEC/INST_INT_LD):
+- 80K: 7,804 / 114,944 = 6.79%
+- 800K: 99,954 / 912,726 = 10.95%
+- 8M: 2,322,599 / 7,995,648 = 29.05%
+
+| Events                      | 80000        | 800000       | 8000000      |
+|----------------------------|--------------|--------------|--------------|
+| Total Time                 | 2.60 ms      | 4.10 ms      | 47.20 ms     |
+| INST_INT_LD                | 17,791,889   | 107,261,165  | 910,219,503  |
+| L1D_CACHE_MISS_LD          | 1,158,498    | 7,968,020    | 118,817,865  |
+| L1D_CACHE_MISS_LD_NONSPEC  | 273,680      | 1,971,935    | 25,647,428   |
+| L1D_TLB_ACCESS             | 27,359,189   | 161,176,765  | 1,123,955,327|
+| L1D_TLB_MISS              | 37,655       | 284,986      | 3,404,457    |
+| L2_TLB_MISS_DATA          | 235          | 2,648        | 17,131       |
+
+Miss rates (L1D_CACHE_MISS_LD_NONSPEC/INST_INT_LD):
+- 80K: 273,680 / 17,791,889 = 1.54%
+- 800K: 1,971,935 / 107,261,165 = 1.84%
+- 8M: 25,647,428 / 910,219,503 = 2.82%
+
+
+
+Page table walk memory accesses:
+
+The virtual address contains 4 page table indices, let's call them L3, L2, L1, L0.
+
+The first load gets the PTE from the the page_table_directory[L3].
+From the we extract the next page table address pt2.
+Then we load the next PTE pt2[L2].
+Continuning the process we load pt1[L1]
+and finally pt0[L0] which gives the physical address that will be cached in the TLB.
+
+So that's 4 data loads.
+
+##### ideas on measuring cache size
+
+Homework problem:
+https://pages.cs.wisc.edu/%7Eremzi/OSTEP/vm-tlbs.pdf
+
+page table walks are cached: https://electronics.stackexchange.com/questions/21469/are-page-table-walks-cached/67985#67985
+
+https://lwn.net/Articles/252125/
+
+## Parallelism and cache
+
+https://github.com/tmastny/6.172/blob/main/hw9/mutex_bench.c
+
+False sharing!
+
+Recall cache coherency policies:
+* CPU-0 writes to a byte in a cache line.
+* that cache line is marked as M, modified.
+* the memory controller marks that cache line as I, invalid
+  for all other CPUs.
+* Later, CPU-1 reads the same cache line and sees it as invalid.
+* the memory controll then requests the cache line from
+  CPU-0 and both are marked as S for shared.
+
+Problem: two separate threads working on independent pieces of
+data in the same cache line. Even though there is no mutex sync,
+they have to wait for the cache coherency policy each write.
+Example:
+* thread A writes to cache line, becomes M
+* thread B reads the same cache line sees line as I
+* thread B has to wait for the cache line to be synced
+  from CPU-0 to CPU-1
+
+Assume that a mutex is 40 bytes. One idea is to pad the mutexes,
+so each is on a separate cache line. So instead of 16 * 40 = 640 bytes,
+we use 16 * 64 = 1024 bytes, but each mutex is separate,
+separate threads locking on different mutexes never have to wait for
+cache coherency.
+
+One interesting note: if we used `rowlock` how many mutexes would we get for
+1024 bytes? 1024 / 40 = 25. So the extra memory from padding isn't even that much,
+especially since those mutexes could still be false sharing.
+
+### false sharing benchmark
+
+```bash
+clang -o mutex_bench mutex_bench.c -fopenmp -lpthread
+./mutex_bench
+
+# w/0 CPU affinity
+Testing with 2 threads:
+Average time with regular locks: 0.698022 seconds
+Average time with padded locks: 0.631817 seconds
+Difference: 0.066205 seconds
+
+Testing with 4 threads:
+Average time with regular locks: 0.752809 seconds
+Average time with padded locks: 0.712890 seconds
+Difference: 0.039919 seconds
+
+Testing with 8 threads:
+Average time with regular locks: 1.614843 seconds
+Average time with padded locks: 1.600959 seconds
+Difference: 0.013884 seconds
+```
