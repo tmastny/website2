@@ -28,7 +28,7 @@ output:
 <ul>
 <li><a href="#false-sharing-benchmark" id="toc-false-sharing-benchmark">false sharing benchmark</a></li>
 </ul></li>
-<li><a href="#b-tree-order-tuning" id="toc-b-tree-order-tuning">B+ Tree order tuning</a></li>
+<li><a href="#b-tree-order-tuning" id="toc-b-tree-order-tuning">B+ Tree Order Tuning</a></li>
 </ul>
 </div>
 
@@ -351,50 +351,97 @@ Difference: 0.013884 seconds</code></pre>
 </div>
 </div>
 <div id="b-tree-order-tuning" class="section level2">
-<h2>B+ Tree order tuning</h2>
+<h2>B+ Tree Order Tuning</h2>
 <p>B+ trees are a fun test-bed to study cache performance
-because they combine random and sequential access patterns.
-Within a node, keys are stored in sorted order and scanned sequentially.
-Each node also has pointers to child nodes, which require a random access
-to follow.</p>
-<p>Check out <a href="https://cs186berkeley.net/notes/note4/">this resource</a>
-for more details on the properties and implementation of B+ trees.</p>
-<p>For our purposes, let’s find the order with the optimal search performance
-for a B+ tree with 1,000,000 keys.
-The minimum number of keys in a node is called the order of the B+ tree
-(the max is 2 times the order).</p>
+because they combine sequential and random access patterns.
+If you aren’t familar with B+ trees, check out <a href="https://cs186berkeley.net/notes/note4/">this resource</a></p>
+<p>Let’s take search: say we want to find the key 55.
+Within a node, keys are already sorted and the algorithm
+scans sequentially until the first key greater than 55 is found
+(blue arrow).
+At that point, we follow the child pointer, which likely requires
+a random memory access (green arrow), and it starts scanning again.</p>
+<p><img src="bptree.svg" /></p>
+<p>This B+ tree has order 9: that’s the maximum number of keys
+in a node. Adjusting this parameter changes the height of the tree,
+and the number of keys we have to scan through. A B+ tree of order 1
+is like a binary search tree and one with infinite order is an array
+(if you like thinking about extremes).</p>
+<p>Sequential access and comparsion is fast:
+the next key is likely to be in the cache and
+there’s only a single integer comparsion per key
+I’ll estimate this to take about 1ns per key.</p>
 <blockquote>
-<p>Note: This is not necessarily something you’d do in real life.
-For starters, B+ trees might not even be stored in memory:
-they could stored on disk with access managed by a buffer pool.
-Also, the purpose of a B+ is to be effective at searches, inserts,
-deletes, and scans. Searching is only one of them, so you
-wouldn’t want to over-optimize it.</p>
+<p>There are some exciting mechanisms behind the scenes
+that make sequential access fast.
+For example, one thing that might limit sequential scan
+speeds is fetching the next cache line.<br />
+After scanning through 64 bytes, the CPU must fetch the
+next line, which might be in main memory.
+So you might think you need to add 100ns per 64 bytes processed.
+Fortunately, modern CPUs have a cache prefetcher that can predict
+the next line and fetch it before it is needed,
+making the 1ns per key estimate a good one.</p>
 </blockquote>
-<p>Let’s say we have a B+ tree with 1,000,000 keys. Let’s estimate the number of
-random accesses. Let <span class="math inline">\(b\)</span> be the order.</p>
+<p>Following a pointer is expensive.
+&gt; Likewise, if you are scanning across many pages, you might cause
+&gt; another type of cache miss in the Translation Lookaside Buffer (TLB),
+&gt; which could cause another 3-4 main memory loads.
+&gt; In practice, modern CPUs have a cache prefetcher that can predict
+&gt; the next line and fetch it before it is needed. CPUs are very good at
+&gt; sequential data access, so I’ll stick with 1ns per key for now.</p>
+<p>Following a pointer is expensive.
+The pointer’s data is unlikely to be in the cache,
+so the the data will have to be fetched from main memory.
+I’ll estimate the time to load a pointer’s data to be 100ns.</p>
+<p>Even though following pointers are expensive,
+the total number of pointers we have to follow is
+always “small”.
+1 trillion keys have less than 30 levels, regardless of the order.
+Finding any key in that situation would only take about
+30 * 100ns = 3 microseconds.</p>
+<p>This creates a trade-off: if we have a small order,
+the total number of instructions are smaller, but we have to
+follow more pointers.
+On the other hand, sequential scanning adds up:
+it would take 16 minutes to scan 1 trillion keys.</p>
+<p>For fun let’s estimate the optimal order for a B+ tree with 100,000,000 keys,
+and then compare it to a benchmark I ran on on my M3 Macbook Air.</p>
+<blockquote>
+<p>This analysis focuses on in-memory search performance to isolate and understand cache
+and random access performance. In the real-world, B+ trees
+do a lot more than search, which is why they are such a useful
+data structure: they balance efficienct search, insertion, and deletion
+and work well with computer architecture.</p>
+</blockquote>
+<p>Let’s say we have a B+ tree with 100,000,000 keys.
+If we let <span class="math inline">\(b\)</span> be the order, then we can estiamte
+the time to search for a random key as follows:</p>
 <p><span class="math display">\[
 \begin{align*}
-\text{Height} &amp;= \log_{2b}(1,000,000) \\
-\text{Time} &amp;= (\text{Height} \times \text{pointer_chase_cost}) + (\text{Height} \times b \times \text{comparison_cost})
+\text{Height} &amp;= \log_{b}(100{,}000{,}000) \\
+\text{Time} &amp;= (\text{Height} \times \text{pointer_chase_cost}) + (\text{Height} \times b / 2 \times \text{comparison_cost})
 \end{align*}
 \]</span></p>
-<p>I implemented a subset of the B+ tree data structure in C
-<a href="https://github.com/tmastny/cache/tree/main/bptree">here</a>.</p>
-<p>I wanted to see how the order of the B+ tree affected the
-search performance.</p>
-<pre><code>## # A tibble: 10 × 5
-##    order actual expected height  time
-##    &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
-##  1     2   1.85     1.15   9.97 1.02 
-##  2     3   0.72     1.02   7.71 0.794
-##  3    10   0.46     0.73   4.61 0.507
-##  4    15   0.44     0.67   4.06 0.467
-##  5    60   0.41     0.58   2.89 0.462
-##  6   100   0.45     0.7    2.61 0.522
-##  7   120   0.5      0.76   2.52 0.555
-##  8   240   0.75     0.93   2.24 0.761
-##  9   500   1.09     1.59   2    1.2  
-## 10  1000   1.97     2.27   1.82 2.00</code></pre>
+<p>To compare against a benchmark, I implemented search and bulk insertion
+for a B+ tree in C
+<a href="https://github.com/tmastny/cache/tree/main/bptree">here</a>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> The B+ tree was bulk loaded keys 1-100,000,000.
+Then I timed 1,000,000 searches for random keys and took the average.</p>
+<p>Here are the results.</p>
 <p><img src="figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<p>Our basic model does really well at predicting the measured time!
+The prediction (blue line) appears off by a constant factor,
+and it grows a little faster than the benchmark for larger orders.
+More importantly, it captures the trade-off between sequential
+scanning and pointer chasing, matching the benchmark’s
+U-shaped curve with both the optimal range around 20-100
+and the performance degradation at the extremes.</p>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>
+In the source code, I refer to the order as the minimum number of keys per node, instead of the maximum.
+As far as I can tell, they are used interchangeably in various sources.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
