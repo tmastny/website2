@@ -1,11 +1,11 @@
 ---
-title: 'Hacking with LLDB to Trace Branch History'
+title: 'CPU Cache Napkin Math with cachegrind'
 author: ~
-date: '2024-12-25'
-slug: hacking-with-lldb-to-trace-branch-history
+date: '2025-01-06'
+slug: cpu-cache-napkin-math
 categories: []
 tags: []
-description: 'Hacking with LLDB to Evaluate Branch Predictions'
+description: 'CPU Cache Napkin Math'
 draft: true
 output:
   blogdown::html_page:
@@ -15,304 +15,337 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#hacking-executables-to-gather-branch-history" id="toc-hacking-executables-to-gather-branch-history">Hacking executables to gather branch history</a>
+<li><a href="#random-access-and-cache" id="toc-random-access-and-cache">Random Access and Cache</a>
 <ul>
-<li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a>
-<ul>
-<li><a href="#linked-libraries" id="toc-linked-libraries">Linked Libraries</a></li>
+<li><a href="#cache-lines" id="toc-cache-lines">Cache lines</a></li>
 </ul></li>
-<li><a href="#parsing-instructions" id="toc-parsing-instructions">Parsing instructions</a></li>
-<li><a href="#tracing-with-lldb" id="toc-tracing-with-lldb">Tracing with LLDB</a>
+<li><a href="#prefetching" id="toc-prefetching">Prefetching</a>
 <ul>
-<li><a href="#address-based-breakpoints" id="toc-address-based-breakpoints">Address-based breakpoints</a></li>
-<li><a href="#scripting-lldb" id="toc-scripting-lldb">Scripting LLDB</a></li>
-<li><a href="#instruction-stepping" id="toc-instruction-stepping">Instruction stepping</a></li>
+<li><a href="#applications" id="toc-applications">Applications</a></li>
+<li><a href="#simple-example" id="toc-simple-example">Simple example</a></li>
 </ul></li>
-<li><a href="#analyzing-branch-history" id="toc-analyzing-branch-history">Analyzing branch history</a></li>
-<li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
-<li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
+<li><a href="#parallelism-and-cache" id="toc-parallelism-and-cache">Parallelism and cache</a>
+<ul>
+<li><a href="#false-sharing-benchmark" id="toc-false-sharing-benchmark">false sharing benchmark</a></li>
 </ul></li>
 </ul>
 </div>
 
+<p>Over the last month, I’ve been taking some time to learn about
+CPUs and I’ve started to develop some intuition on how they work.</p>
+<p>This has been my starting point: <a href="https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/" class="uri">https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/</a></p>
+<div id="random-access-and-cache" class="section level2">
+<h2>Random Access and Cache</h2>
+<p>Let’s say we have an array of 10,000,000 <code>uint32_t</code>s.
+That’s 40MB. If we have a 8MB cache, we can only fit 20% of the
+array in the cache.</p>
+<p>That means if we are randomly selecting an element from the array,
+we should should have a 80% miss rate.</p>
+<p>I’ll be simulating the programs with cachegrind:</p>
+<pre class="bash"><code>cachegrind --tool=cachegrind \
+  --I1=32768,8,64 \
+  --D1=32768,8,64 \
+  --LL=8388608,16,64 \
+  ./sum
+cg_annotate --show=Dr,DLmr cachegrind.out.*</code></pre>
+<pre class="c"><code>for (i = 0; i &lt; N; i++) {
+    int l = rand_r(&amp;seed) % U;
+    val = (val + data[l]);
+    // Data reads (Dr): 100,000,000
+    // LL misses (DLmr): 79,104,010
+}</code></pre>
+<div id="cache-lines" class="section level3">
+<h3>Cache lines</h3>
+<p>Data is added to the cache is 64 byte lines,
+or 64 / 4 = 16 <code>uint32_t</code>s.
+If we do a random lookup, and then read the next
+7 elements, what is the overall miss rate?</p>
+<pre><code>Cache line (16 elements)
+[0 |1 |2 |3 |4 |5 |6 |7 |8 |9 |10|11|12|13|14|15]
+                            ^
+                            R
+                         1  2  3  4  5  6  7  8</code></pre>
+<p>If the random lookup is element 9-15, we will have to
+fetch a second cache line. The chance of that is
+7 / 16 = 43.75%. That gives us an expected number of misses
+as 0.8 + 0.4375 = 1.2375, with an overall miss rate of 1.2375 / 8 = 15.46875%.</p>
+<p>Another way to think about it: if we do 100,000,000 lookups,
+we can expect:
+- Number of 8-lookup sequences = 12,500,000
+- First lookups that miss = 12,500,000 * 0.80 = 10,000,000 misses
+- Second cache line fetches = 12,500,000 * 7 * 0.4375 = 38,281,250 * 0.8 = 5,468,750 misses
+- Total misses = 15,468,750
+- Miss rate = 15,468,750 / 100,000,000 = 15.47%</p>
+<p>That’s a huge improvement compared to 80%. That’s why linear probing
+hash tables might perform better than the linked list implementation,
+which might trigger a cache miss every time it follows a pointer.</p>
+<p>Let’s simulate this with cachegrind: (TODO: add link)</p>
+<pre class="c"><code>for (int i = 0; i &lt; NUM_SEQUENCES; i++) {
+    uint32_t pos = rand_r(&amp;seed) % (ARRAY_SIZE - SEQUENCE_LENGTH);
+
+    for (int j = 0; j &lt; SEQUENCE_LENGTH; j++) {
+        sum += data[pos + j];
+        // ^ Data reads (Dr):  100,000,000
+        // ^ LL misses (DLmr):  14,207,661
+    }
+}</code></pre>
+<p>Simulated miss rate of about 14.2%. This is pretty close to
+our napkin math estimate!</p>
+</div>
+</div>
+<div id="prefetching" class="section level2">
+<h2>Prefetching</h2>
+<p>This is an interesting one, because we can only measure
+the impact of pre-fetching indirectly.</p>
+<p>Confoudning example:
+- <code>A</code> and <code>B</code> are separated by many cache lines
+- if we do sampling profiling, most of the time will be spent
+loading values from <code>A</code> and almost nothing in <code>B</code>
+- Why doesn’t <code>B</code> ever cause a cache miss?</p>
+<p>The answer is that there is a independent hardware feature
+called prefetching that recognizes load patterns and
+independently loads cache lines before the next load instruction.</p>
+<ul>
+<li><a href="https://safari.ethz.ch/architecture/fall2020/lib/exe/fetch.php?media=onur-comparch-fall2020-lecture18-prefetching-afterlecture.pdf" class="uri">https://safari.ethz.ch/architecture/fall2020/lib/exe/fetch.php?media=onur-comparch-fall2020-lecture18-prefetching-afterlecture.pdf</a></li>
+</ul>
+<div id="applications" class="section level3">
+<h3>Applications</h3>
+<p>Matrix multiplication: <a href="https://github.com/tmastny/6.172/commit/e322a616402ac675770a84c6bcbafffb32f584dc" class="uri">https://github.com/tmastny/6.172/commit/e322a616402ac675770a84c6bcbafffb32f584dc</a></p>
+</div>
+<div id="simple-example" class="section level3">
+<h3>Simple example</h3>
+<p>Let’s look at a simple program that sums the elements of an array <code>A</code>.
+Let’s use some napkin math to estimate cache misses and execution time.</p>
 <blockquote>
-<p>This is part of my branch prediction series.</p>
-<ol style="list-style-type: decimal">
-<li><a href="/blog/visualizing-cpu-pipelining/">Visualizng CPU Pipelining</a></li>
-<li><a href="/blog/evaluating-branch-predictions/">Evaluating Branch Predictions</a></li>
-<li>Hacking LLDB to Trace Branch History</li>
-</ol>
+<p>apple m3 cache sizes (from sysctl)
+- L1i: 128KB (instruction)
+- L1d: 64KB (data)
+- L2: 4MB
+- Cache line: 128 bytes</p>
 </blockquote>
-<p>As we saw in the previous post, we need a way to evaluate
-branch prediction algorithms empirically: in real world programs,
-how accurate are the predictions?
-There are well-know benchmarks and advanced CPU tooling to track
-branch predictions, but I wanted to approach this problem
-with a hacker mentality: how can I use the tools I have
-in creative ways to investigate this for myself?</p>
-<p>My goal is to share some of the details around:
-* disassembling executables
-* handling binary executables and shared libraries
-* exploring the LLDB API and dealing with bugs</p>
-<p>If you are interested in LLDB, debugging, and implementations
-challenges, this article is for you. If you want the results
-and visualizations
-check out the next article in the series.</p>
-<div id="hacking-executables-to-gather-branch-history" class="section level1">
-<h1>Hacking executables to gather branch history</h1>
-<p>Here’s my plan:</p>
-<ul>
-<li>disassemble the binary executable to gather the addresses of all branch instructions</li>
-<li>use LLDB to trace the branch paths and gather the branch history</li>
-<li>calculate the branch prediction accuracy for both gshare and concatenation</li>
-<li>compare to the real CPU branch prediction accuracy</li>
-</ul>
-<p>I’m sure there are standard benchmarks for branch predictions
-algorithms, and I think there are better ways to gather the data as well
-(especially if you are on Linux and on Intel processors).
-But hacking is way more fun!</p>
-<p>The full code is available on <a href="https://github.com/tmastny/gshare/tree/main/extract_branch_data">Github</a>.
-Below, I’ll share my method and some of the interesting
-discoveries I made.</p>
-<div id="disassembling-executables" class="section level2">
-<h2>Disassembling executables</h2>
-<p>The easiest approach is <code>otool</code>:</p>
-<pre class="bash"><code>otool -tv /usr/local/bin/tree</code></pre>
-<p>This gives the disassembly of the entire program.</p>
-<p>You can also disassemble with LLDB, but it’s more complicated.
-By default, LLDB only disassembles a single function or frame
-rather than the entire program, even if you know the instruction
-address range.
-<code>otool</code> disassembles everything, so I didn’t spend any more time
-trying to figure out how to do it with LLDB.</p>
-<p>Here’s a snippet of a branch instruction we’ll be parsing
-from the assembly:</p>
-<pre class="asm"><code>0000000100007f03	movq	(%rbx), %rdi
-0000000100007f06	testq	%rdi, %rdi
-0000000100007f09	je	0x100008281</code></pre>
-<div id="linked-libraries" class="section level3">
-<h3>Linked Libraries</h3>
-<p>The binary executable is just a portion of the total branches of the problem.
-An executable may also rely on shared libraries: code that is compiled and lives
-on the operating system. Most commonly these are things in the standard C
-such as memory allocation and file I/O.</p>
-<pre class="bash"><code>% otool -L /usr/local/bin/tree
-
-/usr/local/bin/tree:
-        /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1319.100.3)</code></pre>
-<p>We get a fuller story with LLDB:</p>
-<pre class="bash"><code>(lldb) target modules list
-[  0] 73B8A897-9703-340B-9105-3DA7C54F7231 0x0000000100000000 /usr/local/bin/tree
-[  1] BE14380C-5E18-3640-9FBE-851BEB014BBA 0x00007ff800098000 /usr/lib/dyld
-[  2] F2CA671C-5D32-3BBF-BCAD-CF23124D69F6 0x00007ff80c26e000 /usr/lib/libSystem.B.dylib
-[  3] FA6C4BA7-091E-3F12-BFE1-E51040E31C66 0x00007ff80c268000 /usr/lib/system/libcache.dylib
-...</code></pre>
-<p>The dynamic linker <code>/usr/lib/dyld</code> itself must be loaded into memory to manage the
-shared libraries <code>tree</code> needs. And <code>/usr/lib/libSystem.B.dylib</code> is better thought of as a
-collection of smaller libraries that might need to be loaded.</p>
-<p>The compiler stores all this information in the <code>tree</code> binary itself,
-in the <code>load commands</code> section.</p>
-<pre class="bash"><code>DYLD_PRINT_BINDINGS=1 /usr/local/bin/tree .
-(lldb) breakpoint set -f libsystem_platform.dylib -p &quot;je|jne|jg|jl&quot;</code></pre>
+<p>For example: 8 million uint64_ts
+- Size = 8,000,000 * 8 bytes = 64MB
+- 16x larger than L2 (4MB)
+- For sequential access, each element should be read once</p>
+<p>For sequential access:
+- Cache line = 128 bytes = 16 uint64_ts (since each is 8 bytes)
+- Number of cache lines = 8,000,000/16 = 500,000
+- Expected L1 misses without prefetching = 500,000 (one miss per cache line)
+- Expected L2 misses without prefetching = 500,000 (one miss per cache line)
+- Miss rate without prefetching = 1/16 = 6.25% for both L1 and L2
+- L1 miss costs ~4ns when it hits in L2
+- L2 miss costs ~50-100ns when it does occur</p>
+<p>However, actual misses will likely be much lower due to hardware prefetching,
+as both L1 and L2 caches have prefetchers that can detect sequential patterns.</p>
+<pre><code>12.00 ms   6.1%	15,881,444  12.1%	1,279,139  11.7%	21,500   9.8%	    sum_array</code></pre>
+<pre class="asm"><code>+0x00	sub                 sp, sp, #0x10
++0x04	str                 xzr, [sp, #0x8]
++0x08	cbz                 x1, &quot;sum_array+0x24&quot;
++0x0c	ldr                 x8, [x0], #0x8
++0x10	ldr                 x9, [sp, #0x8]
++0x14	add                 x8, x9, x8
++0x18	str                 x8, [sp, #0x8]
++0x1c	subs                x1, x1, #0x1
++0x20	b.ne                &quot;sum_array+0x0c&quot;
++0x24	ldr                 x0, [sp, #0x8]
++0x28	add                 sp, sp, #0x10
++0x2c	ret</code></pre>
+<pre><code>6.00 ms   3.6%	7,762,916   6.5%	3,276,278  26.2%	    sum_array</code></pre>
+<pre class="asm"><code>+0x00	mov                 x8, #0x0                        ; =0
++0x04	cbz                 x1, &quot;sum_array+0x18&quot;
++0x08	ldr                 x9, [x0], #0x8
++0x0c	add                 x8, x9, x8
++0x10	subs                x1, x1, #0x1
++0x14	b.ne                &quot;sum_array+0x08&quot;
++0x18	mov                 x0, x8
++0x1c	ret</code></pre>
+<p>80000: results, 6.8% miss rate</p>
+<table>
+<thead>
+<tr class="header">
+<th>Events</th>
+<th>80000</th>
+<th>800,000</th>
+<th>8,000,000</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Total</td>
+<td>100.00 µs</td>
+<td>500.00 µs</td>
+<td>5000.00 µs</td>
+</tr>
+<tr class="even">
+<td>INST_INT_LD</td>
+<td>114,944</td>
+<td>912,726</td>
+<td>7,995,648</td>
+</tr>
+<tr class="odd">
+<td>L1D_CACHE_MISS_LD</td>
+<td>15,316</td>
+<td>202,310</td>
+<td>3,239,248</td>
+</tr>
+<tr class="even">
+<td>L1D_CACHE_MISS_LD_NONSPEC</td>
+<td>7,804</td>
+<td>99,954</td>
+<td>2,322,599</td>
+</tr>
+<tr class="odd">
+<td>L1D_TLB_ACCESS</td>
+<td>179,618</td>
+<td>1,101,607</td>
+<td>9,530,427</td>
+</tr>
+<tr class="even">
+<td>L1D_TLB_MISS</td>
+<td>4,972</td>
+<td>25,636</td>
+<td>587,602</td>
+</tr>
+<tr class="odd">
+<td>L2_TLB_MISS_DATA</td>
+<td>192</td>
+<td>619</td>
+<td>11,853</td>
+</tr>
+</tbody>
+</table>
+<p>Miss rates (L1D_CACHE_MISS_LD_NONSPEC/INST_INT_LD):
+- 80K: 7,804 / 114,944 = 6.79%
+- 800K: 99,954 / 912,726 = 10.95%
+- 8M: 2,322,599 / 7,995,648 = 29.05%</p>
+<table>
+<colgroup>
+<col width="40%" />
+<col width="20%" />
+<col width="20%" />
+<col width="20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Events</th>
+<th>80000</th>
+<th>800000</th>
+<th>8000000</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Total Time</td>
+<td>2.60 ms</td>
+<td>4.10 ms</td>
+<td>47.20 ms</td>
+</tr>
+<tr class="even">
+<td>INST_INT_LD</td>
+<td>17,791,889</td>
+<td>107,261,165</td>
+<td>910,219,503</td>
+</tr>
+<tr class="odd">
+<td>L1D_CACHE_MISS_LD</td>
+<td>1,158,498</td>
+<td>7,968,020</td>
+<td>118,817,865</td>
+</tr>
+<tr class="even">
+<td>L1D_CACHE_MISS_LD_NONSPEC</td>
+<td>273,680</td>
+<td>1,971,935</td>
+<td>25,647,428</td>
+</tr>
+<tr class="odd">
+<td>L1D_TLB_ACCESS</td>
+<td>27,359,189</td>
+<td>161,176,765</td>
+<td>1,123,955,327</td>
+</tr>
+<tr class="even">
+<td>L1D_TLB_MISS</td>
+<td>37,655</td>
+<td>284,986</td>
+<td>3,404,457</td>
+</tr>
+<tr class="odd">
+<td>L2_TLB_MISS_DATA</td>
+<td>235</td>
+<td>2,648</td>
+<td>17,131</td>
+</tr>
+</tbody>
+</table>
+<p>Miss rates (L1D_CACHE_MISS_LD_NONSPEC/INST_INT_LD):
+- 80K: 273,680 / 17,791,889 = 1.54%
+- 800K: 1,971,935 / 107,261,165 = 1.84%
+- 8M: 25,647,428 / 910,219,503 = 2.82%</p>
+<p>Page table walk memory accesses:</p>
+<p>The virtual address contains 4 page table indices, let’s call them L3, L2, L1, L0.</p>
+<p>The first load gets the PTE from the the page_table_directory[L3].
+From the we extract the next page table address pt2.
+Then we load the next PTE pt2[L2].
+Continuning the process we load pt1[L1]
+and finally pt0[L0] which gives the physical address that will be cached in the TLB.</p>
+<p>So that’s 4 data loads.</p>
+<div id="ideas-on-measuring-cache-size" class="section level5">
+<h5>ideas on measuring cache size</h5>
+<p>Homework problem:
+<a href="https://pages.cs.wisc.edu/%7Eremzi/OSTEP/vm-tlbs.pdf" class="uri">https://pages.cs.wisc.edu/%7Eremzi/OSTEP/vm-tlbs.pdf</a></p>
+<p>page table walks are cached: <a href="https://electronics.stackexchange.com/questions/21469/are-page-table-walks-cached/67985#67985" class="uri">https://electronics.stackexchange.com/questions/21469/are-page-table-walks-cached/67985#67985</a></p>
+<p><a href="https://lwn.net/Articles/252125/" class="uri">https://lwn.net/Articles/252125/</a></p>
 </div>
 </div>
-<div id="parsing-instructions" class="section level2">
-<h2>Parsing instructions</h2>
-<p>To parse the disassembly, we need to search for and save the address of
-all conditional branch instructions.</p>
-<p>This will depend on your CPU architecture.
-I did this on my 2020 MacBook Air with Intel Ice Lake, which is x86-64.
-If you want to run this analysis for yourself on a modern ARM MacBook,
-you’ll have to both filter for different instructions and
-tracing with LLDB will be different as well.</p>
 </div>
-<div id="tracing-with-lldb" class="section level2">
-<h2>Tracing with LLDB</h2>
-<p>Next, we need to run LLDB on the executable, set breakpoints on all branch
-addresses, and log the branch history.</p>
-<p>I quickly discovered running LLDB on certain executables are off limits: Apple really
-doesn’t like you attaching a debugger even to something simple like the <code>ls</code> command
-in <code>/bin/ls</code>. I tinkered with SIP and csrutils, but couldn’t get anything to work.
-If there’s a way around this let me know!
-I ended up using <code>tree</code> and <code>bzip2</code> as my test executables, installed with Homebrew.</p>
-<p>Typically, you use LLDB on a binary compiled with debugging symbols,
-which let you set breakpoints on function names or line numbers.
-Even without debugging symbols, compiled binaries have externally available
-symbols like function names.
-For example, <code>tree</code> has <code>main</code> and
-<code>emit_tree</code> symbols.</p>
-<p>However, we need to break on addresses.</p>
-<div id="address-based-breakpoints" class="section level3">
-<h3>Address-based breakpoints</h3>
-<p>This is a typical branch instruction from the disassembled binary:</p>
-<pre class="asm"><code>0000000100007f09	je	0x100008281</code></pre>
-<p><code>0x100007f09</code> is where we want LLDB to break so we can trace the branch history.
-Just like we can set a breakpoint on a function name, we can set one
-directly on an address.</p>
-<pre><code>(lldb) target create /usr/local/bin/tree
+<div id="parallelism-and-cache" class="section level2">
+<h2>Parallelism and cache</h2>
+<p><a href="https://github.com/tmastny/6.172/blob/main/hw9/mutex_bench.c" class="uri">https://github.com/tmastny/6.172/blob/main/hw9/mutex_bench.c</a></p>
+<p>False sharing!</p>
+<p>Recall cache coherency policies:
+* CPU-0 writes to a byte in a cache line.
+* that cache line is marked as M, modified.
+* the memory controller marks that cache line as I, invalid
+for all other CPUs.
+* Later, CPU-1 reads the same cache line and sees it as invalid.
+* the memory controll then requests the cache line from
+CPU-0 and both are marked as S for shared.</p>
+<p>Problem: two separate threads working on independent pieces of
+data in the same cache line. Even though there is no mutex sync,
+they have to wait for the cache coherency policy each write.
+Example:
+* thread A writes to cache line, becomes M
+* thread B reads the same cache line sees line as I
+* thread B has to wait for the cache line to be synced
+from CPU-0 to CPU-1</p>
+<p>Assume that a mutex is 40 bytes. One idea is to pad the mutexes,
+so each is on a separate cache line. So instead of 16 * 40 = 640 bytes,
+we use 16 * 64 = 1024 bytes, but each mutex is separate,
+separate threads locking on different mutexes never have to wait for
+cache coherency.</p>
+<p>One interesting note: if we used <code>rowlock</code> how many mutexes would we get for
+1024 bytes? 1024 / 40 = 25. So the extra memory from padding isn’t even that much,
+especially since those mutexes could still be false sharing.</p>
+<div id="false-sharing-benchmark" class="section level3">
+<h3>false sharing benchmark</h3>
+<pre class="bash"><code>clang -o mutex_bench mutex_bench.c -fopenmp -lpthread
+./mutex_bench
 
-(lldb) breakpoint set --name main
-(lldb) breakpoint set -a 0x100007f09
+# w/0 CPU affinity
+Testing with 2 threads:
+Average time with regular locks: 0.698022 seconds
+Average time with padded locks: 0.631817 seconds
+Difference: 0.066205 seconds
 
-(lldb) breakpoint list
-Current breakpoints:
-1: name = &#39;main&#39;, locations = 1
-  1.1: where = tree`main, address = tree[0x0000000100004e08], unresolved, hit count = 0
+Testing with 4 threads:
+Average time with regular locks: 0.752809 seconds
+Average time with padded locks: 0.712890 seconds
+Difference: 0.039919 seconds
 
-2: address = 0x0000000100007f09, locations = 1
-  2.1: address = 0x0000000100007f09, unresolved, hit count = 0</code></pre>
-<p>At this point, both breakpoints are <em>unresolved</em>.
-An unresolved breakpoint means LLDB knows where we want to break in theory,
-but doesn’t yet know where that instruction will actually be located when the program runs.</p>
-<p>We call the address written in the binary file (0x100007f09) the <em>file address</em>,
-and the address where the instruction is loaded into memory the <em>load address</em>.
-There are a few reasons why file and load addresses might differ:</p>
-<ul>
-<li>Address Space Layout Randomization (ASLR) randomly offsets memory addresses for security</li>
-<li>shared libraries often have overlapping file addresses that need to be relocated when loaded</li>
-</ul>
-<p>When we run <code>target create /usr/local/bin/tree</code>, the program isn’t yet loaded:
-rather LLDB gathers all the object and symbol files (called modules or images)
-associated with the executable, so we can set breakpoints before the program is running.
-Only when we run <code>process launch --stop-at-entry</code> or <code>run</code> is the program
-loaded into memory, the load addresses are set, and the breakpoints are resolved.</p>
-<p>For example, here’s the symbol table looking at the <code>emit_tree</code> in <code>tree</code>
-and <code>memcpy</code> in the dynamic linker <code>dyld</code>:</p>
-<pre><code># target modules dump symtab tree [/usr/lib/dyld]
-Index   UserID DSX Type            File Address/Value Load Address        Name
-------- ------ --- --------------- ------------------ ------------------  ---------
-[   67]     67   X Code            0x0000000100007ec7                     emit_tree
-[   87]     87     Code            0x00007ff80009a140                     memcpy
-
-# after `(lldb) process launch --stop-at-entry`
-[   67]     67   X Code            0x0000000100007ec7 0x0000000100007ec7  emit_tree
-[   87]     87     Code            0x00007ff80009a140 0x000000010001e140  memcpy</code></pre>
-<p>For the main executable, the file address and load address are the same.
-LLDB by default asks the operating system
-to disable ASLR. But even with ASLR disabled, shared libraries may have different
-file and load addresses, so LLDB does not resolve breakpoints until the program is loaded.</p>
-<p>Now we’ve set the stage for <a href="https://reviews.llvm.org/D109738">bug 38317</a>.
-If we set the file address breakpoint before the program is loaded, and <code>run</code>:</p>
-<pre><code>(lldb) run
-...
-(lldb) breakpoint list
-Current breakpoints:
-1: name = &#39;main&#39;, locations = 1, resolved = 1, hit count = 1
-  1.1: where = tree`main, address = 0x0000000100004e08, resolved, hit count = 1
-
-2: address = 0x0000000100007f09, locations = 1
-  2.1: address = 0x0000000100007f09, unresolved, hit count = 0</code></pre>
-<p>the breakpiont at 0x100007f09 remains unresolved, even though the program is loaded
-and the file and load address are the same! An unresolved breakpoint
-will <em>not</em> trigger when the program is running.</p>
-<p>On the other hand, if we set the breakpoint after the program is loaded
-the breakpoint is immediately resolved.</p>
-<pre><code>(lldb) breakpoint set -a 0x100007f09
-Breakpoint 2: where = tree`emit_tree + 66, address = 0x0000000100007f09
-(lldb) breakpoint list
-...
-2: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
-  2.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0</code></pre>
-<p>Alternatively, we can set the breakpoint with the <code>-s</code> flag to tell LLDB
-to resolve the address to the file. Then as with the main breakpoint,
-the breakpoint will resolve after the process is launched.</p>
-<pre><code>(lldb) breakpoint set -a 0x100007f09 -s tree
-...
-1: address = tree[0x0000000100007f09], locations = 1
-  1.1: where = tree`emit_tree + 66, address = tree[0x0000000100007f09], unresolved, hit count = 0
-
-(lldb) process launch --stop-at-entry
-...
-1: address = tree[0x0000000100007f09], locations = 1, resolved = 1, hit count = 0
-  1.1: where = tree`emit_tree + 66, address = 0x0000000100007f09, resolved, hit count = 0</code></pre>
-<p>Nothing we can’t work around, but I think it’s interesting to see how LLDB
-works a bit under-the-hood and how are tools often have some small bugs when
-we take a small step off the beaten path.</p>
-</div>
-<div id="scripting-lldb" class="section level3">
-<h3>Scripting LLDB</h3>
-<p>LLDB has two nice scripting interfaces: the Python module and LLDB commands.</p>
-<p>If you are familiar with the interactive LLDB shell, LLDB commands are the
-easiest way to start. All you need to do is to add the commands you would run
-interactively to a file and execute:</p>
-<pre class="bash"><code># commands.lldb
-target create /usr/local/bin/tree
-breakpoint set --name main
-run
-breakpoint set --address 0x100007f09
-breakpoint command add -o &#39;register read rflags&#39; -o &#39;continue&#39;
-continue
-# run the script
-lldb -s commands.lldb # with -o to run the script and exit</code></pre>
-<p>Python is also an option.
-You’ll either need to make sure that you are using the same
-Python as LLDB, or you’ll need to set the <code>PYTHONPATH</code>
-to the <a href="https://lldb.llvm.org/use/python-reference.html#using-the-lldb-py-module-in-python">LLDB Python module.</a></p>
-<pre class="python"><code># commands.py
-import lldb
-
-def run_commands(debugger, command=None, result=None, internal_dict=None):
-    target = debugger.CreateTarget(&quot;/usr/local/bin/tree&quot;)
-    main_bp = target.BreakpointCreateByName(&quot;main&quot;)
-    process = target.LaunchSimple(None, None, None)
-    addr_bp = target.BreakpointCreateByAddress(0x100007f09)
-
-    commands = lldb.SBStringList()
-    commands.AppendString(&quot;register read rflags&quot;)
-    commands.AppendString(&quot;process continue&quot;)
-    addr_bp.SetCommandLineCommands(commands)
-
-    process.Continue()</code></pre>
-<pre class="bash"><code>lldb -o &quot;script import commands; commands.run_commands(lldb.debugger)&quot;</code></pre>
-<p>Lastly, there’s the C++ API. The Python API is just a thin wrapper around the C++ API,
-so once you are comfortable there it’s not hard to move to C++.
-You need to install <code>llvm</code> to get access to the library and headers.</p>
-<p>However, don’t expect much of a performance boost. I implemented branch tracing
-with all three methods and performance was about the same for a trace with
-with about 1000 branches about 20,000 branch predictions:</p>
-<pre><code>./branch_data_cpp.py  83.095 ± 0.452 seconds
-./branch_data_py.py   95.014 ± 0.460 seconds
-./branch_data_lldb.py 98.909 ± 0.271 seconds</code></pre>
-</div>
-<div id="instruction-stepping" class="section level3">
-<h3>Instruction stepping</h3>
-<p>One way to depend a little less on the instruction set
-would be to step through the branch instruction and see
-where you end up. This was a my first attempt,
-but I ran into another bug.</p>
-<p>As you saw in the last section, the basic plan is to
-set a breakpoint on each branch instruction, and then set a
-breakpoint command to log the data.
-When looking at the instruction set, we saw that we can
-figure out the branch behavior by looking at the flags register,
-which we configured LLDB to log:</p>
-<pre><code>breakpoint command add -o &#39;read register rflags&#39; -o &#39;continue&#39;</code></pre>
-<p>If we didn’t want to parse rflags, another approach might be
-something like this:</p>
-<pre><code>breakpoint command add -o &#39;step instruction&#39; -o &#39;p\x $pc&#39; -o &#39;continue&#39;</code></pre>
-<p>This works great running interactively in LLDB,
-I couldn’t get it to work in an automated script, with
-LLDB commands or in Python.</p>
-</div>
-</div>
-<div id="analyzing-branch-history" class="section level2">
-<h2>Analyzing branch history</h2>
-<p>Global vs local. Looking at n-bit runs.</p>
-<p>Add visualizations, showing global branch history,
-number of branches from each address, and
-an analysis of branch prediction table density
-by looking at Gini coefficient.</p>
-</div>
-<div id="comparing-branch-prediction-accuracy" class="section level2">
-<h2>Comparing branch prediction accuracy</h2>
-<p>gshare worse than concatenation again! tree</p>
-<p>gshare better than concatenation! zip</p>
-</div>
-<div id="profiling-cpu-branch-prediction-performance" class="section level2">
-<h2>Profiling CPU branch prediction performance</h2>
-<p><a href="https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d" class="uri">https://claude.ai/chat/b921fb94-3e04-44f0-b6ec-f7217a721e9d</a></p>
-<p>Use CPU counter in instruments.</p>
-<p>Show how accurate branch prediction is in the modern CPU, and compare
-to our gshare and concatenation.</p>
+Testing with 8 threads:
+Average time with regular locks: 1.614843 seconds
+Average time with padded locks: 1.600959 seconds
+Difference: 0.013884 seconds</code></pre>
 </div>
 </div>

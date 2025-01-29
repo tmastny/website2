@@ -15,8 +15,6 @@ output:
 
 <div id="TOC">
 <ul>
-<li><a href="#hacking-executables-to-gather-branch-history" id="toc-hacking-executables-to-gather-branch-history">Hacking executables to gather branch history</a>
-<ul>
 <li><a href="#disassembling-executables" id="toc-disassembling-executables">Disassembling executables</a>
 <ul>
 <li><a href="#linked-libraries" id="toc-linked-libraries">Linked Libraries</a></li>
@@ -31,7 +29,6 @@ output:
 <li><a href="#analyzing-branch-history" id="toc-analyzing-branch-history">Analyzing branch history</a></li>
 <li><a href="#comparing-branch-prediction-accuracy" id="toc-comparing-branch-prediction-accuracy">Comparing branch prediction accuracy</a></li>
 <li><a href="#profiling-cpu-branch-prediction-performance" id="toc-profiling-cpu-branch-prediction-performance">Profiling CPU branch prediction performance</a></li>
-</ul></li>
 </ul>
 </div>
 
@@ -46,7 +43,7 @@ output:
 <p>As we saw in the previous post, we need a way to evaluate
 branch prediction algorithms empirically: in real world programs,
 how accurate are the predictions?
-There are well-know benchmarks and advanced CPU tooling to track
+There are well-know benchmarks and advanced CPU tools to track
 branch predictions, but I wanted to approach this problem
 with a hacker mentality: how can I use the tools I have
 in creative ways to investigate this for myself?</p>
@@ -55,25 +52,11 @@ in creative ways to investigate this for myself?</p>
 * handling binary executables and shared libraries
 * exploring the LLDB API and dealing with bugs</p>
 <p>If you are interested in LLDB, debugging, and implementations
-challenges, this article is for you. If you want the results
+challenges, this article is for you.
+The full code is available on <a href="https://github.com/tmastny/gshare/tree/main/extract_branch_data">Github</a>.</p>
+<p>If you want the results
 and visualizations
 check out the next article in the series.</p>
-<div id="hacking-executables-to-gather-branch-history" class="section level1">
-<h1>Hacking executables to gather branch history</h1>
-<p>Here’s my plan:</p>
-<ul>
-<li>disassemble the binary executable to gather the addresses of all branch instructions</li>
-<li>use LLDB to trace the branch paths and gather the branch history</li>
-<li>calculate the branch prediction accuracy for both gshare and concatenation</li>
-<li>compare to the real CPU branch prediction accuracy</li>
-</ul>
-<p>I’m sure there are standard benchmarks for branch predictions
-algorithms, and I think there are better ways to gather the data as well
-(especially if you are on Linux and on Intel processors).
-But hacking is way more fun!</p>
-<p>The full code is available on <a href="https://github.com/tmastny/gshare/tree/main/extract_branch_data">Github</a>.
-Below, I’ll share my method and some of the interesting
-discoveries I made.</p>
 <div id="disassembling-executables" class="section level2">
 <h2>Disassembling executables</h2>
 <p>The easiest approach is <code>otool</code>:</p>
@@ -314,5 +297,4 @@ by looking at Gini coefficient.</p>
 <p>Use CPU counter in instruments.</p>
 <p>Show how accurate branch prediction is in the modern CPU, and compare
 to our gshare and concatenation.</p>
-</div>
 </div>
