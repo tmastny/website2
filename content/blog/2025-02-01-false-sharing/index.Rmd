@@ -1,0 +1,167 @@
+---
+title: 'Performance Penalty from False Sharing in Parallel Programs'
+author: ~
+date: '2025-02-01'
+slug: false-sharing
+categories: []
+tags: []
+description: 'False sharing is a performance penalty that occurs when multiple threads modify variables that are close to each other in memory.'
+draft: true
+output:
+  blogdown::html_page:
+    toc: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE,
+  results = "show", cache = FALSE, autodep = FALSE, error = TRUE,
+  echo = FALSE, fig.path = "figure-html/"
+)
+```
+
+In concurrent programming, a variable may be shared between threads. 
+To prevent race conditions, threads must synchronize their access to the variable.
+While one thread is using the variable, it assumes exclusive ownership 
+and other threads must wait until it is done.
+
+False sharing occurs when a variable is _not_ logically shared with any other thread,
+but other threads still have to wait on a thread that is modifying the variable. 
+
+## Cache Coherency
+
+Each CPU in a processor has a unique cache, a small amount of memory used to speed up access to data.
+When data is shared between CPUs, 
+the cache coherence protocol ensures that all CPUs see the same value for the variable.
+The smallest unit of data synchronized between caches is called a cache line, 
+which is typically 64 bytes (128 bytes on M-series Apple CPUs). 
+Meaning, if any data in a cache line is modified, the entire cache line must be synchronized.
+
+This creates a problem when two different CPUs are working on two different variables
+that are in the same cache line. Each time they operate on that variable, 
+they have to wait for the cache line to be synchronized.
+
+## Examples
+
+It's surprisingly easy to create false sharing, 
+because compilers typically want to pack data together in memory 
+for performance and size. 
+
+For example, this totally normal variable declaration is vulnerable to false sharing:
+
+```c
+uint16_t a = 0;
+uint16_t b = 0;
+```
+
+`a` and `b` are both 2 byte variables and they are adjacent in memory
+since they are declared right next to each other. 
+Unless `a` just happened to be in the last two bytes of a cache line,
+the two variables will be in the same cache line.
+Anytime one is modified, the cache line must be synchronized causing
+another thread to wait. 
+
+For example, this OpenMP parallel program will have false sharing:
+
+```c
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &a : &b);
+}
+```
+
+The [solution](https://github.com/tmastny/cache/blob/1565c00bbee5d3a1891e008e858015d4463f61f8/false-sharing/ab.c#L25-L31)
+is to pad the variables so they are in different cache lines.
+
+```c
+uint16_t a = 0;
+char padding[CACHE_LINE_SIZE - sizeof(uint16_t)];
+uint16_t b = 0;
+```
+
+It seems a little wasteful, but depending on the workload,
+but avoiding false sharing significantly improve performance.
+
+## Performance
+
+The impact of the previous example is small: 
+false sharing slows down the program by about 0.6%. 
+
+But we can find more dramatic examples. 
+Before, two CPUs had to sync on the same cache line,
+but my M3 MacBook Air has 8 cores. 
+
+An array of 8 `uint16_t` is only 16 bytes, 
+which easily fits on any modern cache line. 
+
+```c
+uint16_t counters[8];
+```
+
+If 8 different threads are writing to different elements of the array,
+they will have to wait for each other to finish modifying the cache line.
+```c
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    do_work(&counters[id]);
+}
+```
+
+We can avoid this again by padding. There's a couple of different ways to do this.
+First, is to create a larger array make sure thread's index into the array
+
+```c
+uint16_t counters[8 * CACHE_LINE_SIZE];
+// ...
+do_work(&counters[id * CACHE_LINE_SIZE]);
+```
+
+A more general approach is to use a struct with padding.
+
+```c
+struct counter {
+    uint16_t value;
+    char padding[CACHE_LINE_SIZE - sizeof(uint16_t)];
+};
+struct counter counters[8];
+// ...
+do_work(&counters[id].value);
+```
+
+Here we see a significant performance improvement: 
+the padded version is 25% faster than the unpadded version.
+
+
+## False sharing
+
+False sharing!
+
+Recall cache coherency policies:
+* CPU-0 writes to a byte in a cache line.
+* that cache line is marked as M, modified.
+* the memory controller marks that cache line as I, invalid
+  for all other CPUs.
+* Later, CPU-1 reads the same cache line and sees it as invalid.
+* the memory controll then requests the cache line from
+  CPU-0 and both are marked as S for shared.
+
+Problem: two separate threads working on independent pieces of
+data in the same cache line. Even though there is no mutex sync,
+they have to wait for the cache coherency policy each write.
+Example:
+* thread A writes to cache line, becomes M
+* thread B reads the same cache line sees line as I
+* thread B has to wait for the cache line to be synced
+  from CPU-0 to CPU-1
+
+Assume that a mutex is 40 bytes. One idea is to pad the mutexes,
+so each is on a separate cache line. So instead of 16 * 40 = 640 bytes,
+we use 16 * 64 = 1024 bytes, but each mutex is separate,
+separate threads locking on different mutexes never have to wait for
+cache coherency.
+
+One interesting note: if we used `rowlock` how many mutexes would we get for
+1024 bytes? 1024 / 40 = 25. So the extra memory from padding isn't even that much,
+especially since those mutexes could still be false sharing.
