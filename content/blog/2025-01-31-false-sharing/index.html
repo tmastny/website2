@@ -1,7 +1,7 @@
 ---
 title: 'False Sharing'
 author: ~
-date: '2025-02-01'
+date: '2025-01-31'
 slug: false-sharing
 categories: []
 tags: []
@@ -9,10 +9,25 @@ description: 'False sharing is a performance penalty that occurs when multiple t
 draft: true
 output:
   blogdown::html_page:
-    toc: false
+    toc: true
 ---
 
 
+<div id="TOC">
+<ul>
+<li><a href="#sharing-true-and-false" id="toc-sharing-true-and-false">Sharing, True and False</a></li>
+<li><a href="#cache-coherency-and-cache-design" id="toc-cache-coherency-and-cache-design">Cache Coherency and Cache Design</a></li>
+<li><a href="#a-b-example" id="toc-a-b-example">a, b Example</a></li>
+<li><a href="#performance" id="toc-performance">Performance</a></li>
+<li><a href="#m-series-processor-performance" id="toc-m-series-processor-performance">M-series Processor Performance</a>
+<ul>
+<li><a href="#atomic-operations" id="toc-atomic-operations">Atomic Operations</a></li>
+</ul></li>
+<li><a href="#false-sharing-mutexes" id="toc-false-sharing-mutexes">False Sharing Mutexes</a></li>
+<li><a href="#conditions-for-performance-loss" id="toc-conditions-for-performance-loss">Conditions for Performance Loss</a></li>
+<li><a href="#conclusion" id="toc-conclusion">Conclusion</a></li>
+</ul>
+</div>
 
 <p>Which program is faster?</p>
 <div class="row">
@@ -61,7 +76,7 @@ but other threads still have to wait on a thread that is modifying the variable.
 In the opening example, <code>a</code> and <code>b</code> are not logically shared:</p>
 <pre class="c"><code>do_work(id == 0 ? &amp;a : &amp;b);</code></pre>
 <p>Thread 0 is modifying <code>a</code> and thread 1 is modifying <code>b</code>. Yet they must still wait for each other
-to finish modifying the variable.</p>
+to finish modifying the other variable.</p>
 </div>
 <div id="cache-coherency-and-cache-design" class="section level2">
 <h2>Cache Coherency and Cache Design</h2>
@@ -70,18 +85,18 @@ Cache coherence protocols ensure that all CPUs see the same value for a variable
 In the basic model, if a CPU would like to write a variable, it must
 announce its intent to the memory controller. Other CPUs with the same variable
 receive that message, invalidate their local copy, and acknowledge the write.
-When the writing CPU receives the acknowledgements, it writes to its copy
-of the variable.</p>
+When the writing CPU receives the acknowledgements, it can write to the variable
+in its cache.</p>
 <p><img src="cache-coherence.svg" /></p>
 <p>If CPU2 or CPU3 wants to write or read to that variable,
 the data will be marked as invalid in the local cache and
 must be synchronized from CPU1’s cache before the operation can complete.
 This synchronization is much faster than a trip to main memory,
-but is still an measurable amount of time.</p>
+but is still a measurable amount of time.</p>
 <p>The smallest unit of data synchronized between caches is called a cache line,
 which is typically 64 bytes (128 bytes on M-series Apple CPUs).
-If <em>any</em> data in a cache line is modified, the entire cache line must be synchronized.
-And that’s the cause of false sharing.</p>
+If <em>any</em> data in a cache line is modified, the entire cache line must be synchronized:
+that’s false sharing.</p>
 </div>
 <div id="a-b-example" class="section level2">
 <h2>a, b Example</h2>
@@ -113,7 +128,7 @@ avoiding false sharing significantly improves performance.</p>
 <div id="performance" class="section level2">
 <h2>Performance</h2>
 <p>The impact of the previous example is small:
-false sharing slows down the program by about 0.68%.</p>
+padding the variables to avoid false sharing speeds up the program by only 0.68%.</p>
 <p>But we can find more dramatic examples.
 In the last example, two CPUs had to sync on the same cache line,
 but my M3 MacBook Air has 8 cores. So let’s force the cache coherency
@@ -130,7 +145,7 @@ before they can do their work.</p>
     do_work(&amp;counters[id]);
 }</code></pre>
 <p>We can avoid this again by padding. There’s a couple of different ways to do this.
-First, is to create a larger array and index into the array at <code>CACHE_LINE_SIZE</code> multiples.</p>
+The first is to create a larger array and index into the array at <code>CACHE_LINE_SIZE</code> multiples.</p>
 <pre class="c"><code>uint16_t counters[8 * CACHE_LINE_SIZE];
 // ...
 do_work(&amp;counters[id * CACHE_LINE_SIZE]);</code></pre>
@@ -156,7 +171,7 @@ without a trip to main memory.</p>
 <p>There are likely cache interconnects between P and E cores,
 but they cores are physically further away and the interconnects
 may have lower bandwidth, so the synchronization takes longer.
-We can see this effect when we measure false sharing that crosses P and E cores.</p>
+We can see this effect when we measure false sharing between P and E cores.</p>
 <p>In the counter example above, we have a discontinuous jump in performance after 4 cores:
 that’s when the cache lines have to synchronize between P and E cores.</p>
 <table>
@@ -195,6 +210,8 @@ that’s when the cache lines have to synchronize between P and E cores.</p>
 </tr>
 </tbody>
 </table>
+<div id="atomic-operations" class="section level3">
+<h3>Atomic Operations</h3>
 <p>The impact of false sharing across P and E cores is comically large
 when working with atomic operations:</p>
 <table>
@@ -259,6 +276,7 @@ and writes can be batched together in a store buffer before being written to the
 This means the normal counter version has false sharing,
 but the synchronization does not happen on every single write.</p>
 </div>
+</div>
 <div id="false-sharing-mutexes" class="section level2">
 <h2>False Sharing Mutexes</h2>
 <p>Anytime we define variables next to each other,
@@ -282,7 +300,7 @@ and index into them using the hash modulo 16.</p>
 The solution is to pad the mutexes so they are in different cache lines.</p>
 <pre class="c"><code>struct padded_mutex {
     pthread_mutex_t mutex;
-    char padding[128 - sizeof(pthread_mutex_t)];
+    char padding[CACHE_LINE_SIZE - sizeof(pthread_mutex_t)];
 };
 struct padded_mutex padded_mutexes[16];</code></pre>
 <p>I compared the performance of the regular and padded array,
@@ -329,11 +347,11 @@ and the padded version only performed better when working across the P and E cor
 <h2>Conditions for Performance Loss</h2>
 <p>The performance loss from false sharing is most significant when:</p>
 <ul>
-<li>there is a lot of cache line contention: in the counter examples,
+<li><strong>there is a lot of cache line contention</strong>: in the counter examples,
 we have up to 8 threads bouncing the same cache line. With mutexes,
 only two CPUs can false share a single cache line.</li>
-<li>the non-memory operations are extremely quick: in the previous examples,
-all we were doing was incrementing a counter. Here’s we are locking and
+<li><strong>the non-memory operations are extremely quick</strong>: in the previous examples,
+all we were doing was incrementing a counter. Here we are locking and
 unlocking a mutex, which has a lot of overhead.</li>
 </ul>
 <p>For reference:</p>
@@ -437,9 +455,9 @@ multiple adjacent ones.</p>
 <h2>Conclusion</h2>
 <p>False sharing occurs during concurrent programs when
 multiple threads are forced to synchronize logically independent variables
-just because they happen to be on the same cache line.</p>
-<p>I think this is a fasincating topic and highlights so interesting
-low-level details of cache design on modern CPUs.</p>
+just because they happen to be on the same cache line.
+I think this is a fascinating topic that highlights low-level details
+of cache design on modern CPUs.</p>
 </div>
 <div class="footnotes footnotes-end-of-document">
 <hr />
