@@ -6,7 +6,7 @@ slug: false-sharing
 categories: []
 tags: []
 description: 'False sharing is a performance penalty that occurs when multiple threads modify variables that are close to each other in memory.'
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
