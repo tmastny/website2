@@ -110,7 +110,7 @@ they will have to wait for each other to finish modifying the cache line.
 ```
 
 We can avoid this again by padding. There's a couple of different ways to do this.
-First, is to create a larger array make sure thread's index into the array
+First, is to create a larger array and index into the array at `CACHE_LINE_SIZE` multiples.
 
 ```c
 uint16_t counters[8 * CACHE_LINE_SIZE];
@@ -132,6 +132,66 @@ do_work(&counters[id].value);
 
 Here we see a significant performance improvement: 
 the padded version is 25% faster than the unpadded version.
+
+### Architecture Dependent Performance
+
+One unique feature of the M-series Apple processors 
+is that they both Performance (P) and Efficiency (E) cores.
+The P cores have independent L1 caches, but share an L2 cache
+and have faster cache interconnects. 
+Cache interconnections are how cache lines are synchronized between CPUs.
+
+There are likely cache interconnects between P and E cores, 
+but they cores are physically further away and the interconnects 
+may have lower bandwidth. We can see this effect when we measure
+the impact of false sharing by the number of cores exposed to false sharing.
+
+In the counter example above, we have a discontinuous jump after 4 cores:
+that's when the cache lines have to synchronize between P and E cores.
+
+Threads | Regular | 128-byte Padded | Improvement
+--------|---------|-----------------|-------------
+2       | 0.019   | 0.018           | 5.06%
+4       | 0.021   | 0.019           | 7.97%
+6       | 0.028   | 0.020           | 25.84%
+8       | 0.030   | 0.023           | 25.12%
+
+The impact of syncing across P and E cores is comically large
+when working with atomic operations:
+
+Threads | Regular | 128-byte Padded | Improvement
+--------|---------|-----------------|-------------
+2       | 1.362   | 0.189           | 620.1%
+4       | 4.201   | 0.193           | 2079.8%
+6       | 18.735  | 0.210           | 8821.5%
+8       | 20.378  | 0.227           | 8890.4%
+
+Programmatically, the atomic operation is very similar to the normal counter version: 
+```c
+#include <stdatomic.h>
+
+struct counter { atomic_int value; };
+struct counter counters[NUM_THREADS];
+
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    pin_to_core(id);  // Pin to P cores 0-3
+    
+    for(int i=0; i<ITERATIONS; i++)
+        atomic_fetch_add_explicit(&counters[id].value, 1, memory_order_relaxed);
+}
+```
+
+But atomic operations have much more strigent requirements for cache coherency.
+Every single increment from any of the CPU must obtain exclusive access, write,
+and then release. 
+
+The normal counter version must still enforce cache coherency when another CPU
+wants to write to an invalid cache line, 
+but features such as the [writing-combine buffer](https://en.wikipedia.org/wiki/Write_combining)
+means that the CPU may not have to synchronize on every single write: some writes can
+be batched and applied together. 
 
 
 ## False sharing

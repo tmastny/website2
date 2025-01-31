@@ -78,7 +78,7 @@ they will have to wait for each other to finish modifying the cache line.</p>
     do_work(&amp;counters[id]);
 }</code></pre>
 <p>We can avoid this again by padding. There’s a couple of different ways to do this.
-First, is to create a larger array make sure thread’s index into the array</p>
+First, is to create a larger array and index into the array at <code>CACHE_LINE_SIZE</code> multiples.</p>
 <pre class="c"><code>uint16_t counters[8 * CACHE_LINE_SIZE];
 // ...
 do_work(&amp;counters[id * CACHE_LINE_SIZE]);</code></pre>
@@ -92,6 +92,116 @@ struct counter counters[8];
 do_work(&amp;counters[id].value);</code></pre>
 <p>Here we see a significant performance improvement:
 the padded version is 25% faster than the unpadded version.</p>
+<div id="architecture-dependent-performance" class="section level3">
+<h3>Architecture Dependent Performance</h3>
+<p>One unique feature of the M-series Apple processors
+is that they both Performance (P) and Efficiency (E) cores.
+The P cores have independent L1 caches, but share an L2 cache
+and have faster cache interconnects.
+Cache interconnections are how cache lines are synchronized between CPUs.</p>
+<p>There are likely cache interconnects between P and E cores,
+but they cores are physically further away and the interconnects
+may have lower bandwidth. We can see this effect when we measure
+the impact of false sharing by the number of cores exposed to false sharing.</p>
+<p>In the counter example above, we have a discontinuous jump after 4 cores:
+that’s when the cache lines have to synchronize between P and E cores.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Threads</th>
+<th>Regular</th>
+<th>128-byte Padded</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td>0.019</td>
+<td>0.018</td>
+<td>5.06%</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>0.021</td>
+<td>0.019</td>
+<td>7.97%</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>0.028</td>
+<td>0.020</td>
+<td>25.84%</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>0.030</td>
+<td>0.023</td>
+<td>25.12%</td>
+</tr>
+</tbody>
+</table>
+<p>The impact of syncing across P and E cores is comically large
+when working with atomic operations:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Threads</th>
+<th>Regular</th>
+<th>128-byte Padded</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td>1.362</td>
+<td>0.189</td>
+<td>620.1%</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>4.201</td>
+<td>0.193</td>
+<td>2079.8%</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>18.735</td>
+<td>0.210</td>
+<td>8821.5%</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>20.378</td>
+<td>0.227</td>
+<td>8890.4%</td>
+</tr>
+</tbody>
+</table>
+<p>Programmatically, the atomic operation is very similar to the normal counter version:</p>
+<pre class="c"><code>#include &lt;stdatomic.h&gt;
+
+struct counter { atomic_int value; };
+struct counter counters[NUM_THREADS];
+
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    pin_to_core(id);  // Pin to P cores 0-3
+    
+    for(int i=0; i&lt;ITERATIONS; i++)
+        atomic_fetch_add_explicit(&amp;counters[id].value, 1, memory_order_relaxed);
+}</code></pre>
+<p>But atomic operations have much more strigent requirements for cache coherency.
+Every single increment from any of the CPU must obtain exclusive access, write,
+and then release.</p>
+<p>The normal counter version must still enforce cache coherency when another CPU
+wants to write to an invalid cache line,
+but features such as the <a href="https://en.wikipedia.org/wiki/Write_combining">writing-combine buffer</a>
+means that the CPU may not have to synchronize on every single write: some writes can
+be batched and applied together.</p>
+</div>
 </div>
 <div id="false-sharing" class="section level2">
 <h2>False sharing</h2>
