@@ -184,15 +184,119 @@ struct counter counters[NUM_THREADS];
 ```
 
 But atomic operations have much more strigent requirements for cache coherency.
-Every single increment from any of the CPU must obtain exclusive access, write,
+In particular, they enforce sequential consistency
+which means every single atomic instruction from any of the CPU 
+must request exclusive access to the cache line, obtain it, write,
 and then release. 
+This cost increases with the number of cores^[
+    See the _Cache line contention_ section of this [blog post](https://fgiesen.wordpress.com/2014/08/18/atomics-and-contention/)
+    by Fabian Giesen for more details.
+] and apparently increases between P and E cores in this particular architecture.
 
-The normal counter version must still enforce cache coherency when another CPU
-wants to write to an invalid cache line, 
-but features such as the [writing-combine buffer](https://en.wikipedia.org/wiki/Write_combining)
-means that the CPU may not have to synchronize on every single write: some writes can
-be batched and applied together. 
+At first I thought that the normal counter version had to do this as well,
+but in reality, non-atomic operations are much more lax. 
+As Fabian Giesen explains in his [blog post](https://fgiesen.wordpress.com/2014/07/07/cache-coherency/),
+caches don't respond to messages immediately, cores execute instructions out of order,
+and writes can be batched together into a store buffer before being written to the cache.
+This means the normal counter version has false sharing, 
+but the synchronization does not happen on every single write. 
 
+## False Sharing Mutexes
+
+Remember anytime we define variables next to each other,
+they might be susceptible to false sharing.
+One particular case of this I find amusing is mutexes.
+
+The entire point of a mutex is to synchronize access to a shared resource.
+But they are often defined next to each other in memory
+at the top of a `.c` file:
+
+```c
+pthread_mutex_t mutex1;
+pthread_mutex_t mutex2;
+```
+
+On my M3 MacBook Air, the size of `pthread_mutex_t` is 64 bytes,
+meaning you are likely to have some false sharing! 
+I think it's funny that the mutex is itself susceptible to false sharing.
+
+A practical example of this is creating a parallel-friendly 
+hash table. You don't want to have a single mutex per hash table,
+because then you would have no parallelism. But a hash per entry
+would be way too large. 
+A good compromise is to assign a fixed number of mutexes, say 16,
+and index into them using the hash modulo 16.
+
+```c
+pthread_mutex_t mutexes[16];
+```
+
+But as we saw, adjacent mutexes are susceptible to false sharing.
+The solution is to pad the mutexes so they are in different cache lines.
+
+I compared the performance of the regular mutex version and the padded version,
+and the padded version only performed better when working across the P and E cores 
+(in fact I got a consistent, but small penalty when using padding on just the P cores). 
+
+Threads | Regular | 128-byte Padded | Improvement
+--------|---------|-----------------|-------------
+2       | 0.029   | 0.030          | -4.19%
+4       | 0.030   | 0.032          | -4.04%
+6       | 0.064   | 0.037          | 42.99%
+8       | 0.072   | 0.042          | 41.90%
+
+## Performance Loss Conditions
+
+The performance loss from false sharing is most significant when: 
+
+* there is a lot of cache line contention: in the previous examples,
+  we have up to 8 threads bouncing the same cache line. In this case,
+  only two lines can be false shared.
+* the non-memory operations are extremely quick: in the previous examples,
+  all we were doing was incrementing a counter. Here's we are locking and
+  unlocking a mutex, which has a lot of overhead.
+
+For reference:
+
+Operation                | Approximate Cost
+------------------------ | ----------------
+Non-atomic Add           | ~1-3 cycles
+Atomic Add               | ~5-50 cycles
+Syscall Entry            | ~100-1000 cycles
+Mutex Lock (uncontended) | ~200-2000 cycles
+Context Switch           | ~1000-10000 cycles
+Mutex Lock (contended)   | ~2000-20000 cycles
+
+> * Uncontended lock: requires at least one syscall (lock)
+> * Contended lock: requires syscall + context switch + another syscall when waking up
+
+The following example is a little contrived, but it is possible to consistently
+see the impact of false sharing when working with mutexes if you try to acquire
+multiple adjacent ones. 
+
+```c
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    int num_threads = omp_get_num_threads();
+    
+    // id = 0 takes even locks, id = 1 takes odd locks
+    for(int i = 0; i < 10000000; i++) {
+        for(int lock_index = id; lock_index < 16; lock_index += num_threads) {
+            pthread_mutex_lock(&mutexes[lock_index]);
+            do_work();
+            pthread_mutex_unlock(&mutexes[lock_index]);
+        }
+    }
+}
+```
+
+Threads | Regular | 128-byte Padded | Improvement
+--------|---------|-----------------|-------------
+2       | 0.367   | 0.367          | 0.22%
+4       | 0.222   | 0.219          | 1.41%
+6       | 0.335   | 0.197          | 41.18%
+8       | 0.309   | 0.160          | 48.22%
 
 ## False sharing
 
