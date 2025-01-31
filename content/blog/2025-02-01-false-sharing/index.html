@@ -19,7 +19,7 @@ output:
 <div class="col-md-6">
 <pre class="c"><code>uint16_t a = 0;
 uint16_t b = 0;
-char c[128];
+char c[126];
 
 #pragma omp parallel num_threads(2)
 {
@@ -29,7 +29,7 @@ char c[128];
 </div>
 <div class="col-md-6">
 <pre class="c"><code>uint16_t a = 0;
-char c[128];
+char c[126];
 uint16_t b = 0;
 
 #pragma omp parallel num_threads(2)
@@ -39,31 +39,55 @@ uint16_t b = 0;
 }</code></pre>
 </div>
 </div>
-<p>The second version!</p>
-<p>In concurrent programming, a variable may be shared between threads.
-To prevent race conditions, threads must synchronize their access to the variable.
-While one thread is using the variable, it assumes exclusive ownership
-and other threads must wait until it is done.</p>
+<p>The second version! Measured over millions of iterations on my M3 MacBook Air,
+the second version is 0.68% percent faster.</p>
+<p>This effect is called false sharing,
+and can occur multiple CPUs are working with variables that are close to each other in memory.</p>
+<div id="sharing-true-and-false" class="section level2">
+<h2>Sharing, True and False</h2>
+<p>In concurrent programming, the programmer may allow data to be <em>shared</em> between threads.
+Say we want any thread to be able to increment <code>data-&gt;value</code>:</p>
+<pre class="c"><code>void increment_value(Data *data) {
+    pthread_mutex_lock(&amp;data-&gt;mutex);
+    data-&gt;value++;
+    pthread_mutex_unlock(&amp;data-&gt;mutex);
+}</code></pre>
+<p>To prevent race conditions, threads must synchronize their access to the variable.
+While one thread holds the lock, if other threads
+try to acquire the lock, they must wait until it is unlocked.</p>
 <p>False sharing occurs when a variable is <em>not</em> logically shared with any other thread,
-but other threads still have to wait on a thread that is modifying the variable.</p>
-<div id="cache-coherency" class="section level2">
-<h2>Cache Coherency</h2>
-<p>Each CPU in a processor has a unique cache, a small amount of memory used to speed up access to data.
-When data is shared between CPUs,
-the cache coherence protocol ensures that all CPUs see the same value for the variable.
-The smallest unit of data synchronized between caches is called a cache line,
-which is typically 64 bytes (128 bytes on M-series Apple CPUs).
-If any data in a cache line is modified, the entire cache line must be synchronized.</p>
-<p>This creates a problem when two different CPUs are working on two different variables
-that are in the same cache line. Each time they operate on that variable,
-they have to wait for the cache line to be synchronized.</p>
+but other threads still have to wait on a thread that is modifying the variable.
+In the opening example, <code>a</code> and <code>b</code> are not logically shared:</p>
+<pre class="c"><code>do_work(id == 0 ? &amp;a : &amp;b);</code></pre>
+<p>Thread 0 is modifying <code>a</code> and thread 1 is modifying <code>b</code>. Yet they must still wait for each other
+to finish modifying the variable.</p>
 </div>
-<div id="examples" class="section level2">
-<h2>Examples</h2>
+<div id="cache-coherency-and-cache-design" class="section level2">
+<h2>Cache Coherency and Cache Design</h2>
+<p>The reason has to do with cache coherency and the design of modern caches.
+Cache coherence protocols ensure that all CPUs see the same value for a variable.
+In the basic model, if a CPU would like to write a variable, it must
+announce it’s intent to the memory controller. Other CPUs with the same variable
+receive that message, invalidate their local copy, and acknowledge the write.
+When the writiing CPU receives the acknowledgements, it writes to it’s copy
+of the variable.</p>
+<p><img src="cache-coherence.svg" /></p>
+<p>If another CPU2 or CPU3 wants to write or read to that variable,
+it will see that it’s local copy is invalid and the data must
+be synchronized from CPU1’s cache before the operation can complete.
+This synchronization is much faster than a trip to main memory,
+but is still an measurable amount of time.</p>
+<p>The smallest unit of data synchronized between caches is called a cache line,
+which is typically 64 bytes (128 bytes on M-series Apple CPUs).
+If <em>any</em> data in a cache line is modified, the entire cache line must be synchronized.
+And that’s the cause of false sharing.</p>
+</div>
+<div id="a-b-example" class="section level2">
+<h2>a, b Example</h2>
 <p>It’s surprisingly easy to create false sharing,
 because compilers typically want to pack data together in memory
-for performance and size.</p>
-<p>For example, this totally normal variable declaration is vulnerable to false sharing:</p>
+for performance and size.
+This totally normal variable declaration we saw before is vulnerable to false sharing:</p>
 <pre class="c"><code>uint16_t a = 0;
 uint16_t b = 0;</code></pre>
 <p><code>a</code> and <code>b</code> are both 2 byte variables and they are adjacent in memory
@@ -71,8 +95,7 @@ since they are declared right next to each other.
 Unless <code>a</code> just happened to be in the last two bytes of a cache line,
 the two variables will be in the same cache line.
 Anytime one is modified, the cache line must be synchronized causing
-another thread to wait.</p>
-<p>For example, this OpenMP parallel program will have false sharing:</p>
+another thread to wait, like in the following OpenMP snippet:</p>
 <pre class="c"><code>#pragma omp parallel num_threads(2)
 {
     int id = omp_get_thread_num();
@@ -89,15 +112,17 @@ but avoiding false sharing significantly improve performance.</p>
 <div id="performance" class="section level2">
 <h2>Performance</h2>
 <p>The impact of the previous example is small:
-false sharing slows down the program by about 0.6%.</p>
+false sharing slows down the program by about 0.68%.</p>
 <p>But we can find more dramatic examples.
-Before, two CPUs had to sync on the same cache line,
-but my M3 MacBook Air has 8 cores.</p>
+In the last example, two CPUs had to sync on the same cache line,
+but my M3 MacBook Air has 8 cores. So let’s force the cache coherency
+policy to synchronize the same cache line on every core.</p>
 <p>An array of 8 <code>uint16_t</code> is only 16 bytes,
 which easily fits on any modern cache line.</p>
 <pre class="c"><code>uint16_t counters[8];</code></pre>
 <p>If 8 different threads are writing to different elements of the array,
-they will have to wait for each other to finish modifying the cache line.</p>
+they will have to wait for each other to finish modifying the cache line
+before they can do their work.</p>
 <pre class="c"><code>#pragma omp parallel
 {
     int id = omp_get_thread_num();
@@ -118,18 +143,20 @@ struct counter counters[8];
 do_work(&amp;counters[id].value);</code></pre>
 <p>Here we see a significant performance improvement:
 the padded version is 25% faster than the unpadded version.</p>
-<div id="architecture-dependent-performance" class="section level3">
-<h3>Architecture Dependent Performance</h3>
+</div>
+<div id="m-series-processor-performance" class="section level2">
+<h2>M-series Processor Performance</h2>
 <p>One unique feature of the M-series Apple processors
 is the use of Performance (P) and Efficiency (E) cores.
 In addition to larger caches and faster clock speeds,
 P cores have faster cache interconnects between each other.
-Cache interconnections are how cache lines are synchronized between CPUs.</p>
+Cache interconnections are how cache lines are synchronized between CPUs,
+without a trip to main memory.</p>
 <p>There are likely cache interconnects between P and E cores,
 but they cores are physically further away and the interconnects
-may have lower bandwidth. We can see this effect when we measure
-false sharing that crosses P and E cores.</p>
-<p>In the counter example above, we have a discontinuous jump after 4 cores:
+may have lower bandwidth, so the synchronization takes longer.
+We can see this effect when we measure false sharing that crosses P and E cores.</p>
+<p>In the counter example above, we have a discontinuous jump in performance after 4 cores:
 that’s when the cache lines have to synchronize between P and E cores.</p>
 <table>
 <thead>
@@ -226,15 +253,14 @@ This cost increases with the number of cores<a href="#fn1" class="footnote-ref" 
 <p>At first I thought that the normal counter version had to enforce the same level of cache coherency,
 but in reality, non-atomic operations are much more lax.
 As Fabian Giesen explains in his <a href="https://fgiesen.wordpress.com/2014/07/07/cache-coherency/">blog post</a>,
-caches don’t respond to messages immediately, cores execute instructions out of order,
+caches don’t respond to coherency messages immediately, cores execute instructions out of order,
 and writes can be batched together in a store buffer before being written to the cache.
 This means the normal counter version has false sharing,
 but the synchronization does not happen on every single write.</p>
 </div>
-</div>
 <div id="false-sharing-mutexes" class="section level2">
 <h2>False Sharing Mutexes</h2>
-<p>Remember anytime we define variables next to each other,
+<p>Anytime we define variables next to each other,
 they might be susceptible to false sharing.
 One particular case of this I find amusing is mutexes.</p>
 <p>The entire point of a mutex is to synchronize access to a shared resource.
@@ -246,13 +272,18 @@ pthread_mutex_t mutex2;</code></pre>
 possibly putting them in the same cache line.</p>
 <p>A practical example of this is creating a parallel-friendly
 hash table. You don’t want to have a single mutex per hash table,
-because then you would have no parallelism. But a hash per entry
+because then you would have no parallelism. But a mutex per entry
 would cost way too much memory.
 A good compromise is to assign a fixed number of mutexes, say 16,
 and index into them using the hash modulo 16.</p>
 <pre class="c"><code>pthread_mutex_t mutexes[16];</code></pre>
 <p>Adjacent mutexes in the array are susceptible to false sharing.
 The solution is to pad the mutexes so they are in different cache lines.</p>
+<pre class="c"><code>struct padded_mutex {
+    pthread_mutex_t mutex;
+    char padding[128 - sizeof(pthread_mutex_t)];
+};
+struct padded_mutex padded_mutexes[16];</code></pre>
 <p>I compared the performance of the regular and padded array,
 and the padded version only performed better when working across the P and E cores
 (in fact I got a small, but consistent penalty when using padding on just the P cores).</p>
@@ -293,13 +324,13 @@ and the padded version only performed better when working across the P and E cor
 </tbody>
 </table>
 </div>
-<div id="performance-loss-conditions" class="section level2">
-<h2>Performance Loss Conditions</h2>
+<div id="conditions-for-performance-loss" class="section level2">
+<h2>Conditions for Performance Loss</h2>
 <p>The performance loss from false sharing is most significant when:</p>
 <ul>
 <li>there is a lot of cache line contention: in the counter examples,
-we have up to 8 threads bouncing the same cache line. In this case,
-only two cache lines can be false shared.</li>
+we have up to 8 threads bouncing the same cache line. With mutexes,
+only two CPUs can false share a single cache line.</li>
 <li>the non-memory operations are extremely quick: in the previous examples,
 all we were doing was incrementing a counter. Here’s we are locking and
 unlocking a mutex, which has a lot of overhead.</li>
@@ -401,33 +432,13 @@ multiple adjacent ones.</p>
 </tbody>
 </table>
 </div>
-<div id="false-sharing" class="section level2">
-<h2>False sharing</h2>
-<p>False sharing!</p>
-<p>Recall cache coherency policies:
-* CPU-0 writes to a byte in a cache line.
-* that cache line is marked as M, modified.
-* the memory controller marks that cache line as I, invalid
-for all other CPUs.
-* Later, CPU-1 reads the same cache line and sees it as invalid.
-* the memory controll then requests the cache line from
-CPU-0 and both are marked as S for shared.</p>
-<p>Problem: two separate threads working on independent pieces of
-data in the same cache line. Even though there is no mutex sync,
-they have to wait for the cache coherency policy each write.
-Example:
-* thread A writes to cache line, becomes M
-* thread B reads the same cache line sees line as I
-* thread B has to wait for the cache line to be synced
-from CPU-0 to CPU-1</p>
-<p>Assume that a mutex is 40 bytes. One idea is to pad the mutexes,
-so each is on a separate cache line. So instead of 16 * 40 = 640 bytes,
-we use 16 * 64 = 1024 bytes, but each mutex is separate,
-separate threads locking on different mutexes never have to wait for
-cache coherency.</p>
-<p>One interesting note: if we used <code>rowlock</code> how many mutexes would we get for
-1024 bytes? 1024 / 40 = 25. So the extra memory from padding isn’t even that much,
-especially since those mutexes could still be false sharing.</p>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>False sharing occurs during concurrent programs when
+multiple threads are forced to synchronize logically independent variables
+just because they happen to be on the same cache line.</p>
+<p>I think this is a fasincating topic and highlights so interesting
+low-level details of cache design on modern CPUs.</p>
 </div>
 <div class="footnotes footnotes-end-of-document">
 <hr />
