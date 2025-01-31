@@ -52,9 +52,9 @@ uint16_t b = 0;
 </div>
 
 The second version! Measured over millions of iterations on my M3 MacBook Air,
-the second version is 0.68% faster^[
+the second version is 0.68% faster.^[
     `ab.c` [benchmark](https://github.com/tmastny/cache/tree/main/false-sharing#ab-abc)
-]. 
+]
 
 This effect is called false sharing - a performance penalty that occurs when multiple CPU cores 
 are forced to synchronize their caches even though they're working with completely independent variables.

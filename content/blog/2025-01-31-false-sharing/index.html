@@ -55,7 +55,7 @@ uint16_t b = 0;
 </div>
 </div>
 <p>The second version! Measured over millions of iterations on my M3 MacBook Air,
-the second version is 0.68% faster<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+the second version is 0.68% faster.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>This effect is called false sharing - a performance penalty that occurs when multiple CPU cores
 are forced to synchronize their caches even though they’re working with completely independent variables.
 Let’s explore why <code>a, b, c</code> has false sharing, but <code>a, c, b</code> doesn’t.</p>
