@@ -35,7 +35,7 @@ When data is shared between CPUs,
 the cache coherence protocol ensures that all CPUs see the same value for the variable.
 The smallest unit of data synchronized between caches is called a cache line, 
 which is typically 64 bytes (128 bytes on M-series Apple CPUs). 
-Meaning, if any data in a cache line is modified, the entire cache line must be synchronized.
+If any data in a cache line is modified, the entire cache line must be synchronized.
 
 This creates a problem when two different CPUs are working on two different variables
 that are in the same cache line. Each time they operate on that variable, 
@@ -156,7 +156,7 @@ Threads | Regular | 128-byte Padded | Improvement
 6       | 0.028   | 0.020           | 25.84%
 8       | 0.030   | 0.023           | 25.12%
 
-The impact of syncing across P and E cores is comically large
+The impact of false sharing across P and E cores is comically large
 when working with atomic operations:
 
 Threads | Regular | 128-byte Padded | Improvement
@@ -176,8 +176,6 @@ struct counter counters[NUM_THREADS];
 #pragma omp parallel
 {
     int id = omp_get_thread_num();
-    pin_to_core(id);  // Pin to P cores 0-3
-    
     for(int i=0; i<ITERATIONS; i++)
         atomic_fetch_add_explicit(&counters[id].value, 1, memory_order_relaxed);
 }
@@ -197,7 +195,7 @@ At first I thought that the normal counter version had to enforce the same level
 but in reality, non-atomic operations are much more lax. 
 As Fabian Giesen explains in his [blog post](https://fgiesen.wordpress.com/2014/07/07/cache-coherency/),
 caches don't respond to messages immediately, cores execute instructions out of order,
-and writes can be batched together into a store buffer before being written to the cache.
+and writes can be batched together in a store buffer before being written to the cache.
 This means the normal counter version has false sharing, 
 but the synchronization does not happen on every single write. 
 
@@ -235,7 +233,7 @@ The solution is to pad the mutexes so they are in different cache lines.
 
 I compared the performance of the regular and padded array,
 and the padded version only performed better when working across the P and E cores 
-(in fact I got a consistent, but small penalty when using padding on just the P cores). 
+(in fact I got a small, but consistent penalty when using padding on just the P cores). 
 
 Threads | Regular | 128-byte Padded | Improvement
 --------|---------|-----------------|-------------
@@ -250,7 +248,7 @@ The performance loss from false sharing is most significant when:
 
 * there is a lot of cache line contention: in the counter examples,
   we have up to 8 threads bouncing the same cache line. In this case,
-  only two lines can be false shared.
+  only two cache lines can be false shared.
 * the non-memory operations are extremely quick: in the previous examples,
   all we were doing was incrementing a counter. Here's we are locking and
   unlocking a mutex, which has a lot of overhead.
@@ -268,6 +266,9 @@ Mutex Lock (contended)   | ~2000-20000 cycles
 
 > * Uncontended lock: requires at least one syscall (lock)
 > * Contended lock: requires syscall + context switch + another syscall when waking up
+
+The mutexes have such a large overhead, they completely overshadow the false sharing,
+or provide enough of a buffer with other instructions to avoid the performance loss.
 
 The following example is a little contrived, but it is possible to consistently
 see the impact of false sharing when working with mutexes if you try to acquire
