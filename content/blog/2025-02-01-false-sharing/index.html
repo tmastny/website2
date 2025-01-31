@@ -14,6 +14,32 @@ output:
 
 
 
+<p>Which program is faster?</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="c"><code>uint16_t a = 0;
+uint16_t b = 0;
+char c[128];
+
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &amp;a : &amp;b);
+}</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="c"><code>uint16_t a = 0;
+char c[128];
+uint16_t b = 0;
+
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &amp;a : &amp;b);
+}</code></pre>
+</div>
+</div>
+<p>The second version!</p>
 <p>In concurrent programming, a variable may be shared between threads.
 To prevent race conditions, threads must synchronize their access to the variable.
 While one thread is using the variable, it assumes exclusive ownership

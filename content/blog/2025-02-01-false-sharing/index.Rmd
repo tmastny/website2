@@ -20,6 +20,43 @@ knitr::opts_chunk$set(
 )
 ```
 
+Which program is faster? 
+
+<div class="row">
+<div class="col-md-6">
+```c
+uint16_t a = 0;
+uint16_t b = 0;
+char c[128];
+
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &a : &b);
+}
+```
+</div>
+<div class="col-md-6">
+```c
+uint16_t a = 0;
+char c[128];
+uint16_t b = 0;
+
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &a : &b);
+}
+```
+</div>
+</div>
+
+
+
+
+The second version! 
+
+
 In concurrent programming, a variable may be shared between threads. 
 To prevent race conditions, threads must synchronize their access to the variable.
 While one thread is using the variable, it assumes exclusive ownership 
