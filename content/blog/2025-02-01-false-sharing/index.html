@@ -95,14 +95,14 @@ the padded version is 25% faster than the unpadded version.</p>
 <div id="architecture-dependent-performance" class="section level3">
 <h3>Architecture Dependent Performance</h3>
 <p>One unique feature of the M-series Apple processors
-is that they both Performance (P) and Efficiency (E) cores.
-The P cores have independent L1 caches, but share an L2 cache
-and have faster cache interconnects.
+is the use of Performance (P) and Efficiency (E) cores.
+In addition to larger caches and faster clock speeds,
+P cores have faster cache interconnects between each other.
 Cache interconnections are how cache lines are synchronized between CPUs.</p>
 <p>There are likely cache interconnects between P and E cores,
 but they cores are physically further away and the interconnects
 may have lower bandwidth. We can see this effect when we measure
-the impact of false sharing by the number of cores exposed to false sharing.</p>
+false sharing that crosses P and E cores.</p>
 <p>In the counter example above, we have a discontinuous jump after 4 cores:
 that’s when the cache lines have to synchronize between P and E cores.</p>
 <table>
@@ -199,7 +199,7 @@ which means every single atomic instruction from any of the CPU
 must request exclusive access to the cache line, obtain it, write,
 and then release.
 This cost increases with the number of cores<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and apparently increases between P and E cores in this particular architecture.</p>
-<p>At first I thought that the normal counter version had to do this as well,
+<p>At first I thought that the normal counter version had to enforce the same level of cache coherency,
 but in reality, non-atomic operations are much more lax.
 As Fabian Giesen explains in his <a href="https://fgiesen.wordpress.com/2014/07/07/cache-coherency/">blog post</a>,
 caches don’t respond to messages immediately, cores execute instructions out of order,
@@ -215,22 +215,21 @@ they might be susceptible to false sharing.
 One particular case of this I find amusing is mutexes.</p>
 <p>The entire point of a mutex is to synchronize access to a shared resource.
 But they are often defined next to each other in memory
-at the top of a <code>.c</code> file:</p>
+at the top of a <code>.c</code> file, meaning they are susceptible to false sharing!</p>
 <pre class="c"><code>pthread_mutex_t mutex1;
 pthread_mutex_t mutex2;</code></pre>
 <p>On my M3 MacBook Air, the size of <code>pthread_mutex_t</code> is 64 bytes,
-meaning you are likely to have some false sharing!
-I think it’s funny that the mutex is itself susceptible to false sharing.</p>
+possibly putting them in the same cache line.</p>
 <p>A practical example of this is creating a parallel-friendly
 hash table. You don’t want to have a single mutex per hash table,
 because then you would have no parallelism. But a hash per entry
-would be way too large.
+would cost way too much memory.
 A good compromise is to assign a fixed number of mutexes, say 16,
 and index into them using the hash modulo 16.</p>
 <pre class="c"><code>pthread_mutex_t mutexes[16];</code></pre>
-<p>But as we saw, adjacent mutexes are susceptible to false sharing.
+<p>Adjacent mutexes in the array are susceptible to false sharing.
 The solution is to pad the mutexes so they are in different cache lines.</p>
-<p>I compared the performance of the regular mutex version and the padded version,
+<p>I compared the performance of the regular and padded array,
 and the padded version only performed better when working across the P and E cores
 (in fact I got a consistent, but small penalty when using padding on just the P cores).</p>
 <table>
@@ -274,7 +273,7 @@ and the padded version only performed better when working across the P and E cor
 <h2>Performance Loss Conditions</h2>
 <p>The performance loss from false sharing is most significant when:</p>
 <ul>
-<li>there is a lot of cache line contention: in the previous examples,
+<li>there is a lot of cache line contention: in the counter examples,
 we have up to 8 threads bouncing the same cache line. In this case,
 only two lines can be false shared.</li>
 <li>the non-memory operations are extremely quick: in the previous examples,

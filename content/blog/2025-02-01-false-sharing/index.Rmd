@@ -136,15 +136,15 @@ the padded version is 25% faster than the unpadded version.
 ### Architecture Dependent Performance
 
 One unique feature of the M-series Apple processors 
-is that they both Performance (P) and Efficiency (E) cores.
-The P cores have independent L1 caches, but share an L2 cache
-and have faster cache interconnects. 
+is the use of Performance (P) and Efficiency (E) cores.
+In addition to larger caches and faster clock speeds,
+P cores have faster cache interconnects between each other.
 Cache interconnections are how cache lines are synchronized between CPUs.
 
 There are likely cache interconnects between P and E cores, 
 but they cores are physically further away and the interconnects 
 may have lower bandwidth. We can see this effect when we measure
-the impact of false sharing by the number of cores exposed to false sharing.
+false sharing that crosses P and E cores.
 
 In the counter example above, we have a discontinuous jump after 4 cores:
 that's when the cache lines have to synchronize between P and E cores.
@@ -193,7 +193,7 @@ This cost increases with the number of cores^[
     by Fabian Giesen for more details.
 ] and apparently increases between P and E cores in this particular architecture.
 
-At first I thought that the normal counter version had to do this as well,
+At first I thought that the normal counter version had to enforce the same level of cache coherency,
 but in reality, non-atomic operations are much more lax. 
 As Fabian Giesen explains in his [blog post](https://fgiesen.wordpress.com/2014/07/07/cache-coherency/),
 caches don't respond to messages immediately, cores execute instructions out of order,
@@ -209,7 +209,7 @@ One particular case of this I find amusing is mutexes.
 
 The entire point of a mutex is to synchronize access to a shared resource.
 But they are often defined next to each other in memory
-at the top of a `.c` file:
+at the top of a `.c` file, meaning they are susceptible to false sharing!
 
 ```c
 pthread_mutex_t mutex1;
@@ -217,13 +217,12 @@ pthread_mutex_t mutex2;
 ```
 
 On my M3 MacBook Air, the size of `pthread_mutex_t` is 64 bytes,
-meaning you are likely to have some false sharing! 
-I think it's funny that the mutex is itself susceptible to false sharing.
+possibly putting them in the same cache line. 
 
 A practical example of this is creating a parallel-friendly 
 hash table. You don't want to have a single mutex per hash table,
 because then you would have no parallelism. But a hash per entry
-would be way too large. 
+would cost way too much memory.
 A good compromise is to assign a fixed number of mutexes, say 16,
 and index into them using the hash modulo 16.
 
@@ -231,10 +230,10 @@ and index into them using the hash modulo 16.
 pthread_mutex_t mutexes[16];
 ```
 
-But as we saw, adjacent mutexes are susceptible to false sharing.
+Adjacent mutexes in the array are susceptible to false sharing.
 The solution is to pad the mutexes so they are in different cache lines.
 
-I compared the performance of the regular mutex version and the padded version,
+I compared the performance of the regular and padded array,
 and the padded version only performed better when working across the P and E cores 
 (in fact I got a consistent, but small penalty when using padding on just the P cores). 
 
@@ -249,7 +248,7 @@ Threads | Regular | 128-byte Padded | Improvement
 
 The performance loss from false sharing is most significant when: 
 
-* there is a lot of cache line contention: in the previous examples,
+* there is a lot of cache line contention: in the counter examples,
   we have up to 8 threads bouncing the same cache line. In this case,
   only two lines can be false shared.
 * the non-memory operations are extremely quick: in the previous examples,
