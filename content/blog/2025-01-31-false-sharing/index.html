@@ -1,0 +1,479 @@
+---
+title: 'False Sharing'
+author: ~
+date: '2025-01-31'
+slug: false-sharing
+categories: []
+tags: []
+description: 'False sharing is a performance penalty that occurs when multiple threads modify variables that are close to each other in memory.'
+draft: false
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#sharing-true-and-false" id="toc-sharing-true-and-false">Sharing, True and False</a></li>
+<li><a href="#cache-coherency-and-cache-design" id="toc-cache-coherency-and-cache-design">Cache Coherency and Cache Design</a></li>
+<li><a href="#a-b-example" id="toc-a-b-example">a, b Example</a></li>
+<li><a href="#performance" id="toc-performance">Performance</a></li>
+<li><a href="#m-series-processor-performance" id="toc-m-series-processor-performance">M-series Processor Performance</a>
+<ul>
+<li><a href="#atomic-operations" id="toc-atomic-operations">Atomic Operations</a></li>
+</ul></li>
+<li><a href="#false-sharing-mutexes" id="toc-false-sharing-mutexes">False Sharing Mutexes</a></li>
+<li><a href="#conditions-for-performance-loss" id="toc-conditions-for-performance-loss">Conditions for Performance Loss</a></li>
+<li><a href="#conclusion" id="toc-conclusion">Conclusion</a></li>
+</ul>
+</div>
+
+<p>Which program is faster?</p>
+<div class="row">
+<div class="col-md-6">
+<pre class="c"><code>uint16_t a = 0;
+uint16_t b = 0;
+char c[126];
+
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &amp;a : &amp;b);
+}</code></pre>
+</div>
+<div class="col-md-6">
+<pre class="c"><code>uint16_t a = 0;
+char c[126];
+uint16_t b = 0;
+
+#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &amp;a : &amp;b);
+}</code></pre>
+</div>
+</div>
+<p>The second version! Measured over millions of iterations on my M3 MacBook Air,
+the second version is 0.68% faster.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>This effect is called false sharing - a performance penalty that occurs when multiple CPU cores
+are forced to synchronize their caches even though they’re working with completely independent variables.
+Let’s explore why <code>a, b, c</code> has false sharing, but <code>a, c, b</code> doesn’t.</p>
+<div id="sharing-true-and-false" class="section level2">
+<h2>Sharing, True and False</h2>
+<p>In concurrent programming, the programmer may allow data to be <em>shared</em> between threads.
+Say we want any thread to be able to increment <code>data-&gt;value</code>:</p>
+<pre class="c"><code>void increment_value(Data *data) {
+    pthread_mutex_lock(&amp;data-&gt;mutex);
+    data-&gt;value++;
+    pthread_mutex_unlock(&amp;data-&gt;mutex);
+}</code></pre>
+<p>To prevent race conditions, threads must synchronize access to shared data.
+While one thread holds the lock, other threads trying to acquire the lock must wait
+until the lock is released.</p>
+<p>False sharing occurs when a variable is <em>not</em> logically shared with any other thread,
+but other threads still have to wait on a thread that is modifying the variable.
+In the opening example, <code>a</code> and <code>b</code> are not logically shared:</p>
+<pre class="c"><code>do_work(id == 0 ? &amp;a : &amp;b);</code></pre>
+<p>Thread 0 is modifying <code>a</code> and thread 1 is modifying <code>b</code>. Yet they must still wait for each other
+to finish modifying the other variable.</p>
+</div>
+<div id="cache-coherency-and-cache-design" class="section level2">
+<h2>Cache Coherency and Cache Design</h2>
+<p>The reason has to do with cache coherency and the design of modern caches.
+Cache coherence protocols ensure that all CPUs see the same value for a variable.
+In the basic model, if a CPU would like to write a variable, it must
+announce its intent to the memory controller. Other CPUs with the same variable
+receive that message, invalidate their local copy, and acknowledge the write.
+When the writing CPU receives the acknowledgements, it can write to the variable
+in its cache.</p>
+<p><img src="cache-coherence.svg" /></p>
+<p>If CPU2 or CPU3 wants to write or read to that variable,
+the data will be marked as invalid in the local cache and
+must be synchronized from CPU1’s cache before the operation can complete.
+This synchronization is much faster than a trip to main memory,
+but is still a measurable amount of time.</p>
+<p>The smallest unit of data synchronized between caches is called a cache line,
+which is typically 64 bytes (128 bytes on M-series Apple CPUs).
+If <em>any</em> data in a cache line is modified, the entire cache line must be synchronized:
+that’s false sharing.</p>
+</div>
+<div id="a-b-example" class="section level2">
+<h2>a, b Example</h2>
+<p>It’s surprisingly easy to create false sharing,
+because compilers typically want to pack data together in memory
+for performance and size.
+This totally normal variable declaration we saw before is vulnerable to false sharing:</p>
+<pre class="c"><code>uint16_t a = 0;
+uint16_t b = 0;</code></pre>
+<p><code>a</code> and <code>b</code> are both 2 byte variables and they are adjacent in memory
+since they are declared right next to each other.
+Unless <code>a</code> just happened to be in the last two bytes of a cache line,
+the two variables will be in the same cache line.
+Anytime one is modified, the cache line must be synchronized causing
+another thread to wait, like in the following OpenMP snippet:</p>
+<pre class="c"><code>#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    do_work(id == 0 ? &amp;a : &amp;b);
+}</code></pre>
+<p>The <a href="https://github.com/tmastny/cache/blob/1565c00bbee5d3a1891e008e858015d4463f61f8/false-sharing/ab.c#L25-L31">solution</a>
+is to pad the variables so they are in different cache lines.</p>
+<pre class="c"><code>uint16_t a = 0;
+char padding[CACHE_LINE_SIZE - sizeof(uint16_t)];
+uint16_t b = 0;</code></pre>
+<p>It seems a little wasteful, but depending on the workload,
+avoiding false sharing significantly improves performance.</p>
+</div>
+<div id="performance" class="section level2">
+<h2>Performance</h2>
+<p>The impact of the previous example is small:
+padding the variables to avoid false sharing speeds up the program by only 0.68%.</p>
+<p>But we can find more dramatic examples.
+In the last example, two CPUs had to sync on the same cache line,
+but my M3 MacBook Air has 8 cores. So let’s force the cache coherency
+policy to synchronize the same cache line on every core.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>An array of 8 <code>uint16_t</code> is only 16 bytes,
+which easily fits on any modern cache line.</p>
+<pre class="c"><code>uint16_t counters[8];</code></pre>
+<p>If 8 different threads are writing to different elements of the array,
+they will have to wait for each other to finish modifying the cache line
+before they can do their work.</p>
+<pre class="c"><code>#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    do_work(&amp;counters[id]);
+}</code></pre>
+<p>We can avoid this again by padding. There’s a couple of different ways to do this.
+The first is to create a larger array and index into the array at <code>CACHE_LINE_SIZE</code> multiples.</p>
+<pre class="c"><code>uint16_t counters[8 * CACHE_LINE_SIZE];
+// ...
+do_work(&amp;counters[id * CACHE_LINE_SIZE]);</code></pre>
+<p>A more general approach is to use a struct with padding.</p>
+<pre class="c"><code>struct counter {
+    uint16_t value;
+    char padding[CACHE_LINE_SIZE - sizeof(uint16_t)];
+};
+struct counter counters[8];
+// ...
+do_work(&amp;counters[id].value);</code></pre>
+<p>Here we see a significant performance improvement:
+the padded version is 25% faster than the unpadded version.</p>
+</div>
+<div id="m-series-processor-performance" class="section level2">
+<h2>M-series Processor Performance</h2>
+<p>One unique feature of the M-series Apple processors
+is the use of Performance (P) and Efficiency (E) cores.
+In addition to larger caches and faster clock speeds,
+P cores have faster cache interconnects between each other.
+Cache interconnections are how cache lines are synchronized between CPUs,
+without a trip to main memory.</p>
+<p>There are likely cache interconnects between P and E cores,
+but they cores are physically further away and the interconnects
+may have lower bandwidth, so the synchronization takes longer.
+We can see this effect when we measure false sharing between P and E cores.</p>
+<p>In the counter example above, we have a discontinuous jump in performance after 4 cores:
+that’s when the cache lines have to synchronize between P and E cores.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Threads</th>
+<th>Regular</th>
+<th>128-byte Padded</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td>0.019</td>
+<td>0.018</td>
+<td>5.06%</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>0.021</td>
+<td>0.019</td>
+<td>7.97%</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>0.028</td>
+<td>0.020</td>
+<td>25.84%</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>0.030</td>
+<td>0.023</td>
+<td>25.12%</td>
+</tr>
+</tbody>
+</table>
+<div id="atomic-operations" class="section level3">
+<h3>Atomic Operations</h3>
+<p>The impact of false sharing across P and E cores is comically large
+when working with atomic operations:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<table>
+<thead>
+<tr class="header">
+<th>Threads</th>
+<th>Regular</th>
+<th>128-byte Padded</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td>1.362</td>
+<td>0.189</td>
+<td>620.1%</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>4.201</td>
+<td>0.193</td>
+<td>2079.8%</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>18.735</td>
+<td>0.210</td>
+<td>8821.5%</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>20.378</td>
+<td>0.227</td>
+<td>8890.4%</td>
+</tr>
+</tbody>
+</table>
+<p>Programmatically, the atomic operation is very similar to the normal counter version:</p>
+<pre class="c"><code>#include &lt;stdatomic.h&gt;
+
+struct counter { atomic_int value; };
+struct counter counters[NUM_THREADS];
+
+#pragma omp parallel
+{
+    int id = omp_get_thread_num();
+    for(int i=0; i&lt;ITERATIONS; i++)
+        atomic_fetch_add_explicit(&amp;counters[id].value, 1, memory_order_relaxed);
+}</code></pre>
+<p>But atomic operations have much more stringent requirements for cache coherency.
+In particular, they enforce sequential consistency
+which means every single atomic instruction from any of the CPU
+must request exclusive access to the cache line, obtain it, write,
+and then release.
+This cost increases with the number of cores<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> and apparently increases between P and E cores in this particular architecture.</p>
+<p>At first I thought that the normal counter version had to enforce the same level of cache coherency,
+but in reality, non-atomic operations are much more lax.
+As Fabian Giesen explains in his <a href="https://fgiesen.wordpress.com/2014/07/07/cache-coherency/">blog post</a>,
+caches don’t respond to coherency messages immediately, cores execute instructions out of order,
+and writes can be batched together in a store buffer before being written to the cache.
+This means the normal counter version has false sharing,
+but the synchronization does not happen on every single write.</p>
+</div>
+</div>
+<div id="false-sharing-mutexes" class="section level2">
+<h2>False Sharing Mutexes</h2>
+<p>Anytime we define variables next to each other,
+they might be susceptible to false sharing.
+One particular case of this I find amusing is mutexes.</p>
+<p>The entire point of a mutex is to synchronize access to a shared resource.
+But they are often defined next to each other in memory
+at the top of a <code>.c</code> file, meaning they are susceptible to false sharing!</p>
+<pre class="c"><code>pthread_mutex_t mutex1;
+pthread_mutex_t mutex2;</code></pre>
+<p>On my M3 MacBook Air, the size of <code>pthread_mutex_t</code> is 64 bytes,
+possibly putting them in the same cache line.</p>
+<p>A practical example of this is creating a parallel-friendly
+hash table. You don’t want to have a single mutex per hash table,
+because then you would have no parallelism. But a mutex per entry
+would cost way too much memory.
+A good compromise is to assign a fixed number of mutexes, say 16,
+and index into them using the hash modulo 16.</p>
+<pre class="c"><code>pthread_mutex_t mutexes[16];</code></pre>
+<p>Adjacent mutexes in the array are susceptible to false sharing.
+The solution is to pad the mutexes so they are in different cache lines.</p>
+<pre class="c"><code>struct padded_mutex {
+    pthread_mutex_t mutex;
+    char padding[CACHE_LINE_SIZE - sizeof(pthread_mutex_t)];
+};
+struct padded_mutex padded_mutexes[16];</code></pre>
+<p>I compared the performance of the regular and padded array,
+and the padded version only performed better when working across the P and E cores
+(in fact I got a small, but consistent penalty when using padding on just the P cores).<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
+<table>
+<thead>
+<tr class="header">
+<th>Threads</th>
+<th>Regular</th>
+<th>128-byte Padded</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td>0.029</td>
+<td>0.030</td>
+<td>-4.19%</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>0.030</td>
+<td>0.032</td>
+<td>-4.04%</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>0.064</td>
+<td>0.037</td>
+<td>42.99%</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>0.072</td>
+<td>0.042</td>
+<td>41.90%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="conditions-for-performance-loss" class="section level2">
+<h2>Conditions for Performance Loss</h2>
+<p>The performance loss from false sharing is most significant when:</p>
+<ul>
+<li><strong>there is a lot of cache line contention</strong>: in the counter examples,
+we have up to 8 threads bouncing the same cache line. With mutexes,
+only two CPUs can false share a single cache line.</li>
+<li><strong>the non-memory operations are extremely quick</strong>: in the previous examples,
+all we were doing was incrementing a counter. Here we are locking and
+unlocking a mutex, which has a lot of overhead.</li>
+</ul>
+<p>For reference:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Operation</th>
+<th>Approximate Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Non-atomic Add</td>
+<td>~1-3 cycles</td>
+</tr>
+<tr class="even">
+<td>Atomic Add</td>
+<td>~5-50 cycles</td>
+</tr>
+<tr class="odd">
+<td>Syscall Entry</td>
+<td>~100-1000 cycles</td>
+</tr>
+<tr class="even">
+<td>Mutex Lock (uncontended)</td>
+<td>~200-2000 cycles</td>
+</tr>
+<tr class="odd">
+<td>Context Switch</td>
+<td>~1000-10000 cycles</td>
+</tr>
+<tr class="even">
+<td>Mutex Lock (contended)</td>
+<td>~2000-20000 cycles</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<ul>
+<li>Uncontended lock: requires at least one syscall (lock)</li>
+<li>Contended lock: requires syscall + context switch + another syscall when waking up</li>
+</ul>
+</blockquote>
+<p>The mutexes have such a large overhead, they completely overshadow the false sharing,
+or provide enough of a buffer with other instructions to avoid the performance loss.</p>
+<p>The following example is a little contrived, but it is possible to consistently
+see the impact of false sharing when working with mutexes if you try to acquire
+multiple adjacent ones.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
+<pre class="c"><code>#pragma omp parallel num_threads(2)
+{
+    int id = omp_get_thread_num();
+    int num_threads = omp_get_num_threads();
+    
+    // id = 0 takes even locks, id = 1 takes odd locks
+    for(int i = 0; i &lt; 10000000; i++) {
+        for(int lock_index = id; lock_index &lt; 16; lock_index += num_threads) {
+            pthread_mutex_lock(&amp;mutexes[lock_index]);
+            do_work();
+            pthread_mutex_unlock(&amp;mutexes[lock_index]);
+        }
+    }
+}</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th>Threads</th>
+<th>Regular</th>
+<th>128-byte Padded</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2</td>
+<td>0.367</td>
+<td>0.367</td>
+<td>0.22%</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>0.222</td>
+<td>0.219</td>
+<td>1.41%</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>0.335</td>
+<td>0.197</td>
+<td>41.18%</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>0.309</td>
+<td>0.160</td>
+<td>48.22%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>False sharing occurs during concurrent programs when
+multiple threads are forced to synchronize logically independent variables
+just because they happen to be on the same cache line.
+I think this is a fascinating topic that highlights low-level details
+of cache design on modern CPUs.</p>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>
+<code>ab.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#ab-abc">benchmark</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>
+<code>counter.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#simple-counter-counterc">benchmark</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>
+<code>atomic.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#atomic-operations-atomicc">benchmark</a><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>
+See the <em>Cache line contention</em> section of this <a href="https://fgiesen.wordpress.com/2014/08/18/atomics-and-contention/">blog post</a>
+by Fabian Giesen for more details.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>
+<code>false-sharing.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#single-lock-false-sharingc">benchmark</a><a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>
+<code>multilock.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#multi-lock-multilockc">benchmark</a><a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
