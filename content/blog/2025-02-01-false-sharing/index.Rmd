@@ -1,5 +1,5 @@
 ---
-title: 'Performance Penalty from False Sharing in Parallel Programs'
+title: 'False Sharing'
 author: ~
 date: '2025-02-01'
 slug: false-sharing
@@ -52,10 +52,11 @@ uint16_t b = 0;
 </div>
 
 The second version! Measured over millions of iterations on my M3 MacBook Air,
-the second version is 0.68% percent faster. 
+the second version is 0.68% faster. 
 
-This effect is called false sharing, 
-and can occur multiple CPUs are working with variables that are close to each other in memory.
+This effect is called false sharing - a performance penalty that occurs when multiple CPU cores 
+are forced to synchronize their caches even though they're working with completely independent variables.
+Let's explore why `a, b, c` has false sharing, but `a, c, b` doesn't.
 
 ## Sharing, True and False
 
@@ -70,9 +71,9 @@ void increment_value(Data *data) {
 }
 ```
 
-To prevent race conditions, threads must synchronize their access to the variable.
-While one thread holds the lock, if other threads
-try to acquire the lock, they must wait until it is unlocked.
+To prevent race conditions, threads must synchronize access to shared data.
+While one thread holds the lock, other threads trying to acquire the lock must wait
+until the lock is released.
 
 False sharing occurs when a variable is _not_ logically shared with any other thread,
 but other threads still have to wait on a thread that is modifying the variable. 
@@ -88,16 +89,16 @@ to finish modifying the variable.
 The reason has to do with cache coherency and the design of modern caches.
 Cache coherence protocols ensure that all CPUs see the same value for a variable.
 In the basic model, if a CPU would like to write a variable, it must 
-announce it's intent to the memory controller. Other CPUs with the same variable
+announce its intent to the memory controller. Other CPUs with the same variable
 receive that message, invalidate their local copy, and acknowledge the write.
-When the writiing CPU receives the acknowledgements, it writes to it's copy
+When the writing CPU receives the acknowledgements, it writes to its copy
 of the variable. 
 
 ![](cache-coherence.svg)
 
-If another CPU2 or CPU3 wants to write or read to that variable, 
-it will see that it's local copy is invalid and the data must
-be synchronized from CPU1's cache before the operation can complete. 
+If CPU2 or CPU3 wants to write or read to that variable, 
+the data will be marked as invalid in the local cache and
+must be synchronized from CPU1's cache before the operation can complete. 
 This synchronization is much faster than a trip to main memory, 
 but is still an measurable amount of time. 
 
@@ -143,7 +144,7 @@ uint16_t b = 0;
 ```
 
 It seems a little wasteful, but depending on the workload,
-but avoiding false sharing significantly improve performance.
+avoiding false sharing significantly improves performance.
 
 ## Performance
 
@@ -246,7 +247,7 @@ struct counter counters[NUM_THREADS];
 }
 ```
 
-But atomic operations have much more strigent requirements for cache coherency.
+But atomic operations have much more stringent requirements for cache coherency.
 In particular, they enforce sequential consistency
 which means every single atomic instruction from any of the CPU 
 must request exclusive access to the cache line, obtain it, write,

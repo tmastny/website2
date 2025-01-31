@@ -1,5 +1,5 @@
 ---
-title: 'Performance Penalty from False Sharing in Parallel Programs'
+title: 'False Sharing'
 author: ~
 date: '2025-02-01'
 slug: false-sharing
@@ -40,9 +40,10 @@ uint16_t b = 0;
 </div>
 </div>
 <p>The second version! Measured over millions of iterations on my M3 MacBook Air,
-the second version is 0.68% percent faster.</p>
-<p>This effect is called false sharing,
-and can occur multiple CPUs are working with variables that are close to each other in memory.</p>
+the second version is 0.68% faster.</p>
+<p>This effect is called false sharing - a performance penalty that occurs when multiple CPU cores
+are forced to synchronize their caches even though they’re working with completely independent variables.
+Let’s explore why <code>a, b, c</code> has false sharing, but <code>a, c, b</code> doesn’t.</p>
 <div id="sharing-true-and-false" class="section level2">
 <h2>Sharing, True and False</h2>
 <p>In concurrent programming, the programmer may allow data to be <em>shared</em> between threads.
@@ -52,9 +53,9 @@ Say we want any thread to be able to increment <code>data-&gt;value</code>:</p>
     data-&gt;value++;
     pthread_mutex_unlock(&amp;data-&gt;mutex);
 }</code></pre>
-<p>To prevent race conditions, threads must synchronize their access to the variable.
-While one thread holds the lock, if other threads
-try to acquire the lock, they must wait until it is unlocked.</p>
+<p>To prevent race conditions, threads must synchronize access to shared data.
+While one thread holds the lock, other threads trying to acquire the lock must wait
+until the lock is released.</p>
 <p>False sharing occurs when a variable is <em>not</em> logically shared with any other thread,
 but other threads still have to wait on a thread that is modifying the variable.
 In the opening example, <code>a</code> and <code>b</code> are not logically shared:</p>
@@ -67,14 +68,14 @@ to finish modifying the variable.</p>
 <p>The reason has to do with cache coherency and the design of modern caches.
 Cache coherence protocols ensure that all CPUs see the same value for a variable.
 In the basic model, if a CPU would like to write a variable, it must
-announce it’s intent to the memory controller. Other CPUs with the same variable
+announce its intent to the memory controller. Other CPUs with the same variable
 receive that message, invalidate their local copy, and acknowledge the write.
-When the writiing CPU receives the acknowledgements, it writes to it’s copy
+When the writing CPU receives the acknowledgements, it writes to its copy
 of the variable.</p>
 <p><img src="cache-coherence.svg" /></p>
-<p>If another CPU2 or CPU3 wants to write or read to that variable,
-it will see that it’s local copy is invalid and the data must
-be synchronized from CPU1’s cache before the operation can complete.
+<p>If CPU2 or CPU3 wants to write or read to that variable,
+the data will be marked as invalid in the local cache and
+must be synchronized from CPU1’s cache before the operation can complete.
 This synchronization is much faster than a trip to main memory,
 but is still an measurable amount of time.</p>
 <p>The smallest unit of data synchronized between caches is called a cache line,
@@ -107,7 +108,7 @@ is to pad the variables so they are in different cache lines.</p>
 char padding[CACHE_LINE_SIZE - sizeof(uint16_t)];
 uint16_t b = 0;</code></pre>
 <p>It seems a little wasteful, but depending on the workload,
-but avoiding false sharing significantly improve performance.</p>
+avoiding false sharing significantly improves performance.</p>
 </div>
 <div id="performance" class="section level2">
 <h2>Performance</h2>
@@ -244,7 +245,7 @@ struct counter counters[NUM_THREADS];
     for(int i=0; i&lt;ITERATIONS; i++)
         atomic_fetch_add_explicit(&amp;counters[id].value, 1, memory_order_relaxed);
 }</code></pre>
-<p>But atomic operations have much more strigent requirements for cache coherency.
+<p>But atomic operations have much more stringent requirements for cache coherency.
 In particular, they enforce sequential consistency
 which means every single atomic instruction from any of the CPU
 must request exclusive access to the cache line, obtain it, write,
