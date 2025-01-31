@@ -52,7 +52,9 @@ uint16_t b = 0;
 </div>
 
 The second version! Measured over millions of iterations on my M3 MacBook Air,
-the second version is 0.68% faster. 
+the second version is 0.68% faster^[
+    `ab.c` [benchmark](https://github.com/tmastny/cache/tree/main/false-sharing#ab-abc)
+]. 
 
 This effect is called false sharing - a performance penalty that occurs when multiple CPU cores 
 are forced to synchronize their caches even though they're working with completely independent variables.
@@ -154,7 +156,9 @@ padding the variables to avoid false sharing speeds up the program by only 0.68%
 But we can find more dramatic examples. 
 In the last example, two CPUs had to sync on the same cache line,
 but my M3 MacBook Air has 8 cores. So let's force the cache coherency
-policy to synchronize the same cache line on every core.
+policy to synchronize the same cache line on every core.^[
+    `counter.c` [benchmark](https://github.com/tmastny/cache/tree/main/false-sharing#simple-counter-counterc)
+]
 
 An array of 8 `uint16_t` is only 16 bytes, 
 which easily fits on any modern cache line. 
@@ -225,7 +229,9 @@ Threads | Regular | 128-byte Padded | Improvement
 ### Atomic Operations
 
 The impact of false sharing across P and E cores is comically large
-when working with atomic operations:
+when working with atomic operations:^[
+    `atomic.c` [benchmark](https://github.com/tmastny/cache/tree/main/false-sharing#atomic-operations-atomicc)
+]
 
 Threads | Regular | 128-byte Padded | Improvement
 --------|---------|-----------------|-------------
@@ -309,7 +315,9 @@ struct padded_mutex padded_mutexes[16];
 
 I compared the performance of the regular and padded array,
 and the padded version only performed better when working across the P and E cores 
-(in fact I got a small, but consistent penalty when using padding on just the P cores). 
+(in fact I got a small, but consistent penalty when using padding on just the P cores).^[
+    `false-sharing.c` [benchmark](https://github.com/tmastny/cache/tree/main/false-sharing#single-lock-false-sharingc)
+] 
 
 Threads | Regular | 128-byte Padded | Improvement
 --------|---------|-----------------|-------------
@@ -348,7 +356,9 @@ or provide enough of a buffer with other instructions to avoid the performance l
 
 The following example is a little contrived, but it is possible to consistently
 see the impact of false sharing when working with mutexes if you try to acquire
-multiple adjacent ones. 
+multiple adjacent ones.^[
+    `multilock.c` [benchmark](https://github.com/tmastny/cache/tree/main/false-sharing#multi-lock-multilockc)
+] 
 
 ```c
 #pragma omp parallel num_threads(2)

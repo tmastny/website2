@@ -55,7 +55,7 @@ uint16_t b = 0;
 </div>
 </div>
 <p>The second version! Measured over millions of iterations on my M3 MacBook Air,
-the second version is 0.68% faster.</p>
+the second version is 0.68% faster<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
 <p>This effect is called false sharing - a performance penalty that occurs when multiple CPU cores
 are forced to synchronize their caches even though they’re working with completely independent variables.
 Let’s explore why <code>a, b, c</code> has false sharing, but <code>a, c, b</code> doesn’t.</p>
@@ -132,7 +132,7 @@ padding the variables to avoid false sharing speeds up the program by only 0.68%
 <p>But we can find more dramatic examples.
 In the last example, two CPUs had to sync on the same cache line,
 but my M3 MacBook Air has 8 cores. So let’s force the cache coherency
-policy to synchronize the same cache line on every core.</p>
+policy to synchronize the same cache line on every core.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>An array of 8 <code>uint16_t</code> is only 16 bytes,
 which easily fits on any modern cache line.</p>
 <pre class="c"><code>uint16_t counters[8];</code></pre>
@@ -213,7 +213,7 @@ that’s when the cache lines have to synchronize between P and E cores.</p>
 <div id="atomic-operations" class="section level3">
 <h3>Atomic Operations</h3>
 <p>The impact of false sharing across P and E cores is comically large
-when working with atomic operations:</p>
+when working with atomic operations:<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
 <table>
 <thead>
 <tr class="header">
@@ -267,7 +267,7 @@ In particular, they enforce sequential consistency
 which means every single atomic instruction from any of the CPU
 must request exclusive access to the cache line, obtain it, write,
 and then release.
-This cost increases with the number of cores<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and apparently increases between P and E cores in this particular architecture.</p>
+This cost increases with the number of cores<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> and apparently increases between P and E cores in this particular architecture.</p>
 <p>At first I thought that the normal counter version had to enforce the same level of cache coherency,
 but in reality, non-atomic operations are much more lax.
 As Fabian Giesen explains in his <a href="https://fgiesen.wordpress.com/2014/07/07/cache-coherency/">blog post</a>,
@@ -305,7 +305,7 @@ The solution is to pad the mutexes so they are in different cache lines.</p>
 struct padded_mutex padded_mutexes[16];</code></pre>
 <p>I compared the performance of the regular and padded array,
 and the padded version only performed better when working across the P and E cores
-(in fact I got a small, but consistent penalty when using padding on just the P cores).</p>
+(in fact I got a small, but consistent penalty when using padding on just the P cores).<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a></p>
 <table>
 <thead>
 <tr class="header">
@@ -399,7 +399,7 @@ unlocking a mutex, which has a lot of overhead.</li>
 or provide enough of a buffer with other instructions to avoid the performance loss.</p>
 <p>The following example is a little contrived, but it is possible to consistently
 see the impact of false sharing when working with mutexes if you try to acquire
-multiple adjacent ones.</p>
+multiple adjacent ones.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a></p>
 <pre class="c"><code>#pragma omp parallel num_threads(2)
 {
     int id = omp_get_thread_num();
@@ -463,7 +463,17 @@ of cache design on modern CPUs.</p>
 <hr />
 <ol>
 <li id="fn1"><p>
+<code>ab.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#ab-abc">benchmark</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>
+<code>counter.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#simple-counter-counterc">benchmark</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>
+<code>atomic.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#atomic-operations-atomicc">benchmark</a><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>
 See the <em>Cache line contention</em> section of this <a href="https://fgiesen.wordpress.com/2014/08/18/atomics-and-contention/">blog post</a>
-by Fabian Giesen for more details.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+by Fabian Giesen for more details.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>
+<code>false-sharing.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#single-lock-false-sharingc">benchmark</a><a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>
+<code>multilock.c</code> <a href="https://github.com/tmastny/cache/tree/main/false-sharing#multi-lock-multilockc">benchmark</a><a href="#fnref6" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
