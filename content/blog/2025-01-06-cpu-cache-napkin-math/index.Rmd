@@ -237,7 +237,7 @@ and finally pt0[L0] which gives the physical address that will be cached in the 
 
 So that's 4 data loads.
 
-##### ideas on measuring cache size
+##### ideas on measuring TLB cache size
 
 Homework problem:
 https://pages.cs.wisc.edu/%7Eremzi/OSTEP/vm-tlbs.pdf
