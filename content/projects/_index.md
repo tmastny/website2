@@ -48,6 +48,10 @@ title: "Projects"
 
 ## Book notes
 
+* [Napkin Math](/projects/napkin-math)
+  * following the [Napkin Math newsletter](https://sirupsen.com/napkin).
+
+<!-- spacing -->
 * [Forecasting: Principles and Practice](https://otexts.com/fpp3/), 3rd edition.
   * complete notes on [Github](https://github.com/tmastny/timeseries/tree/master/vignettes).
 
