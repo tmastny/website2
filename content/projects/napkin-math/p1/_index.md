@@ -12,29 +12,24 @@ Problem #1: How much will the storage of logs cost for a standard, monolithic 10
 
 Let's estimate annualized cost of logs.
 
-Say each request generates 100KB of logs.
-* 100,000 requests/s * 100KB/request = 10GB/s
-* 10GB/s * 3600s/hour * 24hours/day * 365days/year = 32TB/year
+Say each request generates 1KB of logs.
+* 100,000 requests/s * 1KB/request = 100MB/s
+* 100MB/s * 3600s/hour * 24hours/day ~ 9TB/day
+
 
 ### Blob
 
 Say we can put them in blob storage:
-* 1 year commitment $ / month = $0.025 / GB / month
-* 32 TB / 12 months = 2.67 TB / month
-* 2670 GB * $0.025 / GB / month = $66.75 / month
-* $66.75 / month * 12 months/year = $801 / year
+* 9 TB / day * 30 days / month * $0.02 / GB / month = $5400 / month = $64800 / year
 
-But we don't usually need to keeps longs that long. 
+But we don't usually need to keep logs that long. 
 Let's say we only keep last three days
-* 10GB/s * 3600s/hour * 24hours/day * 3days = 2.592TB
-* 2.592TB / 12 months = 0.216TB / month
-* 0.216TB * $0.025 / GB / month = $5.4 / month
-* $5.4 / month * 12 months/year = $64.8 / year
+* 9 * 3 TB / month * $0.02 / GB / month = $540 / month = $6480 / year
 
 Ah, but we are also charged by writes to blob.
 Let's start with 1 write per request.
 * 100,000 requests/s * 1 write/request = 100,000 writes/s
-* $0.005 / 1000 writes * 100,000 writes/s = $0.5 / s
+* 100,000 writes/s * $5 / 1,000,000 writes = $0.5 / s
 * $0.5 / s * 3600s/hour * 24hours/day * 365days/year = $15,768,000 / year
 
 Napkin math technique: let's batch writes by 1000. 
@@ -59,10 +54,6 @@ For three days:
 ## Solution
 
 https://sirupsen.com/napkin/problem-2
-
-Differences
-* estimated bytes / request off by 100.
-    * solution is 1KB, mine was 100KB
 
 I didn't think to estimate how much we fits into 1KB.
 * 1 character per byte, or 1000 characters. 
