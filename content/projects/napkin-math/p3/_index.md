@@ -124,7 +124,7 @@ That's actually significantly worse than I calculated before.
 So in total: 
 * sequentially reading 32 MB: 3.2 ms
 * hash is insignificant additional time
-* 200 ms for each random jump into the hash table
+* 200 ms for all the random jump into the hash table
 * total: 203.2 ms
 
 Still managable! No longer "instant", but humans tolerate it. 
@@ -163,14 +163,24 @@ Recall: we compute 4 hashes, giving a number between 0 and 999,999.
 Each number is mapped into that bit array.
 
 So let's say
-* 2 ns for 4 hashes
-* 4 ns lookup in L2 cache, 4 times
-* 24 ns 
+* 1 ns for load from L1 cache
+* 4 ns for all 4 hashes
+* 4 ns to calculate byte and bit offset into bit map
+* 4, 4 ns lookup in L2 cache
+* 25 ns 
 
-So say 10 ns per element
-* 4 * 10^6 * 24 * 10^-9 s = 96 ms
+So say 24 ns per element
+* 4 * 10^6 * 25 * 10^-9 s = 100 ms
 
-Much faster than hash map!
+Twice as fast as the hash map:
+I wonder if I'm missing something, 
+I thought it would be faster.
+
+Ah, I'm forgetting that the bloom filter is
+_space efficient_: it might be faster, but the
+real payoff is that we only need 128KB + 1% of
+original data size for the backup hash map,
+rather than 8MB for the normal hash map. 
 
 ### Algorithm 2
 
