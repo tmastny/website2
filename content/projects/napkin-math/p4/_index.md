@@ -32,9 +32,24 @@ What if we were only sending 64 bytes per TCP data packet?
 * 64 bytes / 10 us = 6.4 MB/s
 * 6.4 * 10^6 bytes/s / 64 bytes/request = 10^5 requests/s
 
-That's only 10x off from the 640 KB/s we're getting.
+That's 10x off from the 640 KB/s we're getting.
 
 ## Solution
+
+TCP echo benchmark is our speed-of-light
+comparison for networking: this is the theoretical 
+best case. 
+
+That's why it's a useful comparison for the application code,
+in this case `GET` and `SET` in the key-value store.
+In our case, networking should be the bottleneck, because
+the application code is so fast.
+
+But what's we are really seeing is that we are 10x off 
+from the theoretical maximum: we should be able to serve
+more requests. 
+
+
 
 How Redis 6 works:
 * Threaded I/O does not manage 1 connection per thread
