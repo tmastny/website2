@@ -49,15 +49,34 @@ But what's we are really seeing is that we are 10x off
 from the theoretical maximum: we should be able to serve
 more requests. 
 
+## How Redis 6 Threaded I/O Works
 
+Here's a thorough explanation of Redis 6's Threaded I/O,
+with diagrams and a look at the source code: 
+https://www.sobyte.net/post/2022-03/redis-multi-threaded-network-model/
 
-How Redis 6 works:
-* Threaded I/O does not manage 1 connection per thread
-* event-driven I/O like epoll or kqueue monitors socket fds
-  for new data. 
-* I/O threads handles reading and writing to the socket
-* data is sent to the main thread via a buffer.
-* main thread processes requests and writes to a reply buffer
-  for I/O threads to read and send to a socket 
+In the Threaded I/O model, everything is orchestrated
+by the main thread. The main thread waits for I/O events from epoll.
+Once events are received, the main thread assigns each socket to an I/O thread
+to read and parse the request.
 
+The main thread waits for the all the I/O threads to finish,
+and then executes the request on the data structure.
+Each request is stored in a client reply buffer. 
 
+After all the requests are processed, then the main thread
+assigns I/O threads to each client to send the reply to the
+client socket. 
+
+One interesting feature is that the main thread is also an 
+I/O thread: it will always assign itself one client socket to
+read and process, and one client to write to.
+
+The synrchonization is lightweight: the main thread
+assigns work to the I/O threads, processes it's own client,
+and then continuously polls the I/O threads until they are finished.  
+
+There's a few other details, especially around client reply and
+writing to the socket, but here's a diagram of the big picture:
+
+![](redis-io.svg)
