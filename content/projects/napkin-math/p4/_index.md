@@ -62,9 +62,9 @@ to read and parse the request.
 
 The main thread waits for the all the I/O threads to finish,
 and then executes the request on the data structure.
-Each request is stored in a client reply buffer. 
+Each reply is stored in a client reply buffer. 
 
-After all the requests are processed, then the main thread
+After all the requests are processed, the main thread
 assigns I/O threads to each client to send the reply to the
 client socket. 
 
@@ -74,9 +74,12 @@ read and process, and one client to write to.
 
 The synrchonization is lightweight: the main thread
 assigns work to the I/O threads, processes it's own client,
-and then continuously polls the I/O threads until they are finished.  
+and then continuously polls the I/O threads until they are finished. 
+There's also no mutex locks: access to the shared data is staggered over time,
+so no thread is contending for the same data.
 
-There's a few other details, especially around client reply and
-writing to the socket, but here's a diagram of the big picture:
+
+There's a few other detail, but it's all covered in the sobyte.com
+article. So instead, I'll share a diagram of that explains the big picture. 
 
 ![](redis-io.svg)
