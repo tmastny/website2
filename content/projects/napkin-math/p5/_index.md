@@ -67,7 +67,57 @@ leaf nodes are linked together, so we can iterate through the
 page entries, and then go on to the next pages until
 we find 100 records. 
 
+#### pages
+
+The diagram implies 8 records per page, but that does 
+not seem realistic. If the page only stored
+* shop_id
+* id
+* page number
+* page offset
+
+That would be
+* 16 * 10^3 bytes / page * 1 record / 32 bytes = 500 records / page
+
+Let's say for some reason it's not just an index page, 
+but also has other data. If we had 10 columns at 8 bytes each,
+that's still about 200 records per page. 
+
+So either way, we only need to look at 1 page. 
+
+If it _was_ 8 records per page, then we would need
+to load 13 pages. 
+
 #### q3a
+
+Random 8KB SSD:
+* 13 * 100 us = 1.3 ms
+
+#### q3b
+
+random access:
+* 13 * 50 ns = 650 ns = 0.65 us
+
+sequential scan:
+* 1 MB / 100 us  
+* 13 pages * 16 * 10^3 bytes / page = 208 KB
+* 208 * 10^3 bytes * 100 * 10^-6 seconds / 10^6 bytes = 20.8 us
+
+## Solution
+
+Their sequential scan estimate is:
+* 16 * 10^3 bytes / 64 bytes * 5 ns = 1.25 us
+
+We said: 
+* 16 * 10^3 bytes / 10^6 bytes * 100 us = 1.6 us
+
+Which was a little slower, but in the right ballpark. 
+I like my estimate, only because 1 MB / 100 us is easy to remember. 
+
+Lastly, they make a reasonable estimate that the each record is 128 bytes:
+* 1 record / 128 bytes * 16 * 10^3 bytes / page = 125 records / page
+
+So I'm glad I estimated that and thought that through!
 
 
 
