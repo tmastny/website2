@@ -105,6 +105,8 @@ sequential scan:
 
 ## Solution
 
+https://sirupsen.com/napkin/problem-6
+
 Their sequential scan estimate is:
 * 16 * 10^3 bytes / 64 bytes * 5 ns = 1.25 us
 
