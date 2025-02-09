@@ -120,6 +120,41 @@ I feel like I'm missing something, but I'm not sure what:
 * maybe database performance is an issue, but the question is
   about storage costs. 
 
+## Solution
+
+https://sirupsen.com/napkin/problem-8
+
+
+* 256 bytes per product
+  * I estimated 234 and then rounded to 200. Not bad!
+* 80 GB / year, $8 / month
+  * 60 GB / year, $12 / month
+  * he calculated at $0.01 / GB, I did $0.02 / GB
+  * Pretty good! I really thought I was missing something here.
+
+Mentions decreased performance, which I was worried about.
+* in particular, given the current index, you will always
+  fetch up "useless" rows, i.e. rows with outdated revisions.
+
+Solution suggests some problematic cases:
+* I was considered about growing revisions, but even
+  random sporadic behavior by a single merchant could cause problems,
+  if they are constantly creating revisions. 
+
+Mentions compression: 
+* good idea, we'd be storing a lot of near identical data. 
+* Even though I mentioned needing to think about compression in 
+  the last problem, I didn't realize databases could implement compression.
+  * But in general, there's no reason the underlying file on disc couldn't 
+    be compressed. There would be decompression overhead:
+    * ref: x compression ratio decreases 10x performance
+    * 2x on English is 200 MB / s
+    * 3x is 20 MB / s
+* useful to think about, but that would only move us from 60 GB / year
+  to 20-30 GB / year: not a ton of benefit
+
+Solution did not mention alternate indices, so I'm proud I got that one. 
+
 
 
 
