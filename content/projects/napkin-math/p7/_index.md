@@ -105,6 +105,10 @@ with `where is_latest = true`. Those values are all grouped together, so
 are much more likely to be in memory, and old revisions can stay on disc
 until they are migrated off. 
 
+As an side, you'd now likely want to create a view such as `latest_products`
+with `where is_latest = true`, since the typical CRUD operations 
+would not want to waste time querying revisions, and you don't want to 
+accidentally forget and have a really slow query.  
 
 ### overall
 
