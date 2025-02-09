@@ -99,5 +99,48 @@ That's an "instant" UX feel.
 
 ## Solution
 
+https://sirupsen.com/napkin/problem-7
+
+Solution's estimates:
+* 100 articles
+* 1000 words
+* 5 characters per word
+* total: 100 KB = 0.1 MB
+* but I believe his math is just wrong: should be 500 KB,
+  unless he is choosing to round to nearest power of 10.
+
+I had a similar starting place:
+* 100 articles, 6 characters per word, 750 words
+
+But I estimated 450 KB This is more accurate
+in a sense because I measured it. But it also
+includes a lot of non-searchable words, since I 
+looked at the "raw" markdown files. 
+
+As I mentioned, I should have started in reverse:
+* 750 words / article * 6 bytes / word * 100 articles = 450 KB
+
+> He also suggests thinking about gzip! Great idea.
+
+Scanning:
+* less than 1 ms.
+* I went more precise and got 45 us, but there's also probably
+  more overhead. My estimate was closer to raw memory throughput
+
+NYT:
+* 30 articles with 1000 words each. 
+    * happy with my estimate then! Only different by a factor of 3
+* He picked last 10 years, instead of last 100. 
+    * So my estimate of total size would be smaller by 10,
+      i.e. 2.2 GB / 10 = 220 MB
+    * with his extra factor of 3, that's 660 MB. 
+    * Very close to his 500 MB!
+    * overall happy with my apporach here.
+
+Out of curiousity, he estimates search speed about about 50 ms:
+* I had 220 ms, but I had 10x the data, so 22 ms * 3 = 66 ms. 
+  Again, I'm n the right ballpark.
+
+
 
 
