@@ -224,7 +224,39 @@ Syncs per second:
       perception of acceptable latency.
 
 
+Client:
+* I assumed the client might be faster, because they would
+  only need to store their data.
+* But I completely forgot they could be a mobile client! 
+  That would be much slower. 
+
 ### (b)
+
+Idea: hash `(user_id, updated_at)`
+* because we are only filtering on `user_id` and
+  querying `updated_at`, the index pages could be much more
+  dense can we could process fewer pages per disk!
+  Because each B+ tree record would be 8-16 bytes rather than ~200.
+    * the general term is *covering index* or *index-only scan*:
+      when the query can be answered only by the index! So cool. 
+
+### (c)
+
+Merkle Trees: what do I know about them before reading the solution?
+* they somehow hash chunks of data, so you can send data
+  in pieces and verify that you've gotten right data (like in a torrent).
+
+I think they work something like this:
+![](merkle.svg)
+
+The idea is that each of you can compute and compare `hABCD`. 
+If they differ, then you compare `hAB` and `hCD`. Say
+`hAB` match: then you know those rows are the same.
+If `hCD` differs, then at last you compare `hC` and `hD`
+to find out which row is different.
+
+
+
 
 
 
