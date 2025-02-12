@@ -255,6 +255,60 @@ If they differ, then you compare `hAB` and `hCD`. Say
 If `hCD` differs, then at last you compare `hC` and `hD`
 to find out which row is different.
 
+What does the implementation look like?
+* each time a row is updated, the system has to 
+  recalculate the hash for `updated_at` and all
+  the parents nodes of the tree.
+* But since this is a binary tree, that's only
+  log2(100,000) < 17 hashes.
+* Then the client and server can exchange hashes, 
+  starting with the root, following the hashes
+  that aren't equal until we find a row that's different.
+* That should be better than exchanging all the data 
+  (even if it's only 20 MB).
+
+
+From the solution:
+* the problem with sending nodes back and forth,
+  starting with the root is that you have to pay
+  for the latency each time
+* across the US, that's up to 60 ms to single a single
+  hash. 
+
+Send the tree
+* Instead, you want to send the entire tree
+* if you send the entire tree, that's 200,000 hashes
+  (100,000 leaves, and a binary tree has 2x as many nodes
+  as leaves)
+* That's 200,000 * 8 bytes = 1.6 MB
+    * I don't have a good intuition here, 
+      but the solution implies that's a lot
+      for mobile client to handle. 
+    * Rules of thumb for 4G
+        * 50-100 ms latency
+        * 2 MB / s download
+        * inconsistent performance
+* And you have to hash twice as much, so 800 us = 0.8 ms
+
+Send part of the tree
+* Fix a tree height, like 8. 
+  Then leave nodes are 2^8 = 256 and total nodes are 
+  2 * 2^9 = 512
+* The total data is 512 * 8 bytes = 4096 bytes = 4 KB
+* So we still need to hash 100,000 leaves
+  in 100,000 / 256 = 390 takes 100 us. 
+  And then hash and 256 hashes, but that's still about 400 us.
+* The important thing is the data over the network is very
+  small, while giving the client an manage number of hashes
+  to check for consistency. 
+
+Sync
+* when hashes don't match, client requests 
+  390 * 256 bytes ~ 100 KB from server. 
+
+
+
+
 
 
 
