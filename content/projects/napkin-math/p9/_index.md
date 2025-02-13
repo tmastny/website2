@@ -114,11 +114,74 @@ Now the total time is a sequential scan of the
 That's much closer to the 10 ms (or 2 ms) we got
 from the nightly benchmark. 
 
+### (b)
+
+Once again, (b) is essentially the same as (a).
+The difference is that we add each element of
+`title` and `see` to the output, but use the condition
+when they are equal to deduplicate:
+
+```python
+output = []
+title, see = 0, 0
+while title < len(title_ids) and see < len(see_ids):
+    if title_ids[title] == see_ids[see]:
+        output.append(title_ids[title])
+        title += 1
+        see += 1
+    elif title_ids[title] < see_ids[see]:
+        title += 1
+        output.append(title_ids[title])
+    else:
+        see += 1
+        output.append(see_ids[see])
+
+output.extend(title_ids[title:])
+output.extend(see_ids[see:])
+```
 
 ## Solution
 
 https://sirupsen.com/napkin/problem-10
 
+### (a)
 
+One rule of thumb to keep in mind:
+* sequential reading from disk is only 
+  ~2x slower than main memory:
+    * 100 us / 1 MB vs 200 us / 1 MB
 
+### (b)
 
+Nice idea from the solution. We are very
+likely to send much more data than the intersection,
+so we might want to think about network speeds:
+* 40 ms / 1 MB * 24 MB = 960 ms ~ 1 second
+
+Likely opportunities to paginate the results,
+so we would only have to send the first few matches,
+significantly reducing the amount of data sent.
+
+### (d)
+
+One idea to think about is that is how documents
+are inserted into the inverse index. Remember each 
+document is given a unique id greater than all other documents.
+And if you insert documents in order of modified,
+it's likely that the actual products are sorted, 
+or almost sorted. 
+
+For algorithms like merge sort, that can greatly speed
+up sorting from the 1 MB / 5 ms reference.
+
+For example, say we are have the following inverted index:
+```
+"apple" -> [doc1, doc5, doc8]
+```
+Then the doc value could map the doc ids to a modified date:
+```
+doc1 -> "2024-02-12", doc2 -> "2024-02-11"
+```
+
+Either that modified date is correlated with the doc id
+as we discussed above (so it's almost sorted)
