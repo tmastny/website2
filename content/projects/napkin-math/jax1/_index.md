@@ -286,3 +286,51 @@ we use a vector to map it to a different vector. Likewise, another
 way to think is that we can encode more information in the transformation:
 instead of D weights, there are DF weights. 
 
+So before I do the math, my instinct is that this will be compute bound
+at a much lower number, since we are doing many more operations per byte.
+
+In particular, for each row:
+* we do 2DF ops
+* then we do that B times for each output
+* 2BDF
+
+Ah, actually the Ops are exactly the same! 
+That actually makes sense thinking about it a little more,
+because we are still doing the same number of operations per 
+each output element. In other words, the compute-bound threshold
+then should be higher because we have to load more bytes,
+even though the ops are the same.
+
+Compute bound if:
+```
+2BDF / (BD + BDF + BF) = 2DF / (D + DF + F) > 486
+```
+
+This makes sense, because now most of the data is in the
+DF matrices per element. 
+
+From solution:
+* simplification is that BDF dominations denominator
+    * or could have seen that DF dominates the denominator
+      that I found above. 
+    * this is an important pattern to remember
+* 2BDF / BDF = 2
+
+Since it's constant, and 2 >/ 486, we are always comms bound.
+Our TPU would have to have basically the same peak OPs/s as
+bytes/s to be compute bound, which is impossible.
+
+## q5
+
+Let's look at fp16 Ops, since that's what we were using:
+* 1671e12 FLOPs/s / 2 = 835.5e12
+* 3.9e12 bytes/s
+
+Arthemtic intensity:
+* 835.5e12 / 3.9e12 = 214
+
+So we are compute bound if B > 214.
+
+For SXM:
+* (1979 / 2)e12 / 3.35e12 = 295
+
