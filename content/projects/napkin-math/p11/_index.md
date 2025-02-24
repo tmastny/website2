@@ -1,6 +1,6 @@
 # problem 11
 
-https://sirupsen.com/napkin/problem-11
+https://sirupsen.com/napkin/problem-11-circuit-breakers
 
 The circuit breaker pattern is a way to fail fast
 and prevent a failure from cascading: or causing
