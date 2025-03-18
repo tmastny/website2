@@ -1,3 +1,8 @@
+---
+title: "Jax Ch2"
+date: 2024-02-20
+---
+
 # Thinking about TPUs
 
 MXU performances

@@ -1,3 +1,8 @@
+---
+title: "Problem 14"
+date: 2024-03-05
+---
+
 # problem 14
 
 https://sirupsen.com/napkin/problem-14-using-checksums-to-verify

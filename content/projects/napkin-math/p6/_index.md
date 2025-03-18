@@ -1,5 +1,6 @@
 ---
 title: "Problem 6"
+date: 2024-02-14
 ---
 
 # Problem 6

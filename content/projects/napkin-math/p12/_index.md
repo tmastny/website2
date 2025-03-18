@@ -1,3 +1,8 @@
+---
+title: "Problem 12"
+date: 2024-03-01
+---
+
 # problem 12
 
 https://sirupsen.com/napkin/problem-12-recommendations

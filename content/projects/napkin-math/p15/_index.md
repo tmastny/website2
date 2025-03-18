@@ -1,3 +1,8 @@
+---
+title: "Problem 15"
+date: 2025-03-17
+---
+
 # problem 15
 
 https://sirupsen.com/napkin/problem-15

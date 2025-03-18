@@ -1,3 +1,8 @@
+---
+title: "Problem 13"
+date: 2024-03-03
+---
+
 # problem 13
 
 https://sirupsen.com/napkin/problem-13-filtering-with-inverted-indexes
