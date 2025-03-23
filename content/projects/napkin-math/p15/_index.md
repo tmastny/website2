@@ -25,8 +25,7 @@ If sending coast-to-coast, the fastest possible ACK would be
 60 ms (RTT, round trip time).
 * but we also need to include the 3-way handshake
 * 60 ms: SYN, SYN-ACK
-* 60 ms: ACK/GET, ACK response
-* 120 ms to get the first byte
+* 120 ms: ACK/GET, ACK/response with first bytes
 
 So how much data in the initial window?
 * 10 packets * 1440 bytes / packet = 14400 bytes = 14.4 KB
@@ -52,3 +51,20 @@ Let's check the math by looking at the size of my blog:
 I'm very happy to send imagines and JavaScript animations,
 but the font is way more than I thought! I might have to go through
 some of the standard fonts again. 
+
+## Solution
+5 round trips for client to receive first HTML byte from server:
+
+* 1 DNS - ignored because often cached or close by
+* 1 TCP - SYN, SYN+ACK (next is ACK and TLS handshake at the same time)
+* 2 TLS - (TLS connection, Cert+key), (key, acknowledge)
+* 1 HTTP - GET, HTML
+
+Example: at 60 ms RTT from US coast-to-coast: 
+that's 300 ms to first HTML byte. 
+And you can only receive 14.4 KB of data until you have to send the first ACK,
+which is another 60 ms RTT for set of data 
+(assuming no congestion, the server should sent 28.8 KB, doubling each round trip
+according to it's congestion control algorithm).
+* 10 packets * 1440 bytes / packet = 14400 bytes = 14.4 KB
+
