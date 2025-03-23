@@ -1,4 +1,9 @@
-# Problem 9
+---
+title: "Problem 9"
+date: 2024-02-24
+---
+
+# problem 9
 
 https://sirupsen.com/napkin/problem-9
 

@@ -1,3 +1,8 @@
+---
+title: "Problem 11"
+date: 2024-02-28
+---
+
 # problem 11
 
 https://sirupsen.com/napkin/problem-11-circuit-breakers

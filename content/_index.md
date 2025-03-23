@@ -21,6 +21,9 @@ I write about low-level programming, data science, and algorithms.
 [All my posts.](/blog)
 
 ## Key Projects
+* [Dead Rise](https://tmastny.itch.io/dead-rise)
+  * a handmade, 8-bit, fantasy console shooter.
+  * original soundtrack available on [Spotify](https://open.spotify.com/album/2NDjbaV75fAzbkrdobMuiH?si=thOdVn6eS0CUoq_t2wmeqw).
 * [sass](https://github.com/rstudio/sass/)
   * low-level wrapper around libsass. Helps run [Shiny](https://github.com/rstudio/shiny) and [RMarkdown](https://github.com/rstudio/rmarkdown).
   * over [900k downloads per month](https://cranlogs.r-pkg.org/badges/sass).

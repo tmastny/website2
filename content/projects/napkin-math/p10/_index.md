@@ -1,8 +1,13 @@
+---
+title: "Problem 10"
+date: 2024-02-26
+---
+
 # problem 10
 
 https://sirupsen.com/napkin/problem-10
 
-Is MySQL’s maximum transactions per second equivalent to fsyncs per second?
+Is MySQL's maximum transactions per second equivalent to fsyncs per second?
 
 fsync background
 * when calling `write` on a file, the data is stored in the OS's page buffer

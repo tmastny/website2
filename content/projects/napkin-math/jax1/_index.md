@@ -1,3 +1,8 @@
+---
+title: "Jax Ch1"
+date: 2024-02-18
+---
+
 # jax 1
 
 ## rooflines

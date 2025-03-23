@@ -4,6 +4,15 @@ title: "Projects"
 
 # Projects
 
+* [Dead Rise](https://tmastny.itch.io/dead-rise)
+  * a handmade, 8-bit, fantasy console shooter.
+  * original soundtrack available on [Spotify](https://open.spotify.com/album/2NDjbaV75fAzbkrdobMuiH?si=thOdVn6eS0CUoq_t2wmeqw).
+  * credits
+    * [Michaela Mastny](https://www.instagram.com/michaelalifts_/profilecard/?igsh=MW5ocDV4ODhsY2k1bw%3D%3D) handcrafted each pixel and did the graphic design
+    * [Ian Wright](https://open.spotify.com/artist/2L6WmcioMhfNMZ9TssRU2v) wrote the original soundtrack and sound effects
+    * I designed the levels and programmed the game in C++ using the [PPU466](http://graphics.cs.cmu.edu/courses/15-466-f20/game1.html) API. I also compiled the final release to wasm.  
+
+<!-- spacing -->
 * [sass](https://github.com/rstudio/sass/)
   * low-level wrapper around libsass. Part of the [Shiny](https://github.com/rstudio/shiny) backend,
     a web framework for R with millions of downloads per year.
