@@ -21,6 +21,30 @@ class: center, middle, inverse, title-slide
 ---
 
 
+What I want you to take away
+
+--
+* what branch prediction is and how it works
+--
+
+* how branch prediction was exploited 
+--
+
+* hardware is understandable!
+
+???
+
+What branch prediction is and how it works
+how branch prediction was exploited
+and that hardware is understandable! 
+- whether you are a security researcher or software dev,
+  you can learn to poke around your computer's hardware
+  and have a lot of fun!
+
+Let's start with understanding branch prediction.
+
+---
+
 ![](zen-die-shot.jpg)&lt;!-- --&gt;
 
 Die shot of a Zen CPU core by AMD (~1,400,000,000 transistors)
@@ -36,8 +60,17 @@ So it must be critical for performance.
 The size rivals L1 cache, which is critical for performance.
 
 Why does it take up so much space?
+- why not add more memory?
+- or more FLOPs? FLOPs are how many operations a computer can do.
+- when computer go *burrr*, that's the FLOPs
+
 To answer, we first need to understand at a basic level
 how the CPU works.
+
+As an aside: one the reasons why GPUs are "faster" than CPUs
+is that they are specific purpose: all this extra die space
+related to branch prediction, ALU, scheduling can be replaced
+with more memory and more FLOPs.
 
 ---
 
@@ -78,14 +111,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 So at the top are instructions the CPU needs to process
-and each box at the bottom is a stage that is an isolated
-hardware unit that can function independently.
-Don't worry about the details,
-but you should know that an instruction needs to go through
-each stage.
+and each box at the bottom is a stage each instruction
+must go through. 
 
-But this process is really inefficient, because
+Now, let's step through the instructions like we were in 
+a debugger. 
+
+One of the key differences between software and hardware
+is that each "box" is a hardware unit. They can function
+independently and in parallel.
+This means in our current model,
 those hardware units are just sitting there idle.
+
+This idea requires a change of mental models: 
+software engineers typically think of programs
+as executing a single step at a time, like what
+happens when you step through a program with a debugger.
+But hardware requires a different thought process.
 
 What we want is an assembly line!
 
@@ -139,6 +181,12 @@ which makes the CPU much, much faster.
 So much faster, CPU manufactures are willing
 to use 20% of the die space to make this happen.
 
+Another metaphor is a waterslide: we could wait for the
+kid to get the bottom before we allow the next kid to go.
+Or we could push the next one down right after the other. 
+
+---
+![](water.gif)
 ---
 
 But what do you do about branches?
@@ -185,6 +233,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ???
 
+`beq` is a branch statement: like if/else in a high-level language.
+There are 3 components: the two arguments `r1` and `r2` and the 
+label the CPU should jump to if they are equal.
+
+How does this work with the assembly line?
+
 The EX stage is part of the CPU that calculates the operands
 of the instruction:
 in this case, comparing if the r1 and r2 registers are equal.
@@ -200,6 +254,8 @@ it has to throw away all the work it's already done!
 Throwing away work and starting over slows down the CPU:
 so how do you mitigate this?
 
+---
+![](giphy.gif)
 ---
 
 Add hardware!
@@ -236,9 +292,13 @@ So what is the hardware in the branch prediction unit?
 (with a less complicated implementation).
 The memory stores the branch history, which is
 critical for prediction.
+* the cross hatching are `word lines` and `bit lines`:
+  the wiring to lookup and retrieve data from memory
 
-* Logic: this is the complicated feedback
-mechanism to predict and recover from branches.
+
+* Logic: used in conjunction with the memory to compute
+  and predict whether a branch should be take
+* simpler "counter" schemes to basic neural networks
 
 --
 
