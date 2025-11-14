@@ -21,12 +21,13 @@ knitr::opts_chunk$set(
 ```
 
 Cookin' Beets is a kitchen simulation inspired by Cook, Serve, Delicious!
-and Overcooked. The player receives orders and must gather, prepare, cook,
+and Overcooked for the [Playdate](https://play.date). 
+The player receives orders and must gather, prepare, cook,
 and assemble dishes to satisfy customers.  
 
 I also wanted Cookin' Beets to be a rhythm game, or at least
 have reactive music elements based on the demand surges and cooking timers.
-Those elements were never implemented or designed, but was the main
+Those elements were never implemented or designed, but were the main
 inspiration for the name: beats <-> beets. 
 
 Why the Playdate? One of the main reasons I was able to finish my previous game 
@@ -34,7 +35,7 @@ Why the Playdate? One of the main reasons I was able to finish my previous game
 was the constrained complexity. 
 I built the game for an [NES-like fantasy console](https://github.com/15-466/15-466-f23-base1?tab=readme-ov-file),
 which was the perfect techical and artistic challenge.
-I could fully understand the system and art, without being overwhelmed by the complexity of modern and professional engines. 
+I could fully understand the system and art, without being overwhelmed by the complexity of modern engines. 
 
 The Playdate seemed like a similar opportunity, offering a tight
 Lua development kit, 1-bit display, and some unique design opportunities
