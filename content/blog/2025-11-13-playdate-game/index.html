@@ -1,0 +1,134 @@
+---
+title: 'Sendoff for Cookin'' Beets: My Abandoned Playdate Game'
+author: ~
+date: '2025-11-13'
+slug: sendoff-cookin-beets-playdate
+categories: []
+tags: [playdate, game development, lua, pixel art]
+description: 'A postmortem on Cookin'' Beets, my abandoned Playdate game project.'
+draft: false
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#why-abandoned" id="toc-why-abandoned">Why Abandoned?</a>
+<ul>
+<li><a href="#art-complexity" id="toc-art-complexity">Art Complexity</a></li>
+<li><a href="#level-design" id="toc-level-design">Level Design</a></li>
+</ul></li>
+<li><a href="#game-overview" id="toc-game-overview">Game Overview</a></li>
+</ul>
+</div>
+
+<p>Cookin’ Beets is a kitchen simulation inspired by Cook, Serve, Delicious!
+and Overcooked for the <a href="https://play.date">Playdate</a>.
+The player receives orders and must gather, prepare, cook,
+and assemble dishes to satisfy customers.</p>
+<p>I also wanted Cookin’ Beets to be a rhythm game, or at least
+have reactive music elements based on the demand surges and cooking timers.
+Those elements were never implemented or designed, but were the main
+inspiration for the name: beats &lt;-&gt; beets.</p>
+<p>Why the Playdate? One of the main reasons I was able to finish my previous game
+<a href="https://tmastny.itch.io/dead-rise">Dead Rise</a>
+was the constrained complexity.
+I built the game for an <a href="https://github.com/15-466/15-466-f23-base1?tab=readme-ov-file">NES-like fantasy console</a>,
+which was the perfect techical and artistic challenge.
+I could fully understand the system and art, without being overwhelmed by the complexity of modern engines.</p>
+<p>The Playdate seemed like a similar opportunity, offering a tight
+Lua development kit, 1-bit display, and some unique design opportunities
+with the crank. My intuition was correct about the dev environment:
+working with the Playdate SDK was awesome and I learned a lot about
+Lua, game APIs, and even a bit of embedded C.
+But I was quickly overwhelmed by the art and level design,
+and soon abandoned the project.</p>
+<div id="why-abandoned" class="section level2">
+<h2>Why Abandoned?</h2>
+<div id="art-complexity" class="section level3">
+<h3>Art Complexity</h3>
+<p>Dead Rise had an 8-bit, 3 color palette sprite system. Assembling
+a tileset was straightforward and fun with <a href="https://www.piskelapp.com" class="uri">https://www.piskelapp.com</a>
+even for my wife and I who are not artists.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-1"></span>
+<img src="tileset-3rows-zoom.png" alt="Dead Rise handmade tileset"  />
+<p class="caption">
+Figure 1: Dead Rise handmade tileset
+</p>
+</div>
+<p>The beauty of 8-bit is that the art style is very forgiving:
+you can evoke your idea without having to accurately represent it:</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-2"></span>
+<img src="p-row.png" alt="Hero, ghost, grave stone"  />
+<p class="caption">
+Figure 2: Hero, ghost, grave stone
+</p>
+</div>
+<p>I choose the Playdate platform because I thought it would also be
+simple to make art for.
+The Playdate has a 1-bit black and white display, so I could continue
+to use pixel art. And the Playdate as a very high pixel density,
+so I could fill the kitchen with lots of ingredients and stations.</p>
+<p>But the Playdate’s high pixel density meant that I couldn’t just draw simple shapes:
+the image needed to be recognized as the ingredient, so the player could distinguish between an onion and a hamburger patty. This makes it harder to “evoke” or “allude” to an ingredient, especially
+when I couldn’t use color.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-3"></span>
+<img src="lettuce.png" alt="Lettuce? Patty? Bun?"  />
+<p class="caption">
+Figure 3: Lettuce? Patty? Bun?
+</p>
+</div>
+</div>
+<div id="level-design" class="section level3">
+<h3>Level Design</h3>
+<p>My vision was to have multiple kitchens, each with different
+layouts, ingredients, and customer orders, like the restaurants
+in Cook, Serve, Delicious!</p>
+<p>Level design would be oriented around the complexity and timing of orders.
+Orders would start with simple combinations of ingredients and progress
+in complexity. And as the player progressed, the timing of the orders
+would get tighter.</p>
+<p>I think the idea is solid, but I wasn’t motivated to
+tinker and iterate. I had more fun making tooling to design levels by customizing placement,
+stations, and ingredients that actually making the levels.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-4"></span>
+<img src="placement-tooling.png" alt="Developers could tag the level with zones and ingredients"  />
+<p class="caption">
+Figure 4: Developers could tag the level with zones and ingredients
+</p>
+</div>
+<p>For example, I made a small JavaScript app to load background level images
+that you could use to tag zones for ingredient placement and cooking stations.</p>
+</div>
+</div>
+<div id="game-overview" class="section level2">
+<h2>Game Overview</h2>
+<p>Each kitchen is a fixed width background image:
+<img src="bg.png" /></p>
+<p>The playdate crank moves a window along the background image
+to reach different areas of the kitchen:</p>
+<p><img src="crank-rec.gif" /></p>
+<p>The core gameplay loop:</p>
+<ul>
+<li>orders come in at the kitchen window
+<ul>
+<li>orders are timed</li>
+<li>orders have ingredients that must be prepared, cooked, and assembled</li>
+</ul></li>
+<li>the player controls a cursor to select ingredients and cooking stations.
+<ul>
+<li>ingredients like <code>patty</code> must be cooked on the grill</li>
+<li>others like <code>lettuce</code> must be prepared by manually chopping them on the cutting station</li>
+</ul></li>
+<li>the ingredients are assembled on a plate and delivered to the order.</li>
+</ul>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unnamed-chunk-5"></span>
+<img src="g-row.png" alt="Order, grilling, plate"  />
+<p class="caption">
+Figure 5: Order, grilling, plate
+</p>
+</div>
+<p><img src="gameplay.gif" /></p>
+</div>
