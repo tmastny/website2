@@ -6,7 +6,7 @@ slug: sendoff-cookin-beets-playdate
 categories: []
 tags: [playdate, game development, lua, pixel art]
 description: 'A postmortem on Cookin'' Beets, my abandoned Playdate game project.'
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
