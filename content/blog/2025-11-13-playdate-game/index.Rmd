@@ -65,7 +65,7 @@ you can evoke your idea without having to accurately represent it:
 knitr::include_graphics("p-row.png")
 ```
 
-I choose the Playdate platform because I thought it would also be
+I chose the Playdate platform because I thought it would also be
 simple to make art for.
 The Playdate has a 1-bit black and white display, so I could continue
 to use pixel art. And the Playdate as a very high pixel density,
