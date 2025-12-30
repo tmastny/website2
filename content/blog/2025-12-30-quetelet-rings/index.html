@@ -1,0 +1,153 @@
+---
+title: 'Quetelet Rings'
+author: ~
+date: '2025-12-30'
+slug: quetelet-rings
+categories: []
+tags: []
+description: ''
+draft: false
+output:
+  blogdown::html_page:
+    toc: true
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#centers-of-other-optical-phenomena" id="toc-centers-of-other-optical-phenomena">Centers of other optical phenomena</a></li>
+<li><a href="#why-are-there-bands-of-color" id="toc-why-are-there-bands-of-color">Why are there bands of color?</a></li>
+<li><a href="#why-are-the-bands-circular" id="toc-why-are-the-bands-circular">Why are the bands circular?</a></li>
+<li><a href="#positions-of-light-and-eye" id="toc-positions-of-light-and-eye">Positions of Light and Eye</a>
+<ul>
+<li><a href="#c-h" id="toc-c-h">c = h</a></li>
+<li><a href="#c-h-1" id="toc-c-h-1">c &lt; h</a></li>
+<li><a href="#c-h-2" id="toc-c-h-2">c &gt;&gt; h</a></li>
+<li><a href="#c-h-and-c-h" id="toc-c-h-and-c-h">c &lt; h and c = h</a></li>
+</ul></li>
+<li><a href="#setup" id="toc-setup">Setup</a></li>
+</ul>
+</div>
+
+<p>I made <a href="https://en.wikipedia.org/wiki/Quetelet_rings">Quetelet rings</a> at home!</p>
+<p><img src="rings.jpeg" /></p>
+<p>There’s a few great mysteries here to explore:</p>
+<ul>
+<li>why are there color bands?</li>
+<li>why does the color pattern change (unlike a rainbow)?</li>
+<li>why are the colored bands circular?</li>
+<li>why are the rings not centered on the light source?</li>
+</ul>
+<p>Quetelet rings are usually skipped over in Optics textbooks,
+but there is a wonderful explanation in the following paper:</p>
+<blockquote>
+<p>de Witte, A. J. (1967). Interference in scattered light. <em>American Journal of Physics</em>, 35(4), 301–313. <a href="https://doi.org/10.1119/1.1974069" class="uri">https://doi.org/10.1119/1.1974069</a></p>
+</blockquote>
+<p>I’d like to focus the last question: why are the rings not centered on the light source?
+Where are the rings centered?</p>
+<div id="centers-of-other-optical-phenomena" class="section level2">
+<h2>Centers of other optical phenomena</h2>
+<p>A <a href="https://en.wikipedia.org/wiki/Corona_(optical_phenomenon)">Corona’s</a> center is either the sun or the moon,
+the source of the light:</p>
+<p><img src="solar-corona.jpg" /></p>
+<p>A rainbow’s center is the <a href="https://en.wikipedia.org/wiki/Antisolar_point">antisolar point</a>:</p>
+<p><img src="antisolar.png" width="50%" height="50%" style="display: block; margin: auto;" /></p>
+<p>For Quetelet rings, the center is similar to the rainbow and changes based on the geometry
+of the light and observer.</p>
+</div>
+<div id="why-are-there-bands-of-color" class="section level2">
+<h2>Why are there bands of color?</h2>
+<p>The key physical explanation is interference due to optical path difference
+<a href="https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference">(See here for a general explanation).</a>.
+If two rays from the same source reach your eye with different path lengths,
+the resulting wave superposition shifts the wavelength so the resulting color is different.</p>
+<p>For Quetelet rings, the two different paths are:</p>
+<ol style="list-style-type: decimal">
+<li>light refracts into the mirror and then scatters off the dust</li>
+<li>light scatters off the dust and then refracts into the mirror</li>
+</ol>
+<p>de Witt derives the path difference as</p>
+<p><span class="math display">\[\Delta = a(\cos\alpha - \cos\beta) \]</span></p>
+<p>from the following diagram:
+<img src="dewitt-path-difference.png" width="70%" height="70%" style="display: block; margin: auto;" />
+Note that I’m simplifying the constants here into a single term <span class="math inline">\(a\)</span> for simplicity.</p>
+</div>
+<div id="why-are-the-bands-circular" class="section level2">
+<h2>Why are the bands circular?</h2>
+<p>Now the path difference <span class="math inline">\(\Delta\)</span> only depends on the angles <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>.
+So now we need to find the corresponding coordinates on the mirror that satisfy those angles
+to find the shape of the bands.</p>
+<p>First, let’s use small angle approximation to get
+<span class="math display">\[\Delta \approx a&#39;(\beta^2 - \alpha^2) \]</span></p>
+<p>Now, we want to find the set of points <span class="math inline">\((x, y)\)</span> that satisfy this geometry:</p>
+<p><img src="coordinate.png" width="70%" height="70%" style="display: block; margin: auto;" /></p>
+<p>With some trigonometry and the small angle approximation <span class="math inline">\(\theta \approx \tan\theta\)</span>,
+we can derive
+<span class="math display">\[
+\begin{align}
+\alpha &amp;\approx \frac{\sqrt{(x - x_L)^2 + (y - y_L)^2}}{c} \\
+\beta &amp;\approx \frac{\sqrt{(x - x_E)^2 + (y - y_E)^2}}{h}
+\end{align}
+\]</span></p>
+<p>So for some new constant <span class="math inline">\(K\)</span>, we have
+<span class="math display">\[K = \frac{(x - x_E)^2 + (y - y_E)^2}{h^2} - \frac{(x - x_L)^2 + (y - y_L)^2}{c^2}\]</span></p>
+<p>Working out the algebra, we get a center point
+<span class="math display">\[x_C = \frac{c^2x_E - h^2x_L}{c^2 - h^2}\]</span>
+(likewise for <span class="math inline">\(y_C\)</span>).</p>
+</div>
+<div id="positions-of-light-and-eye" class="section level2">
+<h2>Positions of Light and Eye</h2>
+<p>Now we can get some good intuition for where the center of the rings will be
+based on the geometry of the light and eye.</p>
+<div id="c-h" class="section level3">
+<h3>c = h</h3>
+<p>When the light and eye are the same distance from the mirror, <span class="math inline">\(c = h\)</span>,
+the center point goes to infinity, so the bands appear as straight lines.</p>
+</div>
+<div id="c-h-1" class="section level3">
+<h3>c &lt; h</h3>
+<p>What about when the camera is twice as far from the light, <span class="math inline">\(h = 2c\)</span>? Let’s say <span class="math inline">\(x_E = 0\)</span>.
+Then
+<span class="math display">\[ x_C = \frac{c^2 \cdot 0 - (2c)^2 x_L}{c^2 - (2c)^2} = \frac{-4c^2 x_L}{c^2 - 4c^2} = \frac{-4c^2 x_L}{-3c^2} = \frac{4x_L}{3} \]</span></p>
+<p>This means the center of the rings is past the light source, from the perspective of the camera!</p>
+<p><img src="rings-annotated.png" /></p>
+</div>
+<div id="c-h-2" class="section level3">
+<h3>c &gt;&gt; h</h3>
+<p>Lastly, when <span class="math inline">\(c &gt;&gt; h\)</span>, like when the source of the light is the sun, the equation simplifies to
+<span class="math display">\[ x_C \approx \frac{c^2 x_E - h^2 x_L}{c^2 - h^2} \approx \frac{c^2 x_E}{c^2} = x_E \]</span></p>
+<p>That’s the antisolar point, just like in the rainbow! Naturally occuring Quetelet rings
+are very rare, but have been documented on algae films in ponds. Here are some
+key references if you want to see more examples of naturally occurring Quetelet rings:</p>
+<ul>
+<li><a href="https://www.uni-muenster.de/imperia/md/content/fachbereich_physik/didaktik_physik/publikationen/433_colored_rings_on_dusty_surfaces.pdf" class="uri">https://www.uni-muenster.de/imperia/md/content/fachbereich_physik/didaktik_physik/publikationen/433_colored_rings_on_dusty_surfaces.pdf</a></li>
+<li><a href="https://atoptics.wordpress.com/2013/09/14/algae-optics-in-wisconsin/" class="uri">https://atoptics.wordpress.com/2013/09/14/algae-optics-in-wisconsin/</a></li>
+<li><a href="https://ohio-optics.blogspot.com/2013/08/algae-optics-in-wisconsin.html" class="uri">https://ohio-optics.blogspot.com/2013/08/algae-optics-in-wisconsin.html</a></li>
+</ul>
+<p><img src="antisolar-rings.jpg" /></p>
+</div>
+<div id="c-h-and-c-h" class="section level3">
+<h3>c &lt; h and c = h</h3>
+<p>Here’s an image that captures the first two cases, when the light and camera are the
+same distance to the mirror and when the camera is twice as far away.</p>
+<p><img src="center.jpeg" /></p>
+<p>This image is really helpful because you can see the position of the camera reflected in the mirror.</p>
+<p>The <span class="math inline">\(c &lt; h\)</span> case is the white light and as described above you see the lens, light source, and center
+in sequence.</p>
+<p>The <span class="math inline">\(c = h\)</span> case is the reddish light (from my smartphone flashlight passing through my hand).
+The bands appear as straight lines.</p>
+</div>
+</div>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<p>First, I cheated a bit. This isn’t only a picture of a mirror:
+it’s the an image of a mirror through a beamsplitter.</p>
+<p>Here’s the pullback shot, which explains the setup:</p>
+<p><img src="capture.jpeg" /></p>
+<p>With the diagram:</p>
+<p><img src="setup-diagram.png" /></p>
+<p>And two images of the setup in light:</p>
+<p><img src="setup-wide.jpeg" /></p>
+<p>And more from the caemera’s perspective:</p>
+<p><img src="setup-narrow.jpeg" /></p>
+</div>
