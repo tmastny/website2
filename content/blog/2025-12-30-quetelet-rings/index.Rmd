@@ -44,7 +44,7 @@ Where are the rings centered?
 
 ## Centers of other optical phenomena
 
-A [Corona's](https://en.wikipedia.org/wiki/Corona_(optical_phenomenon)) center is either the sun or the moon,
+A [corona's](https://en.wikipedia.org/wiki/Corona_(optical_phenomenon)) center is either the sun or the moon,
 the source of the light:
 
 ![](solar-corona.jpg)
@@ -152,7 +152,7 @@ Here are some references if you want to learn more:
 This behavior is similar to rainbows, but with an important difference.
 In a rainbow the center is always the antisolar point, but in Quetelet rings
 the antisolar point is not the center: it's the point on the other side of the circle,
-intersecting the image of the sun and the center.
+intersecting the image of the light and the center.
 
 ### c = h and c < h
 
@@ -177,9 +177,6 @@ Then
 \[ x_C = \frac{c^2 \cdot 0 - h^2 x_L}{c^2 - h^2} \approx \frac{h^2 x_L}{\epsilon} \]
 
 The center would still be past the light source, but very far away.
-To my eye, the bands appear slightly curved towards the lens,
-but according to the geometry that must be an artifact of the lens or mirror
-rather than a optical property of the Quetelet rings.
 
 ## Capturing the full circle
 
