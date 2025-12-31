@@ -39,7 +39,7 @@ but there is a wonderful explanation in the following paper:
 
 > de Witte, A. J. (1967). Interference in scattered light. *American Journal of Physics*, 35(4), 301–313. https://doi.org/10.1119/1.1974069
 
-I'd like to focus the last question: why are the rings not centered on the light source?
+I'd like to focus on the last question: why are the rings not centered on the light source?
 Where are the rings centered?
 
 ## Centers of other optical phenomena
@@ -126,7 +126,7 @@ the center point goes to infinity, so the bands appear as straight lines.
 
 ### c < h
 
-What about when the camera is twice as far from the light, $h = 2c$? Let's say $x_E = 0$.
+What about when the eye is twice as far from the mirror as the light, $h = 2c$? Let's say $x_E = 0$.
 Then
 \[ x_C = \frac{c^2 \cdot 0 - (2c)^2 x_L}{c^2 - (2c)^2} = \frac{-4c^2 x_L}{c^2 - 4c^2} = \frac{-4c^2 x_L}{-3c^2} = \frac{4x_L}{3} \]
 
@@ -177,7 +177,7 @@ Since you can see the position of the lens and the light source in the mirror,
 we can easily verify the center geometries.
 
 The $c < h$ case is the white light, with circular colored bands.
-As described above you see the lens, light source, and center in that sequence.
+As described above, you see the lens, light source, and center in that sequence.
 
 The $c = h$ case is the reddish light (from my smartphone flashlight passing through my hand).
 The bands appear as straight lines. Again, let's imagine $x_E = 0$ and $c \approx h$.
@@ -193,7 +193,7 @@ part of the rings. That's because the light source itself will be in the path of
 
 ![](block.jpeg)
 
-There's different trade-offs you can make to see different shapes,
+There are different trade-offs you can make to see different shapes,
 but some of the reflected light from the
 source will not make it to the camera:
 ![](block-circle.jpeg)
