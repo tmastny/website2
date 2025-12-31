@@ -154,6 +154,14 @@ In a rainbow the center is always the antisolar point, but in Quetelet rings
 the antisolar point is not the center: it's the point on the other side of the circle,
 intersecting the image of the light and the center.
 
+This image ([source](https://atoptics.wordpress.com/2011/05/14/chromulina-rosanoffii-as-a-cause-of-optical-phenomena-on-water-surface/)) is a perfect illustration:
+
+![](fisheye.jpg)
+
+The center of the image is the center of the rings, $(x_C, y_C)$.
+The shadow of the camera is the antisolar point and you can see it's
+directly opposite the image of the sun across the center.
+
 ### c = h and c < h
 
 Here's an image that captures the first two cases, when the light and camera are the
