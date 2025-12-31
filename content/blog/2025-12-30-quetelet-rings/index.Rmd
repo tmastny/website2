@@ -26,12 +26,12 @@ I made [Quetelet rings](https://en.wikipedia.org/wiki/Quetelet_rings) at home!
 
 ![](rings.jpeg)
 
-Quetelet rings are color rings that appear when light reflects off a a dusty
+Quetelet rings are colored rings that appear when light reflects off a dusty
 mirror. There are many fun questions to explore:
 
-* why are there color bands?
+* why are the bands colored?
 * why does the color pattern change (unlike a rainbow)?
-* why are the colored bands circular?
+* why are the bands circular?
 * why are the rings not centered on the light source?
 
 Quetelet rings are usually skipped over in Optics textbooks,
@@ -139,7 +139,7 @@ This means the center of the rings is past the light source, from the perspectiv
 Lastly, when $c >> h$, like when the source of the light is the sun, the equation simplifies to
 \[ x_C \approx \frac{c^2 x_E - h^2 x_L}{c^2 - h^2} \approx \frac{c^2 x_E}{c^2} = x_E \]
 
-This is the behavor of naturally occuring Quetelet rings.
+This is the behavior of naturally occurring Quetelet rings.
 These are very rare, but have been documented on algae films in ponds.
 Here are some references if you want to learn more:
 
@@ -165,7 +165,7 @@ The camera that took the picture is not the phone, but the larger lens right abo
 
 ![](center.jpeg)
 
-Since you can see the positoin of the lens and the light source in the mirror,
+Since you can see the position of the lens and the light source in the mirror,
 we can easily verify the center geometries.
 
 The $c < h$ case is the white light, with circular colored bands.
@@ -202,7 +202,7 @@ Here's the pullback shot:
 The flashlight is shooting through the pane of glass positioned at a 45 degree angle.
 Most of the light passes through onto the red piano, but ~5% reflects off the glass into the mirror.
 
-The mirror reflects the light _back_ throught glass pane: this time most of the light
+The mirror reflects the light _back_ through the glass pane: this time most of the light
 travels through the glass pane into the camera.
 
 Setup diagram:
@@ -213,7 +213,7 @@ And two images of the setup in light:
 
 ![](setup-wide.jpeg)
 
-And more from the caemera's perspective:
+And more from the camera's perspective:
 
 ![](setup-narrow.jpeg)
 
