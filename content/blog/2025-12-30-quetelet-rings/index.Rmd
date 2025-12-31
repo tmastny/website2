@@ -39,8 +39,7 @@ but there is a wonderful explanation in the following paper:
 
 > de Witte, A. J. (1967). Interference in scattered light. *American Journal of Physics*, 35(4), 301–313. https://doi.org/10.1119/1.1974069
 
-I'd like to focus on the last question: why are the rings not centered on the light source?
-Where are the rings centered?
+I'd like to focus on the last question: where are the rings centered, and why aren't they centered on the light source?
 
 ## Centers of other optical phenomena
 
@@ -181,7 +180,7 @@ As described above, you see the lens, light source, and center in that sequence.
 
 The $c = h$ case is the reddish light (from my smartphone flashlight passing through my hand).
 The bands appear as straight lines. Again, let's imagine $x_E = 0$ and $c \approx h$.
-Then
+When the difference between $c$ and $h$ is some small value $\epsilon$, then
 \[ x_C = \frac{c^2 \cdot 0 - h^2 x_L}{c^2 - h^2} \approx \frac{h^2 x_L}{\epsilon} \]
 
 The center would still be past the light source, but very far away.
