@@ -1,11 +1,11 @@
 ---
-title: 'Quetelet Rings'
+title: 'Homemade Quetelet Rings'
 author: ~
 date: '2025-12-30'
 slug: quetelet-rings
 categories: []
 tags: []
-description: ''
+description: 'Creating and analyzing the physics of Quetelet rings at home, focusing on finding the center of the rings.'
 draft: false
 output:
   blogdown::html_page:
@@ -20,11 +20,14 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Homemade Quetelet Rings
+
 I made [Quetelet rings](https://en.wikipedia.org/wiki/Quetelet_rings) at home!
 
 ![](rings.jpeg)
 
-There's a few great mysteries here to explore:
+Quetelet rings are color rings that appear when light reflects off a a dusty
+mirror. There are many fun questions to explore:
 
 * why are there color bands?
 * why does the color pattern change (unlike a rainbow)?
@@ -57,15 +60,18 @@ of the light and observer.
 
 ## Why are there bands of color?
 
-The key physical explanation is interference due to optical path difference
-[(See here for a general explanation).](https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference).
+Before we find the center, we do need to understand why there are bands of color,
+because we will use that explanation to derive the center location.
+
+The key physical explanation is interference due to optical path length difference
+[(See here for a general explanation).](https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference)
 If two rays from the same source reach your eye with different path lengths,
 the resulting wave superposition shifts the wavelength so the resulting color is different.
 
 For Quetelet rings, the two different paths are:
 
-1. light refracts into the mirror and then scatters off the dust
-2. light scatters off the dust and then refracts into the mirror
+1. light refracts into the glass, reflects, and then scatters off the dust
+2. light scatters off the dust, refracts into the glass, and then reflects
 
 de Witt derives the path difference as
 
@@ -79,9 +85,9 @@ Note that I'm simplifying the constants here into a single term $a$ for simplici
 
 ## Why are the bands circular?
 
-Now the path difference $\Delta$ only depends on the angles $\alpha$ and $\beta$.
-So now we need to find the corresponding coordinates on the mirror that satisfy those angles
-to find the shape of the bands.
+The path difference $\Delta$ only depends on the angles $\alpha$ and $\beta$,
+so to find the shape of the bands on the mirror, we need to find the set of points
+constrained by those angles.
 
 First, let's use small angle approximation to get
 \[\Delta \approx a'(\beta^2 - \alpha^2) \]
@@ -133,9 +139,9 @@ This means the center of the rings is past the light source, from the perspectiv
 Lastly, when $c >> h$, like when the source of the light is the sun, the equation simplifies to
 \[ x_C \approx \frac{c^2 x_E - h^2 x_L}{c^2 - h^2} \approx \frac{c^2 x_E}{c^2} = x_E \]
 
-That's the antisolar point, just like in the rainbow! Naturally occuring Quetelet rings
-are very rare, but have been documented on algae films in ponds. Here are some
-key references if you want to see more examples of naturally occurring Quetelet rings:
+This is the behavor of naturally occuring Quetelet rings.
+These are very rare, but have been documented on algae films in ponds.
+Here are some references if you want to learn more:
 
 * https://www.uni-muenster.de/imperia/md/content/fachbereich_physik/didaktik_physik/publikationen/433_colored_rings_on_dusty_surfaces.pdf
 * https://atoptics.wordpress.com/2013/09/14/algae-optics-in-wisconsin/
@@ -143,32 +149,66 @@ key references if you want to see more examples of naturally occurring Quetelet 
 
 ![](antisolar-rings.jpg)
 
-### c < h and c = h
+This behavior is similar to rainbows, but with an important difference.
+In a rainbow the center is always the antisolar point, but in Quetelet rings
+the antisolar point is not the center: it's the point on the other side of the circle,
+intersecting the image of the sun and the center.
+
+### c = h and c < h
 
 Here's an image that captures the first two cases, when the light and camera are the
 same distance to the mirror and when the camera is twice as far away.
+This is not a composite, but rather a single image taken with two different light
+sources reflecting off the same mirror.
+
+The camera that took the picture is not the phone, but the larger lens right above it.
 
 ![](center.jpeg)
 
-This image is really helpful because you can see the position of the camera reflected in the mirror.
+Since you can see the positoin of the lens and the light source in the mirror,
+we can easily verify the center geometries.
 
-The $c < h$ case is the white light and as described above you see the lens, light source, and center
-in sequence.
+The $c < h$ case is the white light, with circular colored bands.
+As described above you see the lens, light source, and center in that sequence.
 
 The $c = h$ case is the reddish light (from my smartphone flashlight passing through my hand).
-The bands appear as straight lines.
+The bands appear as straight lines. Again, let's imagine $x_E = 0$ and $c \approx h$.
+Then
+\[ x_C = \frac{c^2 \cdot 0 - h^2 x_L}{c^2 - h^2} \approx \frac{h^2 x_L}{\epsilon} \]
 
-## Setup
+The center would still be past the light source, but very far away.
+To my eye, the bands appear slightly curved towards the lens,
+but according to the geometry that must be an artifact of the lens or mirror
+rather than a optical property of the Quetelet rings.
 
+## Capturing the full circle
 
-First, I cheated a bit. This isn't only a picture of a mirror:
-it's the an image of a mirror through a beamsplitter.
+If you try capturing Quetelet rings using the diagram above, you'll only see
+part of the rings. That's because the light source itself will be in the path of the camera.
 
-Here's the pullback shot, which explains the setup:
+![](block.jpeg)
+
+There's different trade-offs you can make to see different shapes,
+but some of the reflected light from the
+source will not make it to the camera:
+![](block-circle.jpeg)
+
+How did I capture the full circle of rings? I used a glass pane from a picture frame
+as a [beamsplitter](https://en.wikipedia.org/wiki/Beam_splitter).
+
+## Beamsplitter Setup
+
+Here's the pullback shot:
 
 ![](capture.jpeg)
 
-With the diagram:
+The flashlight is shooting through the pane of glass positioned at a 45 degree angle.
+Most of the light passes through onto the red piano, but ~5% reflects off the glass into the mirror.
+
+The mirror reflects the light _back_ throught glass pane: this time most of the light
+travels through the glass pane into the camera.
+
+Setup diagram:
 
 ![](setup-diagram.png)
 
@@ -179,3 +219,9 @@ And two images of the setup in light:
 And more from the caemera's perspective:
 
 ![](setup-narrow.jpeg)
+
+Lastly, de Witt also diagrams out the beamsplitter setup in his paper:
+
+```{r out.width='70%', fig.align='center', out.height='70%'}
+knitr::include_graphics("setup-dewitt.png")
+```

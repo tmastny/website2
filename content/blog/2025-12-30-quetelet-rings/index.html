@@ -1,11 +1,11 @@
 ---
-title: 'Quetelet Rings'
+title: 'Homemade Quetelet Rings'
 author: ~
 date: '2025-12-30'
 slug: quetelet-rings
 categories: []
 tags: []
-description: ''
+description: 'Creating and analyzing the physics of Quetelet rings at home, focusing on finding the center of the rings.'
 draft: false
 output:
   blogdown::html_page:
@@ -15,6 +15,8 @@ output:
 
 <div id="TOC">
 <ul>
+<li><a href="#homemade-quetelet-rings" id="toc-homemade-quetelet-rings">Homemade Quetelet Rings</a>
+<ul>
 <li><a href="#centers-of-other-optical-phenomena" id="toc-centers-of-other-optical-phenomena">Centers of other optical phenomena</a></li>
 <li><a href="#why-are-there-bands-of-color" id="toc-why-are-there-bands-of-color">Why are there bands of color?</a></li>
 <li><a href="#why-are-the-bands-circular" id="toc-why-are-the-bands-circular">Why are the bands circular?</a></li>
@@ -23,15 +25,20 @@ output:
 <li><a href="#c-h" id="toc-c-h">c = h</a></li>
 <li><a href="#c-h-1" id="toc-c-h-1">c &lt; h</a></li>
 <li><a href="#c-h-2" id="toc-c-h-2">c &gt;&gt; h</a></li>
-<li><a href="#c-h-and-c-h" id="toc-c-h-and-c-h">c &lt; h and c = h</a></li>
+<li><a href="#c-h-and-c-h" id="toc-c-h-and-c-h">c = h and c &lt; h</a></li>
 </ul></li>
-<li><a href="#setup" id="toc-setup">Setup</a></li>
+<li><a href="#capturing-the-full-circle" id="toc-capturing-the-full-circle">Capturing the full circle</a></li>
+<li><a href="#beamsplitter-setup" id="toc-beamsplitter-setup">Beamsplitter Setup</a></li>
+</ul></li>
 </ul>
 </div>
 
+<div id="homemade-quetelet-rings" class="section level1">
+<h1>Homemade Quetelet Rings</h1>
 <p>I made <a href="https://en.wikipedia.org/wiki/Quetelet_rings">Quetelet rings</a> at home!</p>
 <p><img src="rings.jpeg" /></p>
-<p>There’s a few great mysteries here to explore:</p>
+<p>Quetelet rings are color rings that appear when light reflects off a a dusty
+mirror. There are many fun questions to explore:</p>
 <ul>
 <li>why are there color bands?</li>
 <li>why does the color pattern change (unlike a rainbow)?</li>
@@ -57,14 +64,16 @@ of the light and observer.</p>
 </div>
 <div id="why-are-there-bands-of-color" class="section level2">
 <h2>Why are there bands of color?</h2>
-<p>The key physical explanation is interference due to optical path difference
-<a href="https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference">(See here for a general explanation).</a>.
+<p>Before we find the center, we do need to understand why there are bands of color,
+because we will use that explanation to derive the center location.</p>
+<p>The key physical explanation is interference due to optical path length difference
+<a href="https://openstax.org/books/university-physics-volume-3/pages/3-1-youngs-double-slit-interference">(See here for a general explanation).</a>
 If two rays from the same source reach your eye with different path lengths,
 the resulting wave superposition shifts the wavelength so the resulting color is different.</p>
 <p>For Quetelet rings, the two different paths are:</p>
 <ol style="list-style-type: decimal">
-<li>light refracts into the mirror and then scatters off the dust</li>
-<li>light scatters off the dust and then refracts into the mirror</li>
+<li>light refracts into the glass, reflects, and then scatters off the dust</li>
+<li>light scatters off the dust, refracts into the glass, and then reflects</li>
 </ol>
 <p>de Witt derives the path difference as</p>
 <p><span class="math display">\[\Delta = a(\cos\alpha - \cos\beta) \]</span></p>
@@ -74,9 +83,9 @@ Note that I’m simplifying the constants here into a single term <span class="m
 </div>
 <div id="why-are-the-bands-circular" class="section level2">
 <h2>Why are the bands circular?</h2>
-<p>Now the path difference <span class="math inline">\(\Delta\)</span> only depends on the angles <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>.
-So now we need to find the corresponding coordinates on the mirror that satisfy those angles
-to find the shape of the bands.</p>
+<p>The path difference <span class="math inline">\(\Delta\)</span> only depends on the angles <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span>,
+so to find the shape of the bands on the mirror, we need to find the set of points
+constrained by those angles.</p>
 <p>First, let’s use small angle approximation to get
 <span class="math display">\[\Delta \approx a&#39;(\beta^2 - \alpha^2) \]</span></p>
 <p>Now, we want to find the set of points <span class="math inline">\((x, y)\)</span> that satisfy this geometry:</p>
@@ -116,38 +125,69 @@ Then
 <h3>c &gt;&gt; h</h3>
 <p>Lastly, when <span class="math inline">\(c &gt;&gt; h\)</span>, like when the source of the light is the sun, the equation simplifies to
 <span class="math display">\[ x_C \approx \frac{c^2 x_E - h^2 x_L}{c^2 - h^2} \approx \frac{c^2 x_E}{c^2} = x_E \]</span></p>
-<p>That’s the antisolar point, just like in the rainbow! Naturally occuring Quetelet rings
-are very rare, but have been documented on algae films in ponds. Here are some
-key references if you want to see more examples of naturally occurring Quetelet rings:</p>
+<p>This is the behavor of naturally occuring Quetelet rings.
+These are very rare, but have been documented on algae films in ponds.
+Here are some references if you want to learn more:</p>
 <ul>
 <li><a href="https://www.uni-muenster.de/imperia/md/content/fachbereich_physik/didaktik_physik/publikationen/433_colored_rings_on_dusty_surfaces.pdf" class="uri">https://www.uni-muenster.de/imperia/md/content/fachbereich_physik/didaktik_physik/publikationen/433_colored_rings_on_dusty_surfaces.pdf</a></li>
 <li><a href="https://atoptics.wordpress.com/2013/09/14/algae-optics-in-wisconsin/" class="uri">https://atoptics.wordpress.com/2013/09/14/algae-optics-in-wisconsin/</a></li>
 <li><a href="https://ohio-optics.blogspot.com/2013/08/algae-optics-in-wisconsin.html" class="uri">https://ohio-optics.blogspot.com/2013/08/algae-optics-in-wisconsin.html</a></li>
 </ul>
 <p><img src="antisolar-rings.jpg" /></p>
+<p>This behavior is similar to rainbows, but with an important difference.
+In a rainbow the center is always the antisolar point, but in Quetelet rings
+the antisolar point is not the center: it’s the point on the other side of the circle,
+intersecting the image of the sun and the center.</p>
 </div>
 <div id="c-h-and-c-h" class="section level3">
-<h3>c &lt; h and c = h</h3>
+<h3>c = h and c &lt; h</h3>
 <p>Here’s an image that captures the first two cases, when the light and camera are the
-same distance to the mirror and when the camera is twice as far away.</p>
+same distance to the mirror and when the camera is twice as far away.
+This is not a composite, but rather a single image taken with two different light
+sources reflecting off the same mirror.</p>
+<p>The camera that took the picture is not the phone, but the larger lens right above it.</p>
 <p><img src="center.jpeg" /></p>
-<p>This image is really helpful because you can see the position of the camera reflected in the mirror.</p>
-<p>The <span class="math inline">\(c &lt; h\)</span> case is the white light and as described above you see the lens, light source, and center
-in sequence.</p>
+<p>Since you can see the positoin of the lens and the light source in the mirror,
+we can easily verify the center geometries.</p>
+<p>The <span class="math inline">\(c &lt; h\)</span> case is the white light, with circular colored bands.
+As described above you see the lens, light source, and center in that sequence.</p>
 <p>The <span class="math inline">\(c = h\)</span> case is the reddish light (from my smartphone flashlight passing through my hand).
-The bands appear as straight lines.</p>
+The bands appear as straight lines. Again, let’s imagine <span class="math inline">\(x_E = 0\)</span> and <span class="math inline">\(c \approx h\)</span>.
+Then
+<span class="math display">\[ x_C = \frac{c^2 \cdot 0 - h^2 x_L}{c^2 - h^2} \approx \frac{h^2 x_L}{\epsilon} \]</span></p>
+<p>The center would still be past the light source, but very far away.
+To my eye, the bands appear slightly curved towards the lens,
+but according to the geometry that must be an artifact of the lens or mirror
+rather than a optical property of the Quetelet rings.</p>
 </div>
 </div>
-<div id="setup" class="section level2">
-<h2>Setup</h2>
-<p>First, I cheated a bit. This isn’t only a picture of a mirror:
-it’s the an image of a mirror through a beamsplitter.</p>
-<p>Here’s the pullback shot, which explains the setup:</p>
+<div id="capturing-the-full-circle" class="section level2">
+<h2>Capturing the full circle</h2>
+<p>If you try capturing Quetelet rings using the diagram above, you’ll only see
+part of the rings. That’s because the light source itself will be in the path of the camera.</p>
+<p><img src="block.jpeg" /></p>
+<p>There’s different trade-offs you can make to see different shapes,
+but some of the reflected light from the
+source will not make it to the camera:
+<img src="block-circle.jpeg" /></p>
+<p>How did I capture the full circle of rings? I used a glass pane from a picture frame
+as a <a href="https://en.wikipedia.org/wiki/Beam_splitter">beamsplitter</a>.</p>
+</div>
+<div id="beamsplitter-setup" class="section level2">
+<h2>Beamsplitter Setup</h2>
+<p>Here’s the pullback shot:</p>
 <p><img src="capture.jpeg" /></p>
-<p>With the diagram:</p>
+<p>The flashlight is shooting through the pane of glass positioned at a 45 degree angle.
+Most of the light passes through onto the red piano, but ~5% reflects off the glass into the mirror.</p>
+<p>The mirror reflects the light <em>back</em> throught glass pane: this time most of the light
+travels through the glass pane into the camera.</p>
+<p>Setup diagram:</p>
 <p><img src="setup-diagram.png" /></p>
 <p>And two images of the setup in light:</p>
 <p><img src="setup-wide.jpeg" /></p>
 <p>And more from the caemera’s perspective:</p>
 <p><img src="setup-narrow.jpeg" /></p>
+<p>Lastly, de Witt also diagrams out the beamsplitter setup in his paper:</p>
+<p><img src="setup-dewitt.png" width="70%" height="70%" style="display: block; margin: auto;" /></p>
+</div>
 </div>
