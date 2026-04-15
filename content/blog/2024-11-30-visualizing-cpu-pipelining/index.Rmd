@@ -38,8 +38,7 @@ chapter 4 of Computer Organization and Design.
 This post will assume you are familiar with the [laundry](https://www.cybercomputing.co.uk/Languages/Hardware/laundryAnalogy.html)
 or "assembly-line" model of CPU pipelining, but are hazy on some of the
 lower-level details. It will also help to have a vague idea of
-the 5-stage MIPS pipeline ([this](https://courses.cs.washington.edu/courses/cse410/05sp/lectures/cse410-10-pipelining-a.pdf)
-is a nice, brief high-level summary), since our model CPU will be the 32-bit MIPS.
+the 5-stage MIPS pipeline, since our model CPU will be the 32-bit MIPS.
 
 ## Visualizing pipelines
 
