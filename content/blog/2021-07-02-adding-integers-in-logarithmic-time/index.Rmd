@@ -142,7 +142,7 @@ $$
 1 + 2 + 4 + \cdots + \frac{n}{2} + n = 2n - 1
 $$
 
-So the overall space complexity is `O(n)`.
+So the overall space complexity is `O(n)`^[Thanks for Robert Ehrlich for the correction].
 
 
 ## Real-world Implementation
