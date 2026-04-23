@@ -117,7 +117,7 @@ c_{4} &= g_3 + p_3g_2 + p_3 p_2 g_1 + p_3 p_2 p_1 g_0 + p_3 p_2 p_1 p_0 c_0
 $$
 
 
-The dominating term is $p_3 p_2 p_1 p_0 c_0$,
+The longest product term is $p_3 p_2 p_1 p_0 c_0$,
 with length proportional to `n`. Calculating this with
 successive `AND` operations is still `O(n)`. But we can
 divide-and-conquer to calculate this in `O(log n)`. For example:
@@ -128,27 +128,31 @@ Recall that the height of the circuit is the time complexity.
 This circuit forms a binary tree (upside down),
 which is known to have height `O(log n)`.
 
-Since $p_3 p_2 p_1 p_0 c_0$ is the dominating term, the time complexity
-of that operation is the time complexity of adding all the bits.
-So the time complexity of adding two numbers is `O(log n)`!
+So a long chain of dependencies can be
+reorganized as a balanced tree, changing the time complexity from
+`O(n)` to `O(log n)`. And since we can compute all the carries in parallel,
+the time complexity for the sum also becomes `O(log n)`.
 
 ### Space Complexity
 
-The height a binary tree is `O(log n)` and the number of nodes
-(the number of `AND` gates) is `O(2^n)`.
+Where `n` is the number of bits being added, we can count the total gates
+of the binary tree circuit as a geometric series:
 
-This is very expensive in terms of hardware. Each `AND` gate costs
-money and takes physical space on a circuit board.
-This algorithm is not feasible for even relatively small `n`.
+$$
+1 + 2 + 4 + \cdots + \frac{n}{2} + n = 2n - 1
+$$
+
+So the overall space complexity is `O(n)`.
+
 
 ## Real-world Implementation
 
-Because of the cost and physical space, carry-lookahead adders
-are not implemented for standard 32-bit integers.
+Carry-lookahead adders can also be constructed as intermediate blocks
+and chained together. For example, [Harris and Harris](https://www.sciencedirect.com/topics/computer-science/carry-propagate-adder)
+describe eight 4-bit carry-lookahead blocks chained together to compute
+a 32-bit sum.
 
-The standard algorithm would require around 32 gates, while
-carry-lookahead would require 2^32 = 4,294,967,296.
-
-Instead, carry-lookahead adders are implemented using 4-bit sections
-and chained together. The time complexity is still `O(n)`,
-but with a constant factor speedup.
+This design is a nice compromise, saving gates by avoiding one
+full-width 32-bit carry-lookahead network^[Which can still be practical!],
+while still achieving some speedup from the 4-bit carry-lookahead in each
+block.
