@@ -10,20 +10,19 @@ output:
     toc: true
 ---
 
-<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 <div id="TOC">
 <ul>
-<li><a href="#elementary-school-addition-algorithm">Elementary School Addition Algorithm</a></li>
-<li><a href="#hardware-complexity">Hardware Complexity</a>
+<li><a href="#elementary-school-addition-algorithm" id="toc-elementary-school-addition-algorithm">Elementary School Addition Algorithm</a></li>
+<li><a href="#hardware-complexity" id="toc-hardware-complexity">Hardware Complexity</a>
 <ul>
-<li><a href="#elementary-school-adder">Elementary School Adder</a></li>
+<li><a href="#elementary-school-adder" id="toc-elementary-school-adder">Elementary School Adder</a></li>
 </ul></li>
-<li><a href="#carry-lookahead-adder">Carry-lookahead Adder</a>
+<li><a href="#carry-lookahead-adder" id="toc-carry-lookahead-adder">Carry-lookahead Adder</a>
 <ul>
-<li><a href="#space-complexity">Space Complexity</a></li>
+<li><a href="#space-complexity" id="toc-space-complexity">Space Complexity</a></li>
 </ul></li>
-<li><a href="#real-world-implementation">Real-world Implementation</a></li>
+<li><a href="#real-world-implementation" id="toc-real-world-implementation">Real-world Implementation</a></li>
 </ul>
 </div>
 
@@ -106,7 +105,7 @@ c_{4} &amp;= g_3 + p_3(g_2 + p_2 (g_1 + p_1 (g_0 + p_0 c_0))) \\
 c_{4} &amp;= g_3 + p_3g_2 + p_3 p_2 g_1 + p_3 p_2 p_1 g_0 + p_3 p_2 p_1 p_0 c_0
 \end{align*}
 \]</span></p>
-<p>The dominating term is <span class="math inline">\(p_3 p_2 p_1 p_0 c_0\)</span>,
+<p>The longest product term is <span class="math inline">\(p_3 p_2 p_1 p_0 c_0\)</span>,
 with length proportional to <code>n</code>. Calculating this with
 successive <code>AND</code> operations is still <code>O(n)</code>. But we can
 divide-and-conquer to calculate this in <code>O(log n)</code>. For example:</p>
@@ -114,34 +113,38 @@ divide-and-conquer to calculate this in <code>O(log n)</code>. For example:</p>
 <p>Recall that the height of the circuit is the time complexity.
 This circuit forms a binary tree (upside down),
 which is known to have height <code>O(log n)</code>.</p>
-<p>Since <span class="math inline">\(p_3 p_2 p_1 p_0 c_0\)</span> is the dominating term, the time complexity
-of that operation is the time complexity of adding all the bits.
-So the time complexity of adding two numbers is <code>O(log n)</code>!</p>
+<p>So a long chain of dependencies can be
+reorganized as a balanced tree, changing the time complexity from
+<code>O(n)</code> to <code>O(log n)</code>. And since we can compute all the carries in parallel,
+the time complexity for the sum also becomes <code>O(log n)</code>.</p>
 <div id="space-complexity" class="section level3">
 <h3>Space Complexity</h3>
-<p>The height a binary tree is <code>O(log n)</code> and the number of nodes
-(the number of <code>AND</code> gates) is <code>O(2^n)</code>.</p>
-<p>This is very expensive in terms of hardware. Each <code>AND</code> gate costs
-money and takes physical space on a circuit board.
-This algorithm is not feasible for even relatively small <code>n</code>.</p>
+<p>Where <code>n</code> is the number of bits being added, we can count the total gates
+of the binary tree circuit as a geometric series:</p>
+<p><span class="math display">\[
+1 + 2 + 4 + \cdots + \frac{n}{2} + n = 2n - 1
+\]</span></p>
+<p>So the overall space complexity is <code>O(n)</code>.</p>
 </div>
 </div>
 <div id="real-world-implementation" class="section level2">
 <h2>Real-world Implementation</h2>
-<p>Because of the cost and physical space, carry-lookahead adders
-are not implemented for standard 32-bit integers.</p>
-<p>The standard algorithm would require around 32 gates, while
-carry-lookahead would require 2^32 = 4,294,967,296.</p>
-<p>Instead, carry-lookahead adders are implemented using 4-bit sections
-and chained together. The time complexity is still <code>O(n)</code>,
-but with a constant factor speedup.</p>
+<p>Carry-lookahead adders can also be constructed as intermediate blocks
+and chained together. For example, <a href="https://www.sciencedirect.com/topics/computer-science/carry-propagate-adder">Harris and Harris</a>
+describe eight 4-bit carry-lookahead blocks chained together to compute
+a 32-bit sum.</p>
+<p>This design is a nice compromise, saving gates by avoiding one
+full-width 32-bit carry-lookahead network<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>,
+while still achieving some speedup from the 4-bit carry-lookahead in each
+block.</p>
 </div>
-<div class="footnotes">
+<div class="footnotes footnotes-end-of-document">
 <hr />
 <ol>
 <li id="fn1"><p>Example: <a href="https://en.wikipedia.org/wiki/Binary_number#Addition" class="uri">https://en.wikipedia.org/wiki/Binary_number#Addition</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p>Also known as the ripple carry adder.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>
 <a href="https://en.wikipedia.org/wiki/Model_of_computation" class="uri">https://en.wikipedia.org/wiki/Model_of_computation</a><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Which can still be practical!<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
