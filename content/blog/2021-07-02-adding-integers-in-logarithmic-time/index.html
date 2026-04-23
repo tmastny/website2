@@ -124,7 +124,7 @@ of the binary tree circuit as a geometric series:</p>
 <p><span class="math display">\[
 1 + 2 + 4 + \cdots + \frac{n}{2} + n = 2n - 1
 \]</span></p>
-<p>So the overall space complexity is <code>O(n)</code>.</p>
+<p>So the overall space complexity is <code>O(n)</code><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
 </div>
 </div>
 <div id="real-world-implementation" class="section level2">
@@ -134,7 +134,7 @@ and chained together. For example, <a href="https://www.sciencedirect.com/topics
 describe eight 4-bit carry-lookahead blocks chained together to compute
 a 32-bit sum.</p>
 <p>This design is a nice compromise, saving gates by avoiding one
-full-width 32-bit carry-lookahead network<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>,
+full-width 32-bit carry-lookahead network<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>,
 while still achieving some speedup from the 4-bit carry-lookahead in each
 block.</p>
 </div>
@@ -145,6 +145,7 @@ block.</p>
 <li id="fn2"><p>Also known as the ripple carry adder.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 <li id="fn3"><p>
 <a href="https://en.wikipedia.org/wiki/Model_of_computation" class="uri">https://en.wikipedia.org/wiki/Model_of_computation</a><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
-<li id="fn4"><p>Which can still be practical!<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>Thanks for Robert Ehrlich for the correction<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Which can still be practical!<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
