@@ -64,7 +64,7 @@ here are the tokens identified by some of the popular syntax highlighters:
 +--------------+--------+----------------------------------------------------+
 
 Parsing annotates tokens in the code with specific CSS classes. Below,
-I'll show some examples from my [R Sytnax Highlighting Gallery](/projects/r-syntax-highlighting-gallery).
+I'll show some examples from my [R Sytnax Highlighting Gallery](/projects/r-syntax-highlighting-gallery/).
 
 Here's how `highlight.js` parses the following:
 

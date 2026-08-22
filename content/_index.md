@@ -7,10 +7,10 @@ title: Home
 I'm a software engineer at Wave building financial infrastructure for developing countries.
 I write about low-level programming, data science, and algorithms.
 
-[More about me.](/about)
+[More about me.](/about/)
 
 ## Featured Writing
-* [Visualizing CPU Pipelining](/blog/visualizing-cpu-pipelining)
+* [Visualizing CPU Pipelining](/blog/visualizing-cpu-pipelining/)
   * Interactive visualizations showing how CPUs execute instructions
 * [A* Tricks for Videogame Path Finding](/blog/a-star-tricks-for-videogame-path-finding/)
   * Overview of path finding techniques with animations from my own videogame
@@ -18,7 +18,7 @@ I write about low-level programming, data science, and algorithms.
 * [Discrete Cosine Transform and Time Series Classification](/blog/discrete-cosine-transform-time-series-classification/)
   * Using data compression techniques to classify time series
 
-[All my posts.](/blog)
+[All my posts.](/blog/)
 
 ## Key Projects
 * [Dead Rise](https://tmastny.itch.io/dead-rise)
@@ -35,7 +35,7 @@ I write about low-level programming, data science, and algorithms.
     with techniques from data compression and signal processing.
   * extended articles are available on the package [website](https://tmastny.github.io/tsrecipes/articles/time-series-clustering.html).
 
-[All my projects.](/projects)
+[All my projects.](/projects/)
 
 ### Tools and Libraries
 

@@ -87,7 +87,7 @@ suggesting column names and pandas data frame and series methods:
 
 ![](/blog/siuba-and-ipython-tab-complete/ipython-mtcars.gif)
 
-This was my [small contribution](/blog/siuba-and-ipython-tab-complete) to Siuba, 
+This was my [small contribution](/blog/siuba-and-ipython-tab-complete/) to Siuba, 
 with lots of help from Michael Chow. Include the following to try it out!
 
 ```python
