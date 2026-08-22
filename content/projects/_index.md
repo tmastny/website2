@@ -38,7 +38,7 @@ title: "Projects"
   * a proof-of-concept for an https://observablehq.com/ like experience powered by Shiny's built-in reactive expressions.
 
 <!-- spacing -->
-* [R Syntax Highlighting Gallery](/projects/r-syntax-highlighting-gallery)
+* [R Syntax Highlighting Gallery](/projects/r-syntax-highlighting-gallery/)
   * a gallery I created while investigating syntax highlighting
     for my blog. 
   * also see my [blog post](/blog/syntax-highlighting/) on the topic.
@@ -57,7 +57,7 @@ title: "Projects"
 
 ## Book notes
 
-* [Napkin Math](/projects/napkin-math)
+* [Napkin Math](/projects/napkin-math/)
   * following the [Napkin Math newsletter](https://sirupsen.com/napkin).
 
 <!-- spacing -->

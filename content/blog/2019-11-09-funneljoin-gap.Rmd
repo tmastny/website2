@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE,
 
 ## funneljoin
 
-In my previous [blog post](/blog/funnel-join), 
+In my previous [blog post](/blog/funnel-charts-funneljoin/), 
 I explored the awesome [funneljoin](https://github.com/robinsones/funneljoin)
 package.
 Check that post out for an overview of the package
